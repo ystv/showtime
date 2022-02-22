@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -20,10 +21,16 @@ func (h *Handlers) showStreams(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = yt.GetStreams(r.Context())
+	broadcasts, err := yt.GetBroadcasts(r.Context())
 	if err != nil {
 		err = fmt.Errorf("failed to get streams: %w", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(broadcasts)
+	if err != nil {
+		err = fmt.Errorf("failed to encode to json: %w", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

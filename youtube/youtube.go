@@ -3,7 +3,6 @@ package youtube
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"google.golang.org/api/youtube/v3"
@@ -13,9 +12,30 @@ type (
 	YouTuber struct {
 		yt *youtube.Service
 	}
-	Stream struct {
+	Broadcast struct {
+		ID        string
 		Title     string
 		StartTime string
+		IsManaged bool
+		StreamID  string
+	}
+	// Stream is effectively what you know as the stream key
+	Stream struct {
+		ID     string
+		Title  string
+		Status string
+		Ingest Ingest
+	}
+	Ingest struct {
+		Name    string
+		Address string
+	}
+	NewStream struct {
+		Title       string
+		Description string
+		FrameRate   string
+		IngestType  string
+		Resolution  string
 	}
 )
 
@@ -30,19 +50,43 @@ func New(client *http.Client) (*YouTuber, error) {
 	}, nil
 }
 
-func (y *YouTuber) GetStreams(ctx context.Context) error {
+func (y *YouTuber) GetBroadcasts(ctx context.Context) ([]Broadcast, error) {
 	req := y.yt.LiveBroadcasts.List([]string{"id,snippet"})
 	req.BroadcastStatus("all")
-	broadcasts, err := req.Do()
+	ytBroadcasts, err := req.Do()
 	if err != nil {
-		return fmt.Errorf("failed to list broadcasts: %w", err)
+		return nil, fmt.Errorf("failed to list broadcasts: %w", err)
 	}
-	for _, broadcast := range broadcasts.Items {
-		stream := Stream{
-			Title:     broadcast.Snippet.Title,
-			StartTime: broadcast.Snippet.ScheduledStartTime,
+	broadcasts := []Broadcast{}
+	for _, ytBroadcast := range ytBroadcasts.Items {
+		broadcast := Broadcast{
+			ID:        ytBroadcast.Id,
+			Title:     ytBroadcast.Snippet.Title,
+			StartTime: ytBroadcast.Snippet.ScheduledStartTime,
 		}
-		log.Printf("%+v", stream)
+		broadcasts = append(broadcasts, broadcast)
+	}
+	return broadcasts, nil
+}
+
+func (y *YouTuber) EnableShowTimeForBroadcast(ctx context.Context, broadcastID string) error {
+	stream, err := y.newStream(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create stream: %w", err)
+	}
+
+	err = y.switchStream(ctx, broadcastID, stream.ID)
+	if err != nil {
+		return fmt.Errorf("failed to switch stream: %w", err)
+	}
+
+	return nil
+}
+
+func (y *YouTuber) DisableShowTimeForBroadcast(ctx context.Context, broadcastID string) error {
+	err := y.switchStream(ctx, broadcastID, "")
+	if err != nil {
+		return fmt.Errorf("failed to switch stream: %w", err)
 	}
 	return nil
 }
