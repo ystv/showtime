@@ -1,31 +1,30 @@
 package handlers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
-func (h *Handlers) googleCallback(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) googleCallback(c echo.Context) error {
 	// Check state cookie to make sure there isn't any CSRF biz
-	state, _ := r.Cookie(h.stateCookieName)
+	state, _ := c.Cookie(h.stateCookieName)
 
-	if r.FormValue("state") != state.Value {
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
+	if c.FormValue("state") != state.Value {
+		return c.Redirect(http.StatusTemporaryRedirect, "/")
 	}
 
-	code := r.FormValue("code")
+	code := c.FormValue("code")
 	if code == "" {
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
+		return c.Redirect(http.StatusTemporaryRedirect, "/")
 	}
 
-	tok, err := h.auth.NewToken(r.Context(), code)
+	tok, err := h.auth.NewToken(c.Request().Context(), code)
 	if err != nil {
 		log.Printf("failed to get token: %+v", err)
 	}
 
 	h.auth.StoreToken("me", tok)
-	fmt.Fprintf(w, "successful login!")
+	return c.String(http.StatusOK, "login successful!")
 }

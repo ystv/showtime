@@ -1,36 +1,28 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
+	"github.com/labstack/echo/v4"
 	"github.com/ystv/showtime/youtube"
 )
 
-func (h *Handlers) showStreams(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) showStreams(c echo.Context) error {
 	tok, err := h.auth.GetToken("me")
 	if err != nil {
 		err = fmt.Errorf("failed to get token: %w", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	yt, err := youtube.New(h.auth.GetClient(r.Context(), tok))
+	yt, err := youtube.New(h.auth.GetClient(c.Request().Context(), tok))
 	if err != nil {
 		err = fmt.Errorf("failed to create youtube service: %w", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	broadcasts, err := yt.GetBroadcasts(r.Context())
+	broadcasts, err := yt.GetBroadcasts(c.Request().Context())
 	if err != nil {
 		err = fmt.Errorf("failed to get streams: %w", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(broadcasts)
-	if err != nil {
-		err = fmt.Errorf("failed to encode to json: %w", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	return c.JSON(http.StatusOK, broadcasts)
 }

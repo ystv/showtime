@@ -1,35 +1,41 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/ystv/showtime/auth"
 )
 
 type Handlers struct {
 	auth            *auth.Auther
-	mux             *http.ServeMux
+	mux             *echo.Echo
 	stateCookieName string
 }
 
 func New(auth *auth.Auther) *Handlers {
 	return &Handlers{
 		auth:            auth,
-		mux:             http.NewServeMux(),
+		mux:             echo.New(),
 		stateCookieName: "state-token",
 	}
 }
 
-func (h *Handlers) GetHandlers() http.Handler {
-	h.mux.HandleFunc("/", h.index)
-	h.mux.HandleFunc("/streams", h.showStreams)
-	h.mux.HandleFunc("/oauth/google/login", h.googleLogin)
-	h.mux.HandleFunc("/oauth/google/callback", h.googleCallback)
+func (h *Handlers) Start() {
+	h.mux.GET("/", h.index)
+	h.mux.GET("/streams", h.showStreams)
+	h.mux.GET("/oauth/google/login", h.googleLogin)
+	h.mux.GET("/oauth/google/callback", h.googleCallback)
 
-	return h.mux
+	h.mux.Pre(middleware.RemoveTrailingSlash())
+	h.mux.Use(middleware.Logger())
+	h.mux.Use(middleware.Recover())
+	h.mux.HideBanner = true
+
+	h.mux.Logger.Fatal(h.mux.Start(":8080"))
 }
 
-func (h *Handlers) index(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "it's show time!")
+func (h *Handlers) index(c echo.Context) error {
+	return c.String(http.StatusOK, "it's show time!")
 }

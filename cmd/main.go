@@ -2,9 +2,7 @@ package main
 
 import (
 	"log"
-	"net/http"
 	"os"
-	"time"
 
 	"github.com/ystv/showtime/auth"
 	"github.com/ystv/showtime/handlers"
@@ -26,16 +24,7 @@ func main() {
 
 	auth := auth.NewAuther(config)
 
-	server := &http.Server{
-		Addr:         ":8080",
-		Handler:      handlers.New(auth).GetHandlers(),
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-	}
-	log.Printf("Starting HTTP Server. Listening at %q", server.Addr)
-	if err := server.ListenAndServe(); err != http.ErrServerClosed {
-		log.Printf("%v", err)
-	} else {
-		log.Println("Server closed!")
-	}
+	h := handlers.New(auth)
+
+	h.Start()
 }

@@ -5,12 +5,14 @@ import (
 	"encoding/base64"
 	"net/http"
 	"time"
+
+	"github.com/labstack/echo/v4"
 )
 
-func (h *Handlers) googleLogin(w http.ResponseWriter, r *http.Request) {
-	state := h.generateStateOauthCookie(w)
+func (h *Handlers) googleLogin(c echo.Context) error {
+	state := h.generateStateOauthCookie(c.Response().Writer)
 	url := h.auth.GetAuthCodeURL(state)
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+	return c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
 func (h *Handlers) generateStateOauthCookie(w http.ResponseWriter) string {
