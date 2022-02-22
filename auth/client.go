@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"golang.org/x/oauth2"
 )
@@ -19,6 +20,10 @@ func NewAuther(config *oauth2.Config) *Auther {
 		config: config,
 		tokens: make(map[string]*oauth2.Token),
 	}
+}
+
+func (a *Auther) GetClient(ctx context.Context, tok *oauth2.Token) *http.Client {
+	return a.config.Client(ctx, tok)
 }
 
 func (a *Auther) GetAuthCodeURL(state string) string {

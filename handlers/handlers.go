@@ -23,6 +23,7 @@ func New(auth *auth.Auther) *Handlers {
 
 func (h *Handlers) GetHandlers() http.Handler {
 	h.mux.HandleFunc("/", h.index)
+	h.mux.HandleFunc("/streams", h.showStreams)
 	h.mux.HandleFunc("/oauth/google/login", h.googleLogin)
 	h.mux.HandleFunc("/oauth/google/callback", h.googleCallback)
 

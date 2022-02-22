@@ -19,7 +19,7 @@ func main() {
 	}
 
 	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b, youtube.YoutubeUploadScope)
+	config, err := google.ConfigFromJSON(b, youtube.YoutubeForceSslScope)
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %+v", err)
 	}
