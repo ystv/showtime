@@ -78,6 +78,7 @@ func (h *Handlers) Start() {
 		internal.GET("/playouts/:playoutID", h.obsGetPlayout)
 		internal.GET("/playouts/new", h.obsNewPlayout)
 		internal.POST("/playouts/new", h.obsNewPlayoutSubmit)
+		internal.POST("/playouts/:playoutID/end", h.obsEndPlayout)
 		internal.GET("/playouts/:playoutID/manage", h.obsManagePlayout)
 		internal.GET("/playouts/:playoutID/link/youtube", h.obsLinkToYouTube)
 		internal.POST("/playouts/:playoutID/link/youtube/confirm", h.obsLinkToYouTubeConfirm)

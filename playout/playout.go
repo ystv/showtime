@@ -64,11 +64,24 @@ func (p *Playouter) New(ctx context.Context, po NewPlayout) error {
 	return nil
 }
 
+func (p *Playouter) Get(ctx context.Context, playoutID string) (Playout, error) {
+	po := Playout{}
+	err := p.db.GetContext(ctx, &po, `
+		SELECT playout_id, title, stream_key, website_link_id, youtube_link_id
+		FROM playouts
+		WHERE playout_id = $1;
+	`, playoutID)
+	if err != nil {
+		return Playout{}, fmt.Errorf("failed to get playout: %w", err)
+	}
+	return po, nil
+}
+
 func (p *Playouter) List(ctx context.Context) ([]Playout, error) {
 	po := []Playout{}
 	err := p.db.SelectContext(ctx, &po, `
 		SELECT playout_id, title, stream_key, website_link_id, youtube_link_id
-		FROM playouts;	
+		FROM playouts;
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get list of playouts")

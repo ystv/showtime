@@ -41,3 +41,11 @@ func (y *YouTuber) GetBroadcastDetails(ctx context.Context, broadcastID string) 
 	}
 	return details, nil
 }
+
+func (y *YouTuber) EndBroadcast(ctx context.Context, broadcastID string) error {
+	_, err := y.yt.LiveBroadcasts.Transition("complete", broadcastID, []string{"id"}).Do()
+	if err != nil {
+		return fmt.Errorf("failed to transition broadcast to complete state")
+	}
+	return nil
+}

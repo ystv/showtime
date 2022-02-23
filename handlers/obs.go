@@ -48,6 +48,15 @@ func (h *Handlers) obsNewPlayoutSubmit(c echo.Context) error {
 	return h.obsListPlayouts(c)
 }
 
+func (h *Handlers) obsEndPlayout(c echo.Context) error {
+	err := h.play.End(c.Request().Context(), c.Param("playoutID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return h.obsListPlayouts(c)
+}
+
 func (h *Handlers) obsManagePlayout(c echo.Context) error {
 	po, err := h.play.List(c.Request().Context())
 	if err != nil {
