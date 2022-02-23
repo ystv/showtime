@@ -32,8 +32,8 @@ func (h *Handlers) Start() {
 	h.mux.PUT("/api/playouts", h.updatePlayout)
 	h.mux.GET("/api/playouts", h.listPlayouts)
 	h.mux.GET("/api/streams", h.listStreams)
-	h.mux.GET("/oauth/google/login", h.googleLogin)
-	h.mux.GET("/oauth/google/callback", h.googleCallback)
+	h.mux.GET("/oauth/google/login", h.loginGoogle)
+	h.mux.GET("/oauth/google/callback", h.callbackGoogle)
 
 	h.mux.Pre(middleware.RemoveTrailingSlash())
 	h.mux.Use(middleware.Logger())
