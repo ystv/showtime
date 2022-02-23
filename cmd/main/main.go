@@ -1,6 +1,8 @@
 package main
 
 import (
+	"embed"
+	"io/fs"
 	"log"
 	"os"
 
@@ -10,6 +12,9 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/youtube/v3"
 )
+
+//go:embed public/*
+var content embed.FS
 
 func main() {
 	b, err := os.ReadFile("credentials.json")
@@ -30,7 +35,16 @@ func main() {
 
 	auth := auth.NewAuther(config)
 
-	h := handlers.New(db, auth)
+	templatesFS, err := fs.Sub(content, "public/templates")
+	if err != nil {
+		log.Fatalf("template files failed: %+v", err)
+	}
+	templates, err := handlers.NewTemplater(templatesFS)
+	if err != nil {
+		log.Fatalf("failed to create templater: %w", err)
+	}
+
+	h := handlers.New(db, auth, templates)
 
 	h.Start()
 }

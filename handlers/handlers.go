@@ -1,6 +1,10 @@
 package handlers
 
 import (
+	"fmt"
+	"html/template"
+	"io"
+	"io/fs"
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
@@ -37,19 +41,23 @@ var corsConfig middleware.CORSConfig = middleware.CORSConfig{
 	AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
 }
 
-func New(db *sqlx.DB, auth *auth.Auther) *Handlers {
+func New(db *sqlx.DB, auth *auth.Auther, t *Templater) *Handlers {
 	yt, _ := youtube.New(db, auth)
+
+	e := echo.New()
+	e.Renderer = t
+
 	return &Handlers{
 		auth:            auth,
 		play:            playout.New("rtmp://example.com/app", db, yt),
 		yt:              yt,
-		mux:             echo.New(),
+		mux:             e,
 		stateCookieName: "state-token",
 	}
 }
 
 func (h *Handlers) Start() {
-	h.mux.GET("/", h.index)
+	h.mux.GET("/", h.obsListPlayouts)
 	h.mux.POST("/api/playouts", h.newPlayout)
 	h.mux.PUT("/api/playouts", h.updatePlayout)
 	h.mux.GET("/api/playouts", h.listPlayouts)
@@ -70,6 +78,18 @@ func (h *Handlers) Start() {
 	h.mux.Logger.Fatal(h.mux.Start(":8080"))
 }
 
-func (h *Handlers) index(c echo.Context) error {
-	return c.String(http.StatusOK, "it's show time!")
+type Templater struct {
+	templates *template.Template
+}
+
+func NewTemplater(fs fs.FS) (*Templater, error) {
+	t, err := template.ParseFS(fs, "*.tmpl")
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse templates: %w", err)
+	}
+	return &Templater{templates: t}, nil
+}
+
+func (t *Templater) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
 }
