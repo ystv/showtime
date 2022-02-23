@@ -20,7 +20,10 @@ func (h *Handlers) hookStreamStart(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	go h.play.Forward(c.Request().Context(), po)
+	err = h.play.Forward(c.Request().Context(), po)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
 
 	return c.NoContent(http.StatusOK)
 }
