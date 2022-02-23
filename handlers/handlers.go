@@ -19,6 +19,24 @@ type Handlers struct {
 	stateCookieName string
 }
 
+var domainName = "dev.ystv.co.uk"
+
+var corsConfig middleware.CORSConfig = middleware.CORSConfig{
+	AllowCredentials: true,
+	Skipper:          middleware.DefaultSkipper,
+	AllowOrigins: []string{
+		"http://creator." + domainName,
+		"https://creator." + domainName,
+		"http://my." + domainName,
+		"https://my." + domainName,
+		"http://local." + domainName + ":3000",
+		"https://local." + domainName + ":3000",
+		"http://" + domainName,
+		"https://" + domainName},
+	AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAccessControlAllowCredentials, echo.HeaderAccessControlAllowOrigin},
+	AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
+}
+
 func New(db *sqlx.DB, auth *auth.Auther) *Handlers {
 	yt, _ := youtube.New(db, auth)
 	return &Handlers{
@@ -45,6 +63,7 @@ func (h *Handlers) Start() {
 	h.mux.Pre(middleware.RemoveTrailingSlash())
 	h.mux.Use(middleware.Logger())
 	h.mux.Use(middleware.Recover())
+	h.mux.Use(middleware.CORSWithConfig(corsConfig))
 	h.mux.HideBanner = true
 
 	h.mux.Logger.Fatal(h.mux.Start(":8080"))
