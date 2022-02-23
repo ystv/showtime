@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 	"github.com/ystv/showtime/auth"
@@ -31,8 +32,19 @@ func main() {
 		log.Fatalf("Unable to read client secret file: %+v", err)
 	}
 
+	// Check if debugging
+	debug, err := strconv.ParseBool(os.Getenv("ST_DEBUG"))
+	if err != nil {
+		debug = false
+		os.Setenv("ST_DEBUG", "false")
+	}
+	if debug {
+		log.Println("Debug Mode - Disabled auth - pls don't run in production")
+	}
+
 	conf := Config{
 		handlers: &handlers.Config{
+			Debug:           debug,
 			StateCookieName: "state-token",
 			DomainName:      os.Getenv("ST_DOMAIN_NAME"),
 			IngestAddress:   os.Getenv("ST_INGEST_ADDR"),

@@ -27,6 +27,7 @@ type (
 	}
 
 	Config struct {
+		Debug           bool
 		StateCookieName string
 		DomainName      string
 		IngestAddress   string
@@ -51,6 +52,7 @@ func New(conf *Config, db *sqlx.DB, auth *auth.Auther, t *Templater) *Handlers {
 
 	e := echo.New()
 	e.Renderer = t
+	e.Debug = conf.Debug
 
 	return &Handlers{
 		conf: conf,
@@ -67,7 +69,10 @@ func New(conf *Config, db *sqlx.DB, auth *auth.Auther, t *Templater) *Handlers {
 }
 
 func (h *Handlers) Start() {
-	internal := h.mux.Group("", middleware.JWTWithConfig(h.jwtConfig))
+	internal := h.mux.Group("")
+	if !h.conf.Debug {
+		internal.Use(middleware.JWTWithConfig(h.jwtConfig))
+	}
 	{
 		internal.GET("/", h.obsListPlayouts)
 		internal.GET("/playouts/:playoutID", h.obsGetPlayout)
