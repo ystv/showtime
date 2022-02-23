@@ -37,7 +37,7 @@ func (h *Handlers) Start() {
 	h.mux.GET("/api/playouts", h.listPlayouts)
 	h.mux.POST("/api/playouts/:playoutID/link/youtube/:broadcastID", h.enableYouTube)
 	h.mux.POST("/api/playouts/:playoutID/unlink/youtube/:broadcastID", h.disableYouTube)
-	h.mux.GET("/api/youtube/streams", h.listYouTubeStreams)
+	h.mux.GET("/api/youtube/broadcasts", h.listYouTubeBroadcasts)
 	h.mux.POST("/api/nginx/hook", h.hookStreamStart)
 	h.mux.GET("/oauth/google/login", h.loginGoogle)
 	h.mux.GET("/oauth/google/callback", h.callbackGoogle)
