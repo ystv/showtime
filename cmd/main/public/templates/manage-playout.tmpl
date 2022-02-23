@@ -1,0 +1,39 @@
+{{ define "manage-playout" }}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Edit {{ .Title }}</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <a href="/"><-- back</a>
+    <h1>{{ .Title }}</h1>
+    <h2>Links</h2>
+    <h3>Website</h3>
+    {{ if eq .WebsiteLinkID "" }}
+    <form action="/playouts/{{ .PlayoutID }}/link/website">
+        <input type="submit" value="Link to YSTV website" />
+    </form>
+    {{ else }}
+    <form action="/playouts/{{ .PlayoutID }}/unlink/website/{{ .WebsiteLinkID }}">
+        <input type="submit" value="Unlink from YSTV website" />
+    </form>
+    {{ end }}
+    <h3>YouTube</h3>
+    {{ if eq .YouTubeLinkID "" }}
+    <form action="/playouts/{{ .PlayoutID }}/link/youtube">
+        <input type="submit" value="Link to YouTube" />
+    </form>
+    {{ else }}
+    <form action="/playouts/{{ .PlayoutID }}/unlink/youtube/{{ .YouTubeLinkID }}">
+        <input type="submit" value="Unlink from YouTube" />
+    </form>
+    {{ end }}
+    <p>
+        Prefer a prettier UI? Try  
+        <a href="https://creator.ystv.co.uk/live/playouts">Creator Studio</a>.
+    </p>
+  </body>
+</html>
+{{ end }}
