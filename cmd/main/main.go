@@ -25,7 +25,7 @@ func main() {
 
 	db, err := db.New()
 	if err != nil {
-		log.Fatalf("unable to create database: %w", err)
+		log.Fatalf("unable to create database: %+v", err)
 	}
 
 	auth := auth.NewAuther(config)
