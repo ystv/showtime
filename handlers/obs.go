@@ -31,6 +31,23 @@ func (h *Handlers) obsGetPlayout(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotFound)
 }
 
+func (h *Handlers) obsNewPlayout(c echo.Context) error {
+	return c.Render(http.StatusOK, "new-playout", nil)
+}
+
+func (h *Handlers) obsNewPlayoutSubmit(c echo.Context) error {
+	po := playout.NewPlayout{}
+	err := c.Bind(&po)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	err = h.play.New(c.Request().Context(), po)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	return h.obsListPlayouts(c)
+}
+
 func (h *Handlers) obsManagePlayout(c echo.Context) error {
 	po, err := h.play.List(c.Request().Context())
 	if err != nil {

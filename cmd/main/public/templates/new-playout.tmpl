@@ -1,0 +1,18 @@
+{{ define "new-playout" }}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>New playout</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <h1>New playout</h1>
+    <form action="/playouts/new" method="post">
+        <label for="title">Title:</label>
+        <input name="title" />
+        <input type="submit" value="Create" />
+    </form>
+  </body>
+</html>
+{{ end }}

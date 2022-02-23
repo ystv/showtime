@@ -15,7 +15,7 @@ type (
 		yt            *youtube.YouTuber
 	}
 	NewPlayout struct {
-		Title string `db:"title" json:"title"`
+		Title string `db:"title" json:"title" form:"title"`
 	}
 	Playout struct {
 		PlayoutID     int    `db:"playout_id" json:"playoutID"`
