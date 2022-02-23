@@ -79,3 +79,15 @@ func (h *Handlers) obsLinkToYouTubeConfirm(c echo.Context) error {
 	}
 	return c.Render(http.StatusCreated, "successful-link", c.Param("playoutID"))
 }
+
+func (h *Handlers) obsUnlinkFromYouTube(c echo.Context) error {
+	err := h.yt.DisableShowTimeForBroadcast(c.Request().Context(), c.Param("broadcastID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	err = h.play.UpdateYouTubeLink(c.Request().Context(), c.Param("playoutID"), "")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	return c.Render(http.StatusOK, "successful-unlink", c.Param("playoutID"))
+}
