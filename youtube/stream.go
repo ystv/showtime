@@ -48,7 +48,7 @@ func (y *YouTuber) newStream(ctx context.Context) (Stream, error) {
 	stream := Stream{
 		ID:     ytStream.Id,
 		Title:  ytStream.Snippet.Title,
-		Status: ytStream.Status.HealthStatus.Status,
+		Status: "noData",
 		Ingest: Ingest{
 			Name:    ytStream.Cdn.IngestionInfo.StreamName,
 			Address: ytStream.Cdn.IngestionInfo.IngestionAddress,
