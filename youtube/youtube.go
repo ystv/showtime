@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/ystv/showtime/auth"
 	"google.golang.org/api/youtube/v3"
 )
@@ -11,13 +12,12 @@ import (
 type (
 	YouTuber struct {
 		yt *youtube.Service
+		db *sqlx.DB
 	}
 	Broadcast struct {
 		ID        string
 		Title     string
 		StartTime string
-		IsManaged bool
-		StreamID  string
 	}
 	// Stream is effectively what you know as the stream key
 	Stream struct {
@@ -39,7 +39,15 @@ type (
 	}
 )
 
-func New(auth *auth.Auther) (*YouTuber, error) {
+var Schema = `
+CREATE TABLE youtube_broadcasts (
+	broadcast_id text NOT NULL PRIMARY KEY,
+	ingest_address text NOT NULL,
+	stream_name text NOT NULL
+);
+`
+
+func New(db *sqlx.DB, auth *auth.Auther) (*YouTuber, error) {
 	tok, err := auth.GetToken("me")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get token: %w", err)
@@ -52,26 +60,8 @@ func New(auth *auth.Auther) (*YouTuber, error) {
 
 	return &YouTuber{
 		yt: service,
+		db: db,
 	}, nil
-}
-
-func (y *YouTuber) GetBroadcasts(ctx context.Context) ([]Broadcast, error) {
-	req := y.yt.LiveBroadcasts.List([]string{"id,snippet"})
-	req.BroadcastStatus("all")
-	ytBroadcasts, err := req.Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to list broadcasts: %w", err)
-	}
-	broadcasts := []Broadcast{}
-	for _, ytBroadcast := range ytBroadcasts.Items {
-		broadcast := Broadcast{
-			ID:        ytBroadcast.Id,
-			Title:     ytBroadcast.Snippet.Title,
-			StartTime: ytBroadcast.Snippet.ScheduledStartTime,
-		}
-		broadcasts = append(broadcasts, broadcast)
-	}
-	return broadcasts, nil
 }
 
 func (y *YouTuber) EnableShowTimeForBroadcast(ctx context.Context, broadcastID string) error {
@@ -85,6 +75,17 @@ func (y *YouTuber) EnableShowTimeForBroadcast(ctx context.Context, broadcastID s
 		return fmt.Errorf("failed to switch stream: %w", err)
 	}
 
+	_, err = y.db.ExecContext(ctx, `
+		INSERT INTO youtube_broadcasts (
+			broadcast_id,
+			ingest_address,
+			stream_name
+		) VALUES ($1, $2, $3);`, broadcastID, stream.Ingest.Address, stream.Ingest.Name)
+
+	if err != nil {
+		return fmt.Errorf("failed to add broadcast to db: %w", err)
+	}
+
 	return nil
 }
 
@@ -93,5 +94,12 @@ func (y *YouTuber) DisableShowTimeForBroadcast(ctx context.Context, broadcastID 
 	if err != nil {
 		return fmt.Errorf("failed to switch stream: %w", err)
 	}
+
+	_, err = y.db.ExecContext(ctx, `
+	DELETE FROM youtube_broadcasts WHERE broadcast_id = $1;`, broadcastID)
+	if err != nil {
+		return fmt.Errorf("failed to delete broadcast from db: %w", err)
+	}
+
 	return nil
 }

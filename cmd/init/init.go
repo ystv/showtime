@@ -6,6 +6,7 @@ import (
 
 	"github.com/ystv/showtime/db"
 	"github.com/ystv/showtime/playout"
+	"github.com/ystv/showtime/youtube"
 )
 
 func main() {
@@ -18,5 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create playout schema: %+v", err)
 	}
+	_, err = db.ExecContext(context.Background(), youtube.Schema)
+
 	log.Println("successfully initialised showtime")
 }

@@ -20,7 +20,7 @@ type Handlers struct {
 }
 
 func New(db *sqlx.DB, auth *auth.Auther) *Handlers {
-	yt, _ := youtube.New(auth)
+	yt, _ := youtube.New(db, auth)
 	return &Handlers{
 		auth:            auth,
 		play:            playout.New(db),
