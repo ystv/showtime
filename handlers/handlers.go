@@ -16,6 +16,7 @@ import (
 )
 
 type Handlers struct {
+	conf            *Config
 	auth            *auth.Auther
 	play            *playout.Playouter
 	yt              *youtube.YouTuber
@@ -23,33 +24,21 @@ type Handlers struct {
 	stateCookieName string
 }
 
-var domainName = "dev.ystv.co.uk"
-
-var corsConfig middleware.CORSConfig = middleware.CORSConfig{
-	AllowCredentials: true,
-	Skipper:          middleware.DefaultSkipper,
-	AllowOrigins: []string{
-		"http://creator." + domainName,
-		"https://creator." + domainName,
-		"http://my." + domainName,
-		"https://my." + domainName,
-		"http://local." + domainName + ":3000",
-		"https://local." + domainName + ":3000",
-		"http://" + domainName,
-		"https://" + domainName},
-	AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAccessControlAllowCredentials, echo.HeaderAccessControlAllowOrigin},
-	AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
+type Config struct {
+	DomainName    string
+	IngestAddress string
 }
 
-func New(db *sqlx.DB, auth *auth.Auther, t *Templater) *Handlers {
+func New(conf *Config, db *sqlx.DB, auth *auth.Auther, t *Templater) *Handlers {
 	yt, _ := youtube.New(db, auth)
 
 	e := echo.New()
 	e.Renderer = t
 
 	return &Handlers{
+		conf:            conf,
 		auth:            auth,
-		play:            playout.New("rtmp://example.com/app", db, yt),
+		play:            playout.New(conf.IngestAddress, db, yt),
 		yt:              yt,
 		mux:             e,
 		stateCookieName: "state-token",
@@ -75,6 +64,22 @@ func (h *Handlers) Start() {
 	h.mux.POST("/api/nginx/hook", h.hookStreamStart)
 	h.mux.GET("/oauth/google/login", h.loginGoogle)
 	h.mux.GET("/oauth/google/callback", h.callbackGoogle)
+
+	corsConfig := middleware.CORSConfig{
+		AllowCredentials: true,
+		Skipper:          middleware.DefaultSkipper,
+		AllowOrigins: []string{
+			"http://creator." + h.conf.DomainName,
+			"https://creator." + h.conf.DomainName,
+			"http://my." + h.conf.DomainName,
+			"https://my." + h.conf.DomainName,
+			"http://local." + h.conf.DomainName + ":3000",
+			"https://local." + h.conf.DomainName + ":3000",
+			"http://" + h.conf.DomainName,
+			"https://" + h.conf.DomainName},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAccessControlAllowCredentials, echo.HeaderAccessControlAllowOrigin},
+		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
+	}
 
 	h.mux.Pre(middleware.RemoveTrailingSlash())
 	h.mux.Use(middleware.Logger())

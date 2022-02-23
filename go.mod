@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/jmoiron/sqlx v1.3.4
+	github.com/joho/godotenv v1.4.0
 	github.com/labstack/echo/v4 v4.6.3
 	github.com/mattn/go-sqlite3 v1.14.11
 	github.com/tjarratt/babble v0.0.0-20210505082055-cbca2a4833c1
