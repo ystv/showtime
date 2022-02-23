@@ -5,12 +5,21 @@
     <title>Edit {{ .Title }}</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css"
+/>
+<script
+  defer
+  src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"
+></script>
   </head>
   <body>
+  <div class="column has-text-centered">
     <a href="/"><-- back</a>
-    <h1>{{ .Title }}</h1>
-    <h2>Links</h2>
-    <h3>Website</h3>
+    <h1 class="title">{{ .Title }}</h1>
+    <h2 class="title is-4">Links</h2>
+    <h3 class="title is-5">Website</h3>
     {{ if eq .WebsiteLinkID "" }}
     <form action="/playouts/{{ .PlayoutID }}/link/website">
         <input type="submit" value="Link to YSTV website" />
@@ -20,7 +29,7 @@
         <input type="submit" value="Unlink from YSTV website" />
     </form>
     {{ end }}
-    <h3>YouTube</h3>
+    <h3 class="title is-5">YouTube</h3>
     {{ if eq .YouTubeLinkID "" }}
     <form action="/playouts/{{ .PlayoutID }}/link/youtube">
         <input type="submit" value="Link to YouTube" />
@@ -34,6 +43,7 @@
         Prefer a prettier UI? Try  
         <a href="https://creator.ystv.co.uk/live/playouts">Creator Studio</a>.
     </p>
+    </div>
   </body>
 </html>
 {{ end }}
