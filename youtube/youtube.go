@@ -15,9 +15,9 @@ type (
 		db *sqlx.DB
 	}
 	Broadcast struct {
-		ID        string
-		Title     string
-		StartTime string
+		ID        string `json:"id"`
+		Title     string `json:"title"`
+		StartTime string `json:"startTime"`
 	}
 	// Stream is effectively what you know as the stream key
 	Stream struct {
