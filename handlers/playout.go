@@ -27,3 +27,16 @@ func (h *Handlers) listPlayouts(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, po)
 }
+
+func (h *Handlers) updatePlayout(c echo.Context) error {
+	po := playout.Playout{}
+	err := c.Bind(&po)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	err = h.play.Update(c.Request().Context(), po)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	return nil
+}

@@ -29,6 +29,7 @@ func New(db *sqlx.DB, auth *auth.Auther) *Handlers {
 func (h *Handlers) Start() {
 	h.mux.GET("/", h.index)
 	h.mux.POST("/api/playouts", h.newPlayout)
+	h.mux.PUT("/api/playouts", h.updatePlayout)
 	h.mux.GET("/api/playouts", h.listPlayouts)
 	h.mux.GET("/api/streams", h.listStreams)
 	h.mux.GET("/oauth/google/login", h.googleLogin)

@@ -17,7 +17,7 @@ type (
 		Title string `db:"title" json:"title"`
 	}
 	Playout struct {
-		ID            int    `db:"playout_id" json:"playoutID"`
+		PlayoutID     int    `db:"playout_id" json:"playoutID"`
 		Title         string `db:"title" json:"title"`
 		WebsiteLinkID string `db:"website_link_id" json:"websiteLinkID"`
 		YouTubeLinkID string `db:"youtube_link_id" json:"youtubeLinkID"`
@@ -67,6 +67,18 @@ func (p *Playouter) List(ctx context.Context) ([]Playout, error) {
 		return nil, fmt.Errorf("failed to get list of playouts")
 	}
 	return po, nil
+}
+
+func (p *Playouter) Update(ctx context.Context, po Playout) error {
+	_, err := p.db.ExecContext(ctx, `UPDATE playouts SET
+			title = $1,
+			website_link_id = $2,
+			youtube_link_id = $3
+		WHERE playout_id = $4;`, po.Title, po.WebsiteLinkID, po.YouTubeLinkID, po.PlayoutID)
+	if err != nil {
+		return fmt.Errorf("failed to update playout: %w", err)
+	}
+	return nil
 }
 
 func (p *Playouter) generateStreamkey() string {
