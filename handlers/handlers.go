@@ -58,6 +58,7 @@ func New(db *sqlx.DB, auth *auth.Auther, t *Templater) *Handlers {
 
 func (h *Handlers) Start() {
 	h.mux.GET("/", h.obsListPlayouts)
+	h.mux.GET("/playouts/:playoutID", h.obsGetPlayout)
 	h.mux.POST("/api/playouts", h.newPlayout)
 	h.mux.PUT("/api/playouts", h.updatePlayout)
 	h.mux.GET("/api/playouts", h.listPlayouts)

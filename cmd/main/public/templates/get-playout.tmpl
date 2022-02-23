@@ -1,0 +1,23 @@
+{{ define "get-playout" }}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{ .Title }}</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <a href="/"><-- back</a>
+    <h3>{{ .Title }}</h1>
+    <h2>Stream Key</h3>
+    <h1>{{ .StreamKey }}</h1>
+    <form action="/playouts/{{ .PlayoutID }}/stop" method="post">
+        <input type="submit" value="Shutdown" />
+    </form>
+    <p>
+        Don't know how to add a stream key? Follow the guide 
+        <a href="https://docs.ystv.co.uk/wiki/How_to_add_a_stream_key_to_OBS">here</a>.
+    </p>
+  </body>
+</html>
+{{ end }}
