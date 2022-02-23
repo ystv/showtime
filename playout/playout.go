@@ -77,13 +77,25 @@ func (p *Playouter) List(ctx context.Context) ([]Playout, error) {
 }
 
 func (p *Playouter) Update(ctx context.Context, po Playout) error {
-	_, err := p.db.ExecContext(ctx, `UPDATE playouts SET
+	_, err := p.db.ExecContext(ctx, `
+		UPDATE playouts SET
 			title = $1,
 			website_link_id = $2,
 			youtube_link_id = $3
 		WHERE playout_id = $4;`, po.Title, po.WebsiteLinkID, po.YouTubeLinkID, po.PlayoutID)
 	if err != nil {
 		return fmt.Errorf("failed to update playout: %w", err)
+	}
+	return nil
+}
+
+func (p *Playouter) UpdateYouTubeLink(ctx context.Context, playoutID string, linkID string) error {
+	_, err := p.db.ExecContext(ctx, `
+	UPDATE playouts SET
+		youtube_link_id = $1
+	WHERE playout_id = $2`, linkID, playoutID)
+	if err != nil {
+		return fmt.Errorf("failed to update youtube link id: %w", err)
 	}
 	return nil
 }

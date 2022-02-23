@@ -67,3 +67,15 @@ func (h *Handlers) obsLinkToYouTube(c echo.Context) error {
 	}
 	return echo.NewHTTPError(http.StatusNotFound)
 }
+
+func (h *Handlers) obsLinkToYouTubeConfirm(c echo.Context) error {
+	err := h.yt.EnableShowTimeForBroadcast(c.Request().Context(), c.FormValue("broadcastID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	err = h.play.UpdateYouTubeLink(c.Request().Context(), c.Param("playoutID"), c.FormValue("broadcastID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	return c.Render(http.StatusCreated, "successful-link", c.Param("playoutID"))
+}

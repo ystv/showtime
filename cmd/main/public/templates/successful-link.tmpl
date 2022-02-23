@@ -1,0 +1,17 @@
+{{ define "successful-link" }}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Linked successfully</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <h1>Linked successfully</h1>
+    <p>
+        Click <a href="/playouts/{{ . }}/manage">here</a> to go back to playout manage, 
+        otherwise <a href="/">here</a> for main menu.
+    </p>
+  </body>
+</html>
+{{ end }}
