@@ -23,7 +23,7 @@ func New(db *sqlx.DB, auth *auth.Auther) *Handlers {
 	yt, _ := youtube.New(db, auth)
 	return &Handlers{
 		auth:            auth,
-		play:            playout.New(db),
+		play:            playout.New("rtmp://example.com/app", db, yt),
 		yt:              yt,
 		mux:             echo.New(),
 		stateCookieName: "state-token",

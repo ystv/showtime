@@ -5,11 +5,14 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/ystv/showtime/youtube"
 )
 
 type (
 	Playouter struct {
-		db *sqlx.DB
+		ingestAddress string
+		db            *sqlx.DB
+		yt            *youtube.YouTuber
 	}
 	NewPlayout struct {
 		Title string `db:"title" json:"title"`
@@ -37,8 +40,12 @@ CREATE TABLE playouts(
 );
 `
 
-func New(db *sqlx.DB) *Playouter {
-	return &Playouter{db: db}
+func New(ingestAddress string, db *sqlx.DB, yt *youtube.YouTuber) *Playouter {
+	return &Playouter{
+		ingestAddress: ingestAddress,
+		db:            db,
+		yt:            yt,
+	}
 }
 
 func (p *Playouter) New(ctx context.Context, po NewPlayout) error {
