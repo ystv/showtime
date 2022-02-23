@@ -32,6 +32,7 @@ func (h *Handlers) Start() {
 	h.mux.PUT("/api/playouts", h.updatePlayout)
 	h.mux.GET("/api/playouts", h.listPlayouts)
 	h.mux.GET("/api/streams", h.listStreams)
+	h.mux.POST("/api/nginx/hook", h.hookStreamStart)
 	h.mux.GET("/oauth/google/login", h.loginGoogle)
 	h.mux.GET("/oauth/google/callback", h.callbackGoogle)
 

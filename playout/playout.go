@@ -3,10 +3,8 @@ package playout
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/tjarratt/babble"
 )
 
 type (
@@ -23,8 +21,9 @@ type (
 		YouTubeLinkID string `db:"youtube_link_id" json:"youtubeLinkID"`
 	}
 	ConsumePlayout struct {
-		Title     string `db:"title" json:"title"`
-		StreamKey string `db:"stream_key" json:"streamKey"`
+		StreamKey     string `db:"stream_key" json:"streamKey"`
+		WebsiteLinkID string `db:"website_link_id" json:"websiteLinkID"`
+		YouTubeLinkID string `db:"youtube_link_id" json:"youtubeLinkID"`
 	}
 )
 
@@ -79,11 +78,4 @@ func (p *Playouter) Update(ctx context.Context, po Playout) error {
 		return fmt.Errorf("failed to update playout: %w", err)
 	}
 	return nil
-}
-
-func (p *Playouter) generateStreamkey() string {
-	babbler := babble.NewBabbler()
-	babbler.Separator = "-"
-	babbler.Count = 3
-	return strings.ToLower(babbler.Babble())
 }
