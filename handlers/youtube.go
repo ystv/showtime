@@ -15,3 +15,13 @@ func (h *Handlers) listYouTubeStreams(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, broadcasts)
 }
+
+func (h *Handlers) enableYouTube(c echo.Context) error {
+	h.yt.EnableShowTimeForBroadcast(c.Request().Context(), c.Param("broadcastID"))
+	return c.NoContent(http.StatusOK)
+}
+
+func (h *Handlers) disableYouTube(c echo.Context) error {
+	h.yt.DisableShowTimeForBroadcast(c.Request().Context(), c.Param("broadcastID"))
+	return c.NoContent(http.StatusOK)
+}
