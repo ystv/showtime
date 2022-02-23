@@ -8,19 +8,23 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/ystv/showtime/auth"
 	"github.com/ystv/showtime/playout"
+	"github.com/ystv/showtime/youtube"
 )
 
 type Handlers struct {
 	auth            *auth.Auther
 	play            *playout.Playouter
+	yt              *youtube.YouTuber
 	mux             *echo.Echo
 	stateCookieName string
 }
 
 func New(db *sqlx.DB, auth *auth.Auther) *Handlers {
+	yt, _ := youtube.New(auth)
 	return &Handlers{
 		auth:            auth,
 		play:            playout.New(db),
+		yt:              yt,
 		mux:             echo.New(),
 		stateCookieName: "state-token",
 	}

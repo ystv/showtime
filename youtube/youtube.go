@@ -3,8 +3,8 @@ package youtube
 import (
 	"context"
 	"fmt"
-	"net/http"
 
+	"github.com/ystv/showtime/auth"
 	"google.golang.org/api/youtube/v3"
 )
 
@@ -39,7 +39,12 @@ type (
 	}
 )
 
-func New(client *http.Client) (*YouTuber, error) {
+func New(auth *auth.Auther) (*YouTuber, error) {
+	tok, err := auth.GetToken("me")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token: %w", err)
+	}
+	client := auth.GetClient(context.Background(), tok)
 	service, err := youtube.New(client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create youtube service: %w", err)
