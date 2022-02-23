@@ -22,7 +22,7 @@ func (h *Handlers) generateStateOauthCookie(w http.ResponseWriter) string {
 	b := make([]byte, 16)
 	rand.Read(b)
 	state := base64.URLEncoding.EncodeToString(b)
-	cookie := http.Cookie{Name: h.stateCookieName, Value: state, Expires: expiration}
+	cookie := http.Cookie{Name: h.conf.StateCookieName, Value: state, Expires: expiration}
 	http.SetCookie(w, &cookie)
 
 	return state
@@ -30,7 +30,7 @@ func (h *Handlers) generateStateOauthCookie(w http.ResponseWriter) string {
 
 func (h *Handlers) callbackGoogle(c echo.Context) error {
 	// Check state cookie to make sure there isn't any CSRF biz
-	state, _ := c.Cookie(h.stateCookieName)
+	state, _ := c.Cookie(h.conf.StateCookieName)
 
 	if c.FormValue("state") != state.Value {
 		return c.Redirect(http.StatusTemporaryRedirect, "/")

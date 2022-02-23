@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net/http"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -15,19 +16,35 @@ import (
 	"github.com/ystv/showtime/youtube"
 )
 
-type Handlers struct {
-	conf            *Config
-	auth            *auth.Auther
-	play            *playout.Playouter
-	yt              *youtube.YouTuber
-	mux             *echo.Echo
-	stateCookieName string
-}
+type (
+	Handlers struct {
+		conf      *Config
+		jwtConfig middleware.JWTConfig
+		auth      *auth.Auther
+		play      *playout.Playouter
+		yt        *youtube.YouTuber
+		mux       *echo.Echo
+	}
 
-type Config struct {
-	DomainName    string
-	IngestAddress string
-}
+	Config struct {
+		StateCookieName string
+		DomainName      string
+		IngestAddress   string
+		JWTSigningKey   string
+	}
+
+	// JWTClaims represents an identifiable JWT
+	JWTClaims struct {
+		UserID      int          `json:"id"`
+		Permissions []Permission `json:"perms"`
+		jwt.StandardClaims
+	}
+	// Permission represents the permissions that a user has
+	Permission struct {
+		PermissionID int    `json:"id"`
+		Name         string `json:"name"`
+	}
+)
 
 func New(conf *Config, db *sqlx.DB, auth *auth.Auther, t *Templater) *Handlers {
 	yt, _ := youtube.New(db, auth)
@@ -36,31 +53,39 @@ func New(conf *Config, db *sqlx.DB, auth *auth.Auther, t *Templater) *Handlers {
 	e.Renderer = t
 
 	return &Handlers{
-		conf:            conf,
-		auth:            auth,
-		play:            playout.New(conf.IngestAddress, db, yt),
-		yt:              yt,
-		mux:             e,
-		stateCookieName: "state-token",
+		conf: conf,
+		jwtConfig: middleware.JWTConfig{
+			Claims:      &JWTClaims{},
+			TokenLookup: "cookie:token",
+			SigningKey:  []byte(conf.JWTSigningKey),
+		},
+		auth: auth,
+		play: playout.New(conf.IngestAddress, db, yt),
+		yt:   yt,
+		mux:  e,
 	}
 }
 
 func (h *Handlers) Start() {
-	h.mux.GET("/", h.obsListPlayouts)
-	h.mux.GET("/playouts/:playoutID", h.obsGetPlayout)
-	h.mux.GET("/playouts/new", h.obsNewPlayout)
-	h.mux.POST("/playouts/new", h.obsNewPlayoutSubmit)
-	h.mux.GET("/playouts/:playoutID/manage", h.obsManagePlayout)
-	h.mux.GET("/playouts/:playoutID/link/youtube", h.obsLinkToYouTube)
-	h.mux.POST("/playouts/:playoutID/link/youtube/confirm", h.obsLinkToYouTubeConfirm)
-	h.mux.GET("/playouts/:playoutID/unlink/youtube/:broadcastID", h.obsUnlinkFromYouTube)
-	h.mux.POST("/api/playouts", h.newPlayout)
-	h.mux.PUT("/api/playouts", h.updatePlayout)
-	h.mux.GET("/api/playouts", h.listPlayouts)
-	h.mux.POST("/api/playouts/:playoutID/refresh-key", h.refreshStreamKey)
-	h.mux.POST("/api/playouts/:playoutID/link/youtube/:broadcastID", h.enableYouTube)
-	h.mux.POST("/api/playouts/:playoutID/unlink/youtube/:broadcastID", h.disableYouTube)
-	h.mux.GET("/api/youtube/broadcasts", h.listYouTubeBroadcasts)
+	internal := h.mux.Group("", middleware.JWTWithConfig(h.jwtConfig))
+	{
+		internal.GET("/", h.obsListPlayouts)
+		internal.GET("/playouts/:playoutID", h.obsGetPlayout)
+		internal.GET("/playouts/new", h.obsNewPlayout)
+		internal.POST("/playouts/new", h.obsNewPlayoutSubmit)
+		internal.GET("/playouts/:playoutID/manage", h.obsManagePlayout)
+		internal.GET("/playouts/:playoutID/link/youtube", h.obsLinkToYouTube)
+		internal.POST("/playouts/:playoutID/link/youtube/confirm", h.obsLinkToYouTubeConfirm)
+		internal.GET("/playouts/:playoutID/unlink/youtube/:broadcastID", h.obsUnlinkFromYouTube)
+		internal.POST("/api/playouts", h.newPlayout)
+		internal.PUT("/api/playouts", h.updatePlayout)
+		internal.GET("/api/playouts", h.listPlayouts)
+		internal.POST("/api/playouts/:playoutID/refresh-key", h.refreshStreamKey)
+		internal.POST("/api/playouts/:playoutID/link/youtube/:broadcastID", h.enableYouTube)
+		internal.POST("/api/playouts/:playoutID/unlink/youtube/:broadcastID", h.disableYouTube)
+		internal.GET("/api/youtube/broadcasts", h.listYouTubeBroadcasts)
+	}
+
 	h.mux.POST("/api/nginx/hook", h.hookStreamStart)
 	h.mux.GET("/oauth/google/login", h.loginGoogle)
 	h.mux.GET("/oauth/google/callback", h.callbackGoogle)
