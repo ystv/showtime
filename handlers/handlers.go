@@ -60,6 +60,7 @@ func (h *Handlers) Start() {
 	h.mux.GET("/", h.obsListPlayouts)
 	h.mux.GET("/playouts/:playoutID", h.obsGetPlayout)
 	h.mux.GET("/playouts/:playoutID/manage", h.obsManagePlayout)
+	h.mux.GET("/playouts/:playoutID/link/youtube", h.obsLinkToYouTube)
 	h.mux.POST("/api/playouts", h.newPlayout)
 	h.mux.PUT("/api/playouts", h.updatePlayout)
 	h.mux.GET("/api/playouts", h.listPlayouts)

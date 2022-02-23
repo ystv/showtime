@@ -3,6 +3,7 @@ package youtube
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/ystv/showtime/auth"
@@ -102,4 +103,13 @@ func (y *YouTuber) DisableShowTimeForBroadcast(ctx context.Context, broadcastID 
 	}
 
 	return nil
+}
+
+func (b *Broadcast) PrettyDateTime() string {
+	ts, err := time.Parse(time.RFC3339, b.StartTime)
+	if err != nil {
+		return err.Error()
+	}
+
+	return ts.Format(time.RFC822)
 }
