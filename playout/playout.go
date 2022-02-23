@@ -3,6 +3,7 @@ package playout
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/tjarratt/babble"
@@ -72,5 +73,5 @@ func (p *Playouter) generateStreamkey() string {
 	babbler := babble.NewBabbler()
 	babbler.Separator = "-"
 	babbler.Count = 3
-	return babbler.Babble()
+	return strings.ToLower(babbler.Babble())
 }
