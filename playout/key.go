@@ -32,6 +32,19 @@ func (p *Playouter) GetByStreamKey(ctx context.Context, streamKey string) (Consu
 	return po, nil
 }
 
+func (p *Playouter) RefreshStreamkey(ctx context.Context, playoutID string) error {
+	_, err := p.db.ExecContext(ctx, `
+		UPDATE
+			playouts SET
+				stream_key = $1
+		WHERE
+			playout_id = $2;`, p.generateStreamkey(), playoutID)
+	if err != nil {
+		return fmt.Errorf("failed to update stream key: %w", err)
+	}
+	return nil
+}
+
 func (p *Playouter) generateStreamkey() string {
 	babbler := babble.NewBabbler()
 	babbler.Separator = "-"

@@ -40,3 +40,11 @@ func (h *Handlers) updatePlayout(c echo.Context) error {
 	}
 	return nil
 }
+
+func (h *Handlers) refreshStreamKey(c echo.Context) error {
+	err := h.play.RefreshStreamkey(c.Request().Context(), c.Param("playoutID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	return c.NoContent(http.StatusOK)
+}
