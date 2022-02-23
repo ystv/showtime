@@ -20,6 +20,7 @@ type (
 	Playout struct {
 		PlayoutID     int    `db:"playout_id" json:"playoutID"`
 		Title         string `db:"title" json:"title"`
+		StreamKey     string `db:"stream_key" json:"streamKey"`
 		WebsiteLinkID string `db:"website_link_id" json:"websiteLinkID"`
 		YouTubeLinkID string `db:"youtube_link_id" json:"youtubeLinkID"`
 	}
@@ -66,7 +67,7 @@ func (p *Playouter) New(ctx context.Context, po NewPlayout) error {
 func (p *Playouter) List(ctx context.Context) ([]Playout, error) {
 	po := []Playout{}
 	err := p.db.SelectContext(ctx, &po, `
-		SELECT playout_id, title, website_link_id, youtube_link_id
+		SELECT playout_id, title, stream_key, website_link_id, youtube_link_id
 		FROM playouts;	
 	`)
 	if err != nil {
