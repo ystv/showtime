@@ -3,20 +3,24 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/ystv/showtime/auth"
+	"github.com/ystv/showtime/playout"
 )
 
 type Handlers struct {
 	auth            *auth.Auther
+	play            *playout.Playouter
 	mux             *echo.Echo
 	stateCookieName string
 }
 
-func New(auth *auth.Auther) *Handlers {
+func New(db *sqlx.DB, auth *auth.Auther) *Handlers {
 	return &Handlers{
 		auth:            auth,
+		play:            playout.New(db),
 		mux:             echo.New(),
 		stateCookieName: "state-token",
 	}
@@ -24,7 +28,9 @@ func New(auth *auth.Auther) *Handlers {
 
 func (h *Handlers) Start() {
 	h.mux.GET("/", h.index)
-	h.mux.GET("/streams", h.showStreams)
+	h.mux.POST("/api/playouts", h.newPlayout)
+	h.mux.GET("/api/playouts", h.listPlayouts)
+	h.mux.GET("/api/streams", h.listStreams)
 	h.mux.GET("/oauth/google/login", h.googleLogin)
 	h.mux.GET("/oauth/google/callback", h.googleCallback)
 

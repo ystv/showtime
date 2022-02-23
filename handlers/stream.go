@@ -8,7 +8,7 @@ import (
 	"github.com/ystv/showtime/youtube"
 )
 
-func (h *Handlers) showStreams(c echo.Context) error {
+func (h *Handlers) listStreams(c echo.Context) error {
 	tok, err := h.auth.GetToken("me")
 	if err != nil {
 		err = fmt.Errorf("failed to get token: %w", err)
