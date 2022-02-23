@@ -2,8 +2,10 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 
 	"golang.org/x/oauth2"
 )
@@ -40,14 +42,26 @@ func (a *Auther) NewToken(ctx context.Context, code string) (*oauth2.Token, erro
 	return tok, nil
 }
 
-func (a *Auther) StoreToken(userID string, tok *oauth2.Token) {
-	a.tokens[userID] = tok
+func (a *Auther) StoreToken(userID string, tok *oauth2.Token) error {
+	f, err := os.OpenFile(userID, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return fmt.Errorf("unable to open oauth token cache file: %w", err)
+	}
+	defer f.Close()
+	err = json.NewEncoder(f).Encode(tok)
+	if err != nil {
+		return fmt.Errorf("failed to encode oauth token to json: %w", err)
+	}
+	return nil
 }
 
 func (a *Auther) GetToken(userID string) (*oauth2.Token, error) {
-	tok, ok := a.tokens[userID]
-	if !ok {
-		return nil, fmt.Errorf("no token found")
+	f, err := os.Open(userID)
+	if err != nil {
+		return nil, err
 	}
-	return tok, nil
+	tok := &oauth2.Token{}
+	err = json.NewDecoder(f).Decode(tok)
+	defer f.Close()
+	return tok, err
 }

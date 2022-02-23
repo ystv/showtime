@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -22,9 +22,14 @@ func (h *Handlers) googleCallback(c echo.Context) error {
 
 	tok, err := h.auth.NewToken(c.Request().Context(), code)
 	if err != nil {
-		log.Printf("failed to get token: %+v", err)
+		err = fmt.Errorf("failed to get token: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	h.auth.StoreToken("me", tok)
+	err = h.auth.StoreToken("me", tok)
+	if err != nil {
+		err = fmt.Errorf("failed to store token: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
 	return c.String(http.StatusOK, "login successful!")
 }
