@@ -8,10 +8,10 @@ import (
 	"net/http"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/ystv/showtime/auth"
+	"github.com/ystv/showtime/channel"
 	"github.com/ystv/showtime/playout"
 	"github.com/ystv/showtime/youtube"
 )
@@ -21,6 +21,7 @@ type (
 		conf      *Config
 		jwtConfig middleware.JWTConfig
 		auth      *auth.Auther
+		mcr       *channel.MCR
 		play      *playout.Playouter
 		yt        *youtube.YouTuber
 		mux       *echo.Echo
@@ -47,9 +48,7 @@ type (
 	}
 )
 
-func New(conf *Config, db *sqlx.DB, auth *auth.Auther, t *Templater) *Handlers {
-	yt, _ := youtube.New(db, auth)
-
+func New(conf *Config, auth *auth.Auther, play *playout.Playouter, mcr *channel.MCR, yt *youtube.YouTuber, t *Templater) *Handlers {
 	e := echo.New()
 	e.Renderer = t
 	e.Debug = conf.Debug
@@ -62,7 +61,8 @@ func New(conf *Config, db *sqlx.DB, auth *auth.Auther, t *Templater) *Handlers {
 			SigningKey:  []byte(conf.JWTSigningKey),
 		},
 		auth: auth,
-		play: playout.New(conf.IngestAddress, db, yt),
+		play: play,
+		mcr:  mcr,
 		yt:   yt,
 		mux:  e,
 	}
@@ -74,6 +74,7 @@ func (h *Handlers) Start() {
 		internal.Use(middleware.JWTWithConfig(h.jwtConfig))
 	}
 	{
+		// Basic UI endpoints
 		internal.GET("/", h.obsListPlayouts)
 		internal.GET("/playouts/:playoutID", h.obsGetPlayout)
 		internal.GET("/playouts/new", h.obsNewPlayout)
@@ -85,6 +86,11 @@ func (h *Handlers) Start() {
 		internal.GET("/playouts/:playoutID/link/youtube", h.obsLinkToYouTube)
 		internal.POST("/playouts/:playoutID/link/youtube/confirm", h.obsLinkToYouTubeConfirm)
 		internal.GET("/playouts/:playoutID/unlink/youtube/:broadcastID", h.obsUnlinkFromYouTube)
+		internal.GET("/channels", h.obsListChannels)
+		internal.GET("/channels/new", h.obsNewChannel)
+		internal.POST("/channels/new", h.obsNewChannelSubmit)
+
+		// API endpoints
 		internal.POST("/api/playouts", h.newPlayout)
 		internal.PUT("/api/playouts", h.updatePlayout)
 		internal.GET("/api/playouts", h.listPlayouts)

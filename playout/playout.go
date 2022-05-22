@@ -9,6 +9,9 @@ import (
 )
 
 type (
+	Config struct {
+		IngestAddress string
+	}
 	Playouter struct {
 		ingestAddress string
 		db            *sqlx.DB
@@ -41,9 +44,9 @@ CREATE TABLE playouts(
 );
 `
 
-func New(ingestAddress string, db *sqlx.DB, yt *youtube.YouTuber) *Playouter {
+func New(c Config, db *sqlx.DB, yt *youtube.YouTuber) *Playouter {
 	return &Playouter{
-		ingestAddress: ingestAddress,
+		ingestAddress: c.IngestAddress,
 		db:            db,
 		yt:            yt,
 	}

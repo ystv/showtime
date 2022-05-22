@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
+	"github.com/ystv/showtime/channel"
 	"github.com/ystv/showtime/playout"
 	"github.com/ystv/showtime/youtube"
 )
@@ -142,4 +143,34 @@ func (h *Handlers) obsUnlinkFromYouTube(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	return c.Render(http.StatusOK, "successful-unlink", c.Param("playoutID"))
+}
+
+func (h *Handlers) obsListChannels(c echo.Context) error {
+	ch, err := h.mcr.List(c.Request().Context())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	data := struct {
+		Channels []channel.Channel
+	}{
+		Channels: ch,
+	}
+	return c.Render(http.StatusOK, "list-channels", data)
+}
+
+func (h *Handlers) obsNewChannel(c echo.Context) error {
+	return c.Render(http.StatusOK, "new-channel", nil)
+}
+
+func (h *Handlers) obsNewChannelSubmit(c echo.Context) error {
+	ch := channel.NewChannel{}
+	err := c.Bind(&ch)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	err = h.mcr.New(c.Request().Context(), ch)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	return h.obsListChannels(c)
 }
