@@ -64,7 +64,7 @@ func (p *Playouter) New(ctx context.Context, po NewPlayout) error {
 	return nil
 }
 
-func (p *Playouter) Get(ctx context.Context, playoutID string) (Playout, error) {
+func (p *Playouter) Get(ctx context.Context, playoutID int) (Playout, error) {
 	po := Playout{}
 	err := p.db.GetContext(ctx, &po, `
 		SELECT playout_id, title, stream_key, website_link_id, youtube_link_id

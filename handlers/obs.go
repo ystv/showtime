@@ -49,7 +49,11 @@ func (h *Handlers) obsNewPlayoutSubmit(c echo.Context) error {
 }
 
 func (h *Handlers) obsEndPlayout(c echo.Context) error {
-	err := h.play.End(c.Request().Context(), c.Param("playoutID"))
+	playoutID, err := strconv.Atoi(c.Param("playoutID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	err = h.play.End(c.Request().Context(), playoutID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}

@@ -5,7 +5,8 @@ import (
 	"fmt"
 )
 
-func (p *Playouter) End(ctx context.Context, playoutID string) error {
+// End stops a playout and triggers a stop on all linked services.
+func (p *Playouter) End(ctx context.Context, playoutID int) error {
 	po, err := p.Get(ctx, playoutID)
 	if err != nil {
 		return fmt.Errorf("failed to get playout: %w", err)
