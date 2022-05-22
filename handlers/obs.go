@@ -70,6 +70,28 @@ func (h *Handlers) obsManagePlayout(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotFound)
 }
 
+func (h *Handlers) obsLinkToPublicSite(c echo.Context) error {
+	playoutID, err := strconv.Atoi(c.Param("playoutID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	p, err := h.play.Get(c.Request().Context(), playoutID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	data := struct {
+		Playout  playout.Playout
+		Channels []channel.Channel
+	}{
+		Playout: p,
+	}
+	return c.Render(http.StatusOK, "set-public-site-link", data)
+}
+
+func (h *Handlers) obsLinkToPublicSiteConfirm(c echo.Context) error {
+	return c.Render(http.StatusCreated, "successful-link", c.Param("playoutID"))
+}
+
 func (h *Handlers) obsLinkToYouTube(c echo.Context) error {
 	po, err := h.play.List(c.Request().Context())
 	if err != nil {

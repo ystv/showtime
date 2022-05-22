@@ -19,9 +19,9 @@
     <a href="/"><-- back</a>
     <h1 class="title">{{ .Title }}</h1>
     <h2 class="title is-4">Links</h2>
-    <h3 class="title is-5">Website</h3>
+    <h3 class="title is-5">YSTV website</h3>
     {{ if eq .WebsiteLinkID "" }}
-    <form action="/playouts/{{ .PlayoutID }}/link/website">
+    <form action="/playouts/{{ .PlayoutID }}/link/public-site">
         <input type="submit" value="Link to YSTV website" />
     </form>
     {{ else }}
