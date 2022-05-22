@@ -2,7 +2,9 @@ package youtube
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -50,7 +52,7 @@ CREATE TABLE youtube_broadcasts (
 
 func New(db *sqlx.DB, auth *auth.Auther) (*YouTuber, error) {
 	tok, err := auth.GetToken("me")
-	if err != nil {
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, fmt.Errorf("failed to get token: %w", err)
 	}
 	client := auth.GetClient(context.Background(), tok)
