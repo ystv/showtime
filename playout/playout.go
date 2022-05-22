@@ -84,7 +84,7 @@ func (p *Playouter) List(ctx context.Context) ([]Playout, error) {
 		FROM playouts;
 	`)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get list of playouts")
+		return nil, fmt.Errorf("failed to get list of playouts: %w", err)
 	}
 	return po, nil
 }
