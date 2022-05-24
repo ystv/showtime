@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 
-	"github.com/ystv/showtime/channel"
 	"github.com/ystv/showtime/db"
-	"github.com/ystv/showtime/playout"
+	"github.com/ystv/showtime/livestream"
+	"github.com/ystv/showtime/mcr"
 	"github.com/ystv/showtime/youtube"
 )
 
@@ -18,11 +18,11 @@ func main() {
 
 	ctx := context.Background()
 
-	_, err = db.ExecContext(ctx, playout.Schema)
+	_, err = db.ExecContext(ctx, livestream.Schema)
 	if err != nil {
-		log.Fatalf("failed to create playout schema: %+v", err)
+		log.Fatalf("failed to create livestream schema: %+v", err)
 	}
-	_, err = db.ExecContext(ctx, channel.Schema)
+	_, err = db.ExecContext(ctx, mcr.Schema)
 	if err != nil {
 		log.Fatalf("failed to create channel schema: %+v", err)
 	}

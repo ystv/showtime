@@ -1,4 +1,4 @@
-{{ define "get-playout" }}
+{{ define "get-livestream" }}
 <!DOCTYPE html>
 <html>
   <head>
@@ -19,7 +19,10 @@
     <h3 class="title is-5">{{ .Title }}</h1>
     <h2 class="title is-4">Stream Key</h3>
     <h1 class="title is-2">{{ .StreamKey }}</h1>
-    <form action="/playouts/{{ .PlayoutID }}/end" method="post">
+    <form action="/livestreams/{{ .LivestreamID }}/start" method="post">
+      <input type="submit" value="Start stream" />
+    </form>
+    <form action="/livestreams/{{ .LivestreamID }}/end" method="post">
         <input type="submit" value="End stream" />
     </form>
     <p>

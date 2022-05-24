@@ -1,8 +1,8 @@
-{{ define "new-playout" }}
+{{ define "list-livestreams" }}
 <!DOCTYPE html>
 <html>
   <head>
-    <title>New playout</title>
+    <title>Select livestream</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link
@@ -15,14 +15,13 @@
 ></script>
   </head>
   <body>
-  <div class="column has-text-centered">
-    <h1 class="title">New playout</h1>
-    <form action="/playouts/new" method="post">
-        <label for="title">Title:</label>
-        <input name="title" />
-        <input type="submit" value="Create" />
-    </form>
-    </div>
+    <h1 class="title">Select a livestream</h1>
+    <ul>
+    {{ range . }}
+        <a href="/livestreams/{{ .LivestreamID }}">{{ .Title }}</a>
+    {{ end }}
+    </ul>
+    <p>or create a <a href="livestreams/new">new</a> one.</p>
   </body>
 </html>
 {{ end }}

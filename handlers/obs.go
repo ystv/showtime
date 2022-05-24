@@ -6,119 +6,136 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
-	"github.com/ystv/showtime/channel"
-	"github.com/ystv/showtime/playout"
+	"github.com/ystv/showtime/livestream"
+	"github.com/ystv/showtime/mcr"
 	"github.com/ystv/showtime/youtube"
 )
 
-func (h *Handlers) obsListPlayouts(c echo.Context) error {
-	po, err := h.play.List(c.Request().Context())
+func (h *Handlers) obsListLivestreams(c echo.Context) error {
+	strms, err := h.ls.List(c.Request().Context())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	return c.Render(http.StatusOK, "list-playouts", po)
+	return c.Render(http.StatusOK, "list-livestreams", strms)
 }
 
-func (h *Handlers) obsGetPlayout(c echo.Context) error {
-	po, err := h.play.List(c.Request().Context())
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
-	for _, playout := range po {
-		if strconv.Itoa(playout.PlayoutID) == c.Param("playoutID") {
-			return c.Render(http.StatusOK, "get-playout", playout)
-		}
-	}
-	return echo.NewHTTPError(http.StatusNotFound)
-}
-
-func (h *Handlers) obsNewPlayout(c echo.Context) error {
-	return c.Render(http.StatusOK, "new-playout", nil)
-}
-
-func (h *Handlers) obsNewPlayoutSubmit(c echo.Context) error {
-	po := playout.NewPlayout{}
-	err := c.Bind(&po)
+func (h *Handlers) obsGetLivestream(c echo.Context) error {
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	err = h.play.New(c.Request().Context(), po)
+	strm, err := h.ls.Get(c.Request().Context(), strmID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	return h.obsListPlayouts(c)
+	return c.Render(http.StatusOK, "get-livestream", strm)
 }
 
-func (h *Handlers) obsEndPlayout(c echo.Context) error {
-	playoutID, err := strconv.Atoi(c.Param("playoutID"))
+func (h *Handlers) obsNewLivestream(c echo.Context) error {
+	return c.Render(http.StatusOK, "new-livestream", nil)
+}
+
+func (h *Handlers) obsNewLivestreamSubmit(c echo.Context) error {
+	strm := livestream.NewLivestream{}
+	err := c.Bind(&strm)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	err = h.play.End(c.Request().Context(), playoutID)
+	err = h.ls.New(c.Request().Context(), strm)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-
-	return h.obsListPlayouts(c)
+	return h.obsListLivestreams(c)
 }
 
-func (h *Handlers) obsManagePlayout(c echo.Context) error {
-	po, err := h.play.List(c.Request().Context())
+func (h *Handlers) obsStartLivestream(c echo.Context) error {
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	err = h.ls.Start(c.Request().Context(), strmID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	for _, playout := range po {
-		if strconv.Itoa(playout.PlayoutID) == c.Param("playoutID") {
-			return c.Render(http.StatusOK, "manage-playout", playout)
-		}
+
+	return h.obsGetLivestream(c)
+}
+
+func (h *Handlers) obsEndLivestream(c echo.Context) error {
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	return echo.NewHTTPError(http.StatusNotFound)
+	err = h.ls.End(c.Request().Context(), strmID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return h.obsListLivestreams(c)
+}
+
+func (h *Handlers) obsManageLivestream(c echo.Context) error {
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	strm, err := h.ls.Get(c.Request().Context(), strmID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	return c.Render(http.StatusOK, "manage-livestream", strm)
 }
 
 func (h *Handlers) obsLinkToPublicSite(c echo.Context) error {
-	playoutID, err := strconv.Atoi(c.Param("playoutID"))
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	p, err := h.play.Get(c.Request().Context(), playoutID)
+	strm, err := h.ls.Get(c.Request().Context(), strmID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
+
+	ch, err := h.mcr.List(c.Request().Context())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
 	data := struct {
-		Playout  playout.Playout
-		Channels []channel.Channel
+		Livestream livestream.Livestream
+		Channels   []mcr.Channel
 	}{
-		Playout: p,
+		Livestream: strm,
+		Channels:   ch,
 	}
 	return c.Render(http.StatusOK, "set-public-site-link", data)
 }
 
 func (h *Handlers) obsLinkToPublicSiteConfirm(c echo.Context) error {
-	return c.Render(http.StatusCreated, "successful-link", c.Param("playoutID"))
+	return c.Render(http.StatusCreated, "successful-link", c.Param("livestreamID"))
 }
 
 func (h *Handlers) obsLinkToYouTube(c echo.Context) error {
-	po, err := h.play.List(c.Request().Context())
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	strm, err := h.ls.Get(c.Request().Context(), strmID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	for _, p := range po {
-		if strconv.Itoa(p.PlayoutID) == c.Param("playoutID") {
-			broadcasts, err := h.yt.GetBroadcasts(c.Request().Context())
-			if err != nil {
-				return fmt.Errorf("failed to get youtube broadcasts: %w", err)
-			}
-			data := struct {
-				Playout    playout.Playout
-				Broadcasts []youtube.Broadcast
-			}{
-				Playout:    p,
-				Broadcasts: broadcasts,
-			}
-			return c.Render(http.StatusOK, "set-youtube-link", data)
-		}
+	broadcasts, err := h.yt.GetBroadcasts(c.Request().Context())
+	if err != nil {
+		return fmt.Errorf("failed to get youtube broadcasts: %w", err)
 	}
-	return echo.NewHTTPError(http.StatusNotFound)
+	data := struct {
+		Livestream livestream.Livestream
+		Broadcasts []youtube.Broadcast
+	}{
+		Livestream: strm,
+		Broadcasts: broadcasts,
+	}
+	return c.Render(http.StatusOK, "set-youtube-link", data)
 }
 
 func (h *Handlers) obsLinkToYouTubeConfirm(c echo.Context) error {
@@ -126,11 +143,15 @@ func (h *Handlers) obsLinkToYouTubeConfirm(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	err = h.play.UpdateYouTubeLink(c.Request().Context(), c.Param("playoutID"), c.FormValue("broadcastID"))
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	err = h.ls.UpdateYouTubeLink(c.Request().Context(), strmID, c.FormValue("broadcastID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	return c.Render(http.StatusCreated, "successful-link", c.Param("playoutID"))
+	return c.Render(http.StatusCreated, "successful-link", c.Param("livestreamID"))
 }
 
 func (h *Handlers) obsUnlinkFromYouTube(c echo.Context) error {
@@ -138,11 +159,15 @@ func (h *Handlers) obsUnlinkFromYouTube(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	err = h.play.UpdateYouTubeLink(c.Request().Context(), c.Param("playoutID"), "")
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	err = h.ls.UpdateYouTubeLink(c.Request().Context(), strmID, "")
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	return c.Render(http.StatusOK, "successful-unlink", c.Param("playoutID"))
+	return c.Render(http.StatusOK, "successful-unlink", c.Param("livestreamID"))
 }
 
 func (h *Handlers) obsListChannels(c echo.Context) error {
@@ -151,7 +176,7 @@ func (h *Handlers) obsListChannels(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	data := struct {
-		Channels []channel.Channel
+		Channels []mcr.Channel
 	}{
 		Channels: ch,
 	}
@@ -163,7 +188,7 @@ func (h *Handlers) obsNewChannel(c echo.Context) error {
 }
 
 func (h *Handlers) obsNewChannelSubmit(c echo.Context) error {
-	ch := channel.NewChannel{}
+	ch := mcr.NewChannel{}
 	err := c.Bind(&ch)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)

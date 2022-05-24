@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Link {{ .Playout.Title }} to YSTV website</title>
+    <title>Stream {{ .Livestream.Title }} to YSTV website</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link
@@ -16,16 +16,16 @@
   </head>
   <body>
   <div class="column has-text-centered">
-    <h1 class="title">{{ .Playout.Title }}</h1>
-    <form action="/playouts/{{ .Playout.PlayoutID }}/link/public-site/confirm" method="post">
-        <label for="channel">Select a destination to link to:</label>
+    <h1 class="title">{{ .Livestream.Title }}</h1>
+    <form action="/livestreams/{{ .Livestream.LivestreamID }}/link/public-site/confirm" method="post">
+        <label for="channel">Select a destination to stream to:</label>
         <select name="channelID">
             {{ range .Channels }}
                 <option value="{{ .ID }}">{{ .Title }}</option>
             {{ end }}
-                <option value="direct">Direct</option>
+                <option value="direct">As event</option>
         </select>
-        <input type="submit" value="Link to playout" />
+        <input type="submit" value="Confirm stream" />
     </form>
     </div>
   </body>

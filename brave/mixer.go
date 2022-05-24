@@ -19,6 +19,9 @@ func (b *Braver) NewMixer(ctx context.Context) (Mixer, error) {
 	}
 
 	body, err := json.Marshal(data)
+	if err != nil {
+		return Mixer{}, fmt.Errorf("failed to marshal json: %w", err)
+	}
 
 	u := b.baseURL.ResolveReference(&url.URL{Path: "/api/mixers"})
 	req, err := http.NewRequest(http.MethodPut, u.String(), bytes.NewBuffer(body))

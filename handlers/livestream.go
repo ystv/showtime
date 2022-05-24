@@ -4,37 +4,37 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/ystv/showtime/playout"
+	"github.com/ystv/showtime/livestream"
 )
 
-func (h *Handlers) newPlayout(c echo.Context) error {
-	po := playout.NewPlayout{}
-	err := c.Bind(&po)
+func (h *Handlers) newLivestream(c echo.Context) error {
+	strm := livestream.NewLivestream{}
+	err := c.Bind(&strm)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	err = h.play.New(c.Request().Context(), po)
+	err = h.ls.New(c.Request().Context(), strm)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	return nil
 }
 
-func (h *Handlers) listPlayouts(c echo.Context) error {
-	po, err := h.play.List(c.Request().Context())
+func (h *Handlers) listLivestreams(c echo.Context) error {
+	strms, err := h.ls.List(c.Request().Context())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	return c.JSON(http.StatusOK, po)
+	return c.JSON(http.StatusOK, strms)
 }
 
-func (h *Handlers) updatePlayout(c echo.Context) error {
-	po := playout.Playout{}
-	err := c.Bind(&po)
+func (h *Handlers) updateLivestream(c echo.Context) error {
+	strm := livestream.Livestream{}
+	err := c.Bind(&strm)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	err = h.play.Update(c.Request().Context(), po)
+	err = h.ls.Update(c.Request().Context(), strm)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -42,7 +42,7 @@ func (h *Handlers) updatePlayout(c echo.Context) error {
 }
 
 func (h *Handlers) refreshStreamKey(c echo.Context) error {
-	err := h.play.RefreshStreamkey(c.Request().Context(), c.Param("playoutID"))
+	err := h.ls.RefreshStreamKey(c.Request().Context(), c.Param("playoutID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}

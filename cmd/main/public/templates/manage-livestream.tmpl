@@ -1,4 +1,4 @@
-{{ define "manage-playout" }}
+{{ define "manage-livestream" }}
 <!DOCTYPE html>
 <html>
   <head>
@@ -21,27 +21,27 @@
     <h2 class="title is-4">Links</h2>
     <h3 class="title is-5">YSTV website</h3>
     {{ if eq .WebsiteLinkID "" }}
-    <form action="/playouts/{{ .PlayoutID }}/link/public-site">
+      <form action="/livestreams/{{ .LivestreamID }}/link/public-site">
         <input type="submit" value="Link to YSTV website" />
     </form>
     {{ else }}
-    <form action="/playouts/{{ .PlayoutID }}/unlink/website/{{ .WebsiteLinkID }}">
+      <form action="/livestreams/{{ .LivestreamID }}/unlink/public-site/{{ .WebsiteLinkID }}">
         <input type="submit" value="Unlink from YSTV website" />
     </form>
     {{ end }}
     <h3 class="title is-5">YouTube</h3>
     {{ if eq .YouTubeLinkID "" }}
-    <form action="/playouts/{{ .PlayoutID }}/link/youtube">
+      <form action="/livestreams/{{ .LivestreamID }}/link/youtube">
         <input type="submit" value="Link to YouTube" />
     </form>
     {{ else }}
-    <form action="/playouts/{{ .PlayoutID }}/unlink/youtube/{{ .YouTubeLinkID }}">
+      <form action="/livestreams/{{ .LivestreamID }}/unlink/youtube/{{ .YouTubeLinkID }}">
         <input type="submit" value="Unlink from YouTube" />
     </form>
     {{ end }}
     <p>
         Prefer a prettier UI? Try  
-        <a href="https://creator.ystv.co.uk/live/playouts">Creator Studio</a>.
+        <a href="https://creator.ystv.co.uk/live/streams">Creator Studio</a>.
     </p>
     </div>
   </body>

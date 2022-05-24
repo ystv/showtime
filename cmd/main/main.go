@@ -10,10 +10,10 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/ystv/showtime/auth"
 	"github.com/ystv/showtime/brave"
-	"github.com/ystv/showtime/channel"
 	"github.com/ystv/showtime/db"
 	"github.com/ystv/showtime/handlers"
-	"github.com/ystv/showtime/playout"
+	"github.com/ystv/showtime/livestream"
+	"github.com/ystv/showtime/mcr"
 	"github.com/ystv/showtime/youtube"
 )
 
@@ -22,9 +22,9 @@ var content embed.FS
 
 // Config for ShowTime!
 type Config struct {
-	playout  playout.Config
-	brave    brave.Config
-	handlers *handlers.Config
+	livestream livestream.Config
+	brave      brave.Config
+	handlers   *handlers.Config
 }
 
 func main() {
@@ -43,7 +43,7 @@ func main() {
 	}
 
 	conf := Config{
-		playout: playout.Config{
+		livestream: livestream.Config{
 			IngestAddress: os.Getenv("ST_INGEST_ADDR"),
 		},
 		brave: brave.Config{
@@ -77,12 +77,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create brave client: %+v", err)
 	}
-	mcr := channel.NewMCR(db, brave)
+	mcr := mcr.NewMCR(db, brave)
 	yt, err := youtube.New(db, auth)
 	if err != nil {
 		log.Fatalf("failed to create youtube client: %+v", err)
 	}
-	play := playout.New(conf.playout, db, yt)
+	ls := livestream.New(conf.livestream, db, yt)
 
 	templatesFS, err := fs.Sub(content, "public/templates")
 	if err != nil {
@@ -93,7 +93,7 @@ func main() {
 		log.Fatalf("failed to create templater: %w", err)
 	}
 
-	h := handlers.New(conf.handlers, auth, play, mcr, yt, templates)
+	h := handlers.New(conf.handlers, auth, ls, mcr, yt, templates)
 
 	h.Start()
 }
