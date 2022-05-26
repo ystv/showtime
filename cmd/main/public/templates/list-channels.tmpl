@@ -15,6 +15,7 @@
 ></script>
   </head>
   <body>
+  <div class="column has-text-centered">
     <h1 class="title">Select a channel</h1>
     <ul>
     {{ range .Channels }}
@@ -22,6 +23,7 @@
     {{ end }}
     </ul>
     <p>or create a <a href="/channels/new">new</a> one.</p>
+  </div>
   </body>
 </html>
 {{ end }}

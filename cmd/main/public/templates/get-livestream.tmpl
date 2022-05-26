@@ -15,20 +15,29 @@
 ></script>
   </head>
   <body>
-    <a href="/"><-- back</a>
+  <div class="column has-text-centered">
+    <a href="/livestreams">🔙 Back</a>
     <h3 class="title is-5">{{ .Title }}</h1>
     <h2 class="title is-4">Stream Key</h3>
-    <h1 class="title is-2">{{ .StreamKey }}</h1>
+    <div class="container">
+      <div class="notification is-primary">
+        <h1 class="title is-2">{{ .StreamKey }}</h1>
+      </div>
+    </div>
     <form action="/livestreams/{{ .LivestreamID }}/start" method="post">
       <input type="submit" value="Start stream" />
     </form>
     <form action="/livestreams/{{ .LivestreamID }}/end" method="post">
         <input type="submit" value="End stream" />
     </form>
+    <form action="/livestreams/{{ .LivestreamID }}/manage">
+        <input type="submit" value="Manage stream" />
+    </form>
     <p>
         Don't know how to add a stream key? Follow the guide 
         <a href="https://docs.ystv.co.uk/wiki/How_to_add_a_stream_key_to_OBS">here</a>.
     </p>
+  </div>
   </body>
 </html>
 {{ end }}

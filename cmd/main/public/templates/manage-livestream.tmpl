@@ -16,16 +16,16 @@
   </head>
   <body>
   <div class="column has-text-centered">
-    <a href="/"><-- back</a>
+    <a href="/livestreams/{{ .LivestreamID }}">🔙 Back</a>
     <h1 class="title">{{ .Title }}</h1>
     <h2 class="title is-4">Links</h2>
     <h3 class="title is-5">YSTV website</h3>
-    {{ if eq .WebsiteLinkID "" }}
-      <form action="/livestreams/{{ .LivestreamID }}/link/public-site">
+    {{ if eq .MCRLinkID "" }}
+      <form action="/livestreams/{{ .LivestreamID }}/link/mcr">
         <input type="submit" value="Link to YSTV website" />
     </form>
     {{ else }}
-      <form action="/livestreams/{{ .LivestreamID }}/unlink/public-site/{{ .WebsiteLinkID }}">
+      <form action="/livestreams/{{ .LivestreamID }}/unlink/mcr/{{ .MCRLinkID }}" method="post">
         <input type="submit" value="Unlink from YSTV website" />
     </form>
     {{ end }}
@@ -35,7 +35,7 @@
         <input type="submit" value="Link to YouTube" />
     </form>
     {{ else }}
-      <form action="/livestreams/{{ .LivestreamID }}/unlink/youtube/{{ .YouTubeLinkID }}">
+      <form action="/livestreams/{{ .LivestreamID }}/unlink/youtube/{{ .YouTubeLinkID }}" method="post">
         <input type="submit" value="Unlink from YouTube" />
     </form>
     {{ end }}

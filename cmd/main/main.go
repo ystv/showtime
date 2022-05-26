@@ -53,6 +53,7 @@ func main() {
 			Debug:           debug,
 			StateCookieName: "state-token",
 			DomainName:      os.Getenv("ST_DOMAIN_NAME"),
+			IngestAddress:   os.Getenv("ST_INGEST_ADDR"),
 			JWTSigningKey:   os.Getenv("ST_SIGNING_KEY"),
 		},
 	}
