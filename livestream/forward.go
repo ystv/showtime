@@ -11,7 +11,7 @@ import (
 
 // Forward a livestream to it's linked platforms.
 func (ls *Livestreamer) Forward(ctx context.Context, strm ConsumeLivestream) error {
-	if strm.WebsiteLinkID != "" {
+	if strm.MCRLinkID != "" {
 
 	}
 

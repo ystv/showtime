@@ -1,4 +1,4 @@
-{{ define "set-public-site-link" }}
+{{ define "set-mcr-link" }}
 <!DOCTYPE html>
 <html>
   <head>
@@ -16,14 +16,14 @@
   </head>
   <body>
   <div class="column has-text-centered">
+    <a href="/livestreams/{{ .Livestream.LivestreamID }}/manage">🔙 Back</a>
     <h1 class="title">{{ .Livestream.Title }}</h1>
-    <form action="/livestreams/{{ .Livestream.LivestreamID }}/link/public-site/confirm" method="post">
+    <form action="/livestreams/{{ .Livestream.LivestreamID }}/link/mcr/confirm" method="post">
         <label for="channel">Select a destination to stream to:</label>
         <select name="channelID">
             {{ range .Channels }}
                 <option value="{{ .ID }}">{{ .Title }}</option>
             {{ end }}
-                <option value="direct">As event</option>
         </select>
         <input type="submit" value="Confirm stream" />
     </form>

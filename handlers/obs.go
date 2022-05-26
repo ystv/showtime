@@ -86,7 +86,7 @@ func (h *Handlers) obsManageLivestream(c echo.Context) error {
 	return c.Render(http.StatusOK, "manage-livestream", strm)
 }
 
-func (h *Handlers) obsLinkToPublicSite(c echo.Context) error {
+func (h *Handlers) obsLinkToMCR(c echo.Context) error {
 	strmID, err := strconv.Atoi(c.Param("livestreamID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -96,7 +96,7 @@ func (h *Handlers) obsLinkToPublicSite(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	ch, err := h.mcr.List(c.Request().Context())
+	ch, err := h.mcr.ListChannels(c.Request().Context())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -108,11 +108,65 @@ func (h *Handlers) obsLinkToPublicSite(c echo.Context) error {
 		Livestream: strm,
 		Channels:   ch,
 	}
-	return c.Render(http.StatusOK, "set-public-site-link", data)
+	return c.Render(http.StatusOK, "set-mcr-link", data)
 }
 
-func (h *Handlers) obsLinkToPublicSiteConfirm(c echo.Context) error {
+func (h *Handlers) obsLinkToMCRConfirm(c echo.Context) error {
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	strm, err := h.ls.Get(c.Request().Context(), strmID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	res := struct {
+		ChannelID string `form:"channelID"`
+	}{}
+	err = c.Bind(&res)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	po := mcr.NewPlayout{
+		ChannelID:  res.ChannelID,
+		SrcURI:     h.conf.IngestAddress + "/" + strm.StreamKey,
+		Title:      strm.Title,
+		Visibility: "public",
+	}
+	playoutID, err := h.mcr.NewPlayout(c.Request().Context(), po)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	err = h.ls.UpdateMCRLink(c.Request().Context(), strmID, strconv.Itoa(playoutID))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
 	return c.Render(http.StatusCreated, "successful-link", c.Param("livestreamID"))
+}
+
+func (h *Handlers) obsUnlinkFromMCR(c echo.Context) error {
+	linkID, err := strconv.Atoi(c.Param("linkID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	err = h.mcr.DeletePlayout(c.Request().Context(), linkID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	err = h.ls.UpdateMCRLink(c.Request().Context(), strmID, "")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	return c.Render(http.StatusOK, "successful-unlink", c.Param("livestreamID"))
 }
 
 func (h *Handlers) obsLinkToYouTube(c echo.Context) error {
@@ -155,7 +209,7 @@ func (h *Handlers) obsLinkToYouTubeConfirm(c echo.Context) error {
 }
 
 func (h *Handlers) obsUnlinkFromYouTube(c echo.Context) error {
-	err := h.yt.DisableShowTimeForBroadcast(c.Request().Context(), c.Param("broadcastID"))
+	err := h.yt.DisableShowTimeForBroadcast(c.Request().Context(), c.Param("linkID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -171,7 +225,7 @@ func (h *Handlers) obsUnlinkFromYouTube(c echo.Context) error {
 }
 
 func (h *Handlers) obsListChannels(c echo.Context) error {
-	ch, err := h.mcr.List(c.Request().Context())
+	ch, err := h.mcr.ListChannels(c.Request().Context())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -193,7 +247,7 @@ func (h *Handlers) obsNewChannelSubmit(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	err = h.mcr.New(c.Request().Context(), ch)
+	_, err = h.mcr.NewChannel(c.Request().Context(), ch)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}

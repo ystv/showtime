@@ -12,7 +12,7 @@ func (ls *Livestreamer) Start(ctx context.Context, livestreamID int) error {
 		return fmt.Errorf("failed to get livestream: %w", err)
 	}
 
-	if strm.WebsiteLinkID != "" {
+	if strm.MCRLinkID != "" {
 		// err = ls.mcr.StartPlayout(ctx, strm.WebsiteLinkID)
 		// if err != nil {
 		//	return fmt.Errorf("website failed to start playout: %w", err)
@@ -36,8 +36,8 @@ func (ls *Livestreamer) End(ctx context.Context, livestreamID int) error {
 		return fmt.Errorf("failed to get playout: %w", err)
 	}
 
-	if strm.WebsiteLinkID != "" {
-		// err = ls.mcr.StartPlayout(ctx, strm.WebsiteLinkID)
+	if strm.MCRLinkID != "" {
+		// err = ls.mcr.StartPlayout(ctx, strm.MCRLinkID)
 		// if err != nil {
 		//	return fmt.Errorf("website failed to start playout: %w", err)
 	}

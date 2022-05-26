@@ -23,7 +23,7 @@ type (
 	}
 	// NewLivestream creates a new livestream.
 	NewLivestream struct {
-		Title string `db:"title" json:"title" form:"title"`
+		Title string `json:"title" form:"title"`
 	}
 	// Livestream is the metadata of a stream and the links to external
 	// platforms.
@@ -31,13 +31,13 @@ type (
 		LivestreamID  int    `db:"livestream_id" json:"livestreamID"`
 		Title         string `db:"title" json:"title"`
 		StreamKey     string `db:"stream_key" json:"streamKey"`
-		WebsiteLinkID string `db:"website_link_id" json:"websiteLinkID"` // CS' playoutID
-		YouTubeLinkID string `db:"youtube_link_id" json:"youtubeLinkID"` // YT' broadcastID
+		MCRLinkID     string `db:"mcr_link_id" json:"mcrLinkID"`         // MCR's playoutID
+		YouTubeLinkID string `db:"youtube_link_id" json:"youtubeLinkID"` // YT's broadcastID
 	}
 	// ConsumeLivestream provides the links of a given stream key.
 	ConsumeLivestream struct {
 		StreamKey     string `db:"stream_key" json:"streamKey"`
-		WebsiteLinkID string `db:"website_link_id" json:"websiteLinkID"`
+		MCRLinkID     string `db:"mcr_link_id" json:"mcrLinkID"`
 		YouTubeLinkID string `db:"youtube_link_id" json:"youtubeLinkID"`
 	}
 )
@@ -48,7 +48,7 @@ CREATE TABLE livestreams(
 	livestream_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
 	title text NOT NULL,
 	stream_key text NOT NULL,
-	website_link_id text NOT NULL,
+	mcr_link_id text NOT NULL,
 	youtube_link_id text NOT NULL
 );
 `
@@ -69,7 +69,7 @@ func (ls *Livestreamer) New(ctx context.Context, strm NewLivestream) error {
 		INSERT INTO livestreams (
 			title,
 			stream_key,
-			website_link_id,
+			mcr_link_id,
 			youtube_link_id
 			) VALUES ($1, $2, '', '');`, strm.Title, streamKey)
 	if err != nil {
@@ -82,7 +82,7 @@ func (ls *Livestreamer) New(ctx context.Context, strm NewLivestream) error {
 func (ls *Livestreamer) Get(ctx context.Context, livestreamID int) (Livestream, error) {
 	strm := Livestream{}
 	err := ls.db.GetContext(ctx, &strm, `
-		SELECT livestream_id, title, stream_key, website_link_id, youtube_link_id
+		SELECT livestream_id, title, stream_key, mcr_link_id, youtube_link_id
 		FROM livestreams
 		WHERE livestream_id  = $1;
 	`, livestreamID)
@@ -96,7 +96,7 @@ func (ls *Livestreamer) Get(ctx context.Context, livestreamID int) (Livestream, 
 func (ls *Livestreamer) List(ctx context.Context) ([]Livestream, error) {
 	strms := []Livestream{}
 	err := ls.db.SelectContext(ctx, &strms, `
-		SELECT livestream_id, title, stream_key, website_link_id, youtube_link_id
+		SELECT livestream_id, title, stream_key, mcr_link_id, youtube_link_id
 		FROM livestreams;
 	`)
 	if err != nil {
@@ -112,9 +112,21 @@ func (ls *Livestreamer) Update(ctx context.Context, strm Livestream) error {
 			title = $1,
 			website_link_id = $2,
 			youtube_link_id = $3
-		WHERE playout_id = $4;`, strm.Title, strm.WebsiteLinkID, strm.YouTubeLinkID, strm.LivestreamID)
+		WHERE playout_id = $4;`, strm.Title, strm.MCRLinkID, strm.YouTubeLinkID, strm.LivestreamID)
 	if err != nil {
 		return fmt.Errorf("failed to update playout: %w", err)
+	}
+	return nil
+}
+
+// UpdateMCRLink updates only the MCR playout link on a livestream.
+func (ls *Livestreamer) UpdateMCRLink(ctx context.Context, livestreamID int, linkID string) error {
+	_, err := ls.db.ExecContext(ctx, `
+	UPDATE livestreams SET
+		mcr_link_id = $1
+	WHERE livestream_id = $2;`, linkID, livestreamID)
+	if err != nil {
+		return fmt.Errorf("failed to update mcr link id: %w", err)
 	}
 	return nil
 }
@@ -124,7 +136,7 @@ func (ls *Livestreamer) UpdateYouTubeLink(ctx context.Context, livestreamID int,
 	_, err := ls.db.ExecContext(ctx, `
 	UPDATE livestreams SET
 		youtube_link_id = $1
-	WHERE livestream_id = $2`, linkID, livestreamID)
+	WHERE livestream_id = $2;`, linkID, livestreamID)
 	if err != nil {
 		return fmt.Errorf("failed to update youtube link id: %w", err)
 	}
