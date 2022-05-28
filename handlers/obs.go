@@ -11,6 +11,10 @@ import (
 	"github.com/ystv/showtime/youtube"
 )
 
+func (h *Handlers) obsHome(c echo.Context) error {
+	return c.Render(http.StatusOK, "home", nil)
+}
+
 func (h *Handlers) obsListLivestreams(c echo.Context) error {
 	strms, err := h.ls.List(c.Request().Context())
 	if err != nil {

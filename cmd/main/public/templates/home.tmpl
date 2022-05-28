@@ -1,0 +1,35 @@
+{{ define "home" }}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ShowTime!</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css"
+/>
+<script
+  defer
+  src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"
+></script>
+  </head>
+  <body>
+  <div class="column has-text-centered">
+    <h1 class="title">ShowTime!</h1>
+    <h2 class="subtitle">What do you mean we're not recording? It's showtime!</h2>
+    <div class="columns">
+      <div class="column">
+        <a href="/livestreams">Livestreams</a>
+      </div>
+      <div class="column">
+        <a href="/channels">Channels</a>
+      </div>
+      <div class="column">
+        <a href="/integrations">Integrations</a>
+      </div>
+    </div>
+  </div>
+  </body>
+</html>
+{{ end }}

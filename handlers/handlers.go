@@ -79,6 +79,7 @@ func (h *Handlers) Start() {
 	}
 	{
 		// Basic UI endpoints
+		internal.GET("/", h.obsHome)
 		internal.GET("/livestreams", h.obsListLivestreams)
 		internal.GET("/livestreams/new", h.obsNewLivestream)
 		internal.POST("/livestreams/new", h.obsNewLivestreamSubmit)
