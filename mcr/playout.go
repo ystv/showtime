@@ -32,9 +32,20 @@ func (mcr *MCR) StartPlayout(ctx context.Context, po Playout) error {
 	if err != nil {
 		return fmt.Errorf("failed to get channel: %w", err)
 	}
+
 	err = mcr.brave.CutMixerToInput(ctx, ch.MixerID, po.BraveInputID)
 	if err != nil {
 		return fmt.Errorf("failed to cut mixer \"%d\" to input \"%d\": %w", ch.MixerID, po.BraveInputID, err)
+	}
+
+	_, err = mcr.db.ExecContext(ctx, `
+		UPDATE playouts
+		SET
+			status = 'live'
+		WHERE playout_id = $1
+	`, po.ID)
+	if err != nil {
+		return fmt.Errorf("failed to update status: %w", err)
 	}
 	return nil
 }
@@ -44,6 +55,17 @@ func (mcr *MCR) EndPlayout(ctx context.Context, po Playout) error {
 	err := mcr.brave.DeleteInput(ctx, po.BraveInputID)
 	if err != nil {
 		return fmt.Errorf("failed to delete input: %w", err)
+	}
+
+	_, err = mcr.db.ExecContext(ctx, `
+		UPDATE playouts
+		SET
+			brave_input_id = 0,
+			status = 'stream-ended'
+		WHERE playout_id = $1
+	`, po.ID)
+	if err != nil {
+		return fmt.Errorf("failed to update status: %w", err)
 	}
 	return nil
 }
