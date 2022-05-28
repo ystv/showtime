@@ -15,15 +15,15 @@ Create a `.env` file with the following parameters:
 ST_DEBUG=true or false
 
 # Nginx RTMP live application that is configured with a hook to ShowTime!
-ST_INGEST_ADDR=stream.example.com/ingest
+ST_INGEST_ADDR=rtmp://stream.example.com/ingest
 
 # Brave instance to support redundancy and channels
 ST_BRAVE_ADDR=brave.example.com
 
-# Note: these two don't need to be filled if debug is enabled
+# Note: these two don't need to be filled if debug is enabled.
 
 # Verify web-auth tokens
-ST_SIGNING_KEY
+ST_SIGNING_KEY=something-long-and-random
 
 # Used for cookies
 ST_DOMAIN_NAME=example.com
