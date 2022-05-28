@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/ystv/showtime/mcr"
 	"github.com/ystv/showtime/youtube"
 )
 
@@ -19,6 +20,7 @@ type (
 	Livestreamer struct {
 		ingestAddress string
 		db            *sqlx.DB
+		mcr           *mcr.MCR
 		yt            *youtube.YouTuber
 	}
 	// NewLivestream creates a new livestream.
@@ -29,8 +31,9 @@ type (
 	// platforms.
 	Livestream struct {
 		LivestreamID  int    `db:"livestream_id" json:"livestreamID"`
-		Title         string `db:"title" json:"title"`
 		StreamKey     string `db:"stream_key" json:"streamKey"`
+		Status        string `db:"status" json:"status"`
+		Title         string `db:"title" json:"title"`
 		MCRLinkID     string `db:"mcr_link_id" json:"mcrLinkID"`         // MCR's playoutID
 		YouTubeLinkID string `db:"youtube_link_id" json:"youtubeLinkID"` // YT's broadcastID
 	}
@@ -46,18 +49,20 @@ type (
 var Schema = `
 CREATE TABLE livestreams(
 	livestream_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+	status text NOT NULL,
+	stream_key text NOT NULL UNIQUE,
 	title text NOT NULL,
-	stream_key text NOT NULL,
 	mcr_link_id text NOT NULL,
 	youtube_link_id text NOT NULL
 );
 `
 
 // New creates an instance of livestreamer.
-func New(c Config, db *sqlx.DB, yt *youtube.YouTuber) *Livestreamer {
+func New(c Config, db *sqlx.DB, mcr *mcr.MCR, yt *youtube.YouTuber) *Livestreamer {
 	return &Livestreamer{
 		ingestAddress: c.IngestAddress,
 		db:            db,
+		mcr:           mcr,
 		yt:            yt,
 	}
 }
@@ -67,11 +72,12 @@ func (ls *Livestreamer) New(ctx context.Context, strm NewLivestream) error {
 	streamKey := ls.generateStreamkey()
 	_, err := ls.db.ExecContext(ctx, `
 		INSERT INTO livestreams (
-			title,
 			stream_key,
+			status,
+			title,
 			mcr_link_id,
 			youtube_link_id
-			) VALUES ($1, $2, '', '');`, strm.Title, streamKey)
+			) VALUES ($1, 'pending', $2, '', '');`, streamKey, strm.Title)
 	if err != nil {
 		return fmt.Errorf("failed to insert livestream: %w", err)
 	}
@@ -82,7 +88,7 @@ func (ls *Livestreamer) New(ctx context.Context, strm NewLivestream) error {
 func (ls *Livestreamer) Get(ctx context.Context, livestreamID int) (Livestream, error) {
 	strm := Livestream{}
 	err := ls.db.GetContext(ctx, &strm, `
-		SELECT livestream_id, title, stream_key, mcr_link_id, youtube_link_id
+		SELECT livestream_id, stream_key, status, title, mcr_link_id, youtube_link_id
 		FROM livestreams
 		WHERE livestream_id  = $1;
 	`, livestreamID)
@@ -96,7 +102,7 @@ func (ls *Livestreamer) Get(ctx context.Context, livestreamID int) (Livestream, 
 func (ls *Livestreamer) List(ctx context.Context) ([]Livestream, error) {
 	strms := []Livestream{}
 	err := ls.db.SelectContext(ctx, &strms, `
-		SELECT livestream_id, title, stream_key, mcr_link_id, youtube_link_id
+		SELECT livestream_id, stream_key, status, title, mcr_link_id, youtube_link_id
 		FROM livestreams;
 	`)
 	if err != nil {
@@ -139,6 +145,18 @@ func (ls *Livestreamer) UpdateYouTubeLink(ctx context.Context, livestreamID int,
 	WHERE livestream_id = $2;`, linkID, livestreamID)
 	if err != nil {
 		return fmt.Errorf("failed to update youtube link id: %w", err)
+	}
+	return nil
+}
+
+// updateStatus updates only the status on a livestream.
+func (ls *Livestreamer) updateStatus(ctx context.Context, livestreamID int, status string) error {
+	_, err := ls.db.ExecContext(ctx, `
+		UPDATE livestreams SET
+			status = $1
+		WHERE livestream_id = $2`, status, livestreamID)
+	if err != nil {
+		return fmt.Errorf("failed to update status: %w", err)
 	}
 	return nil
 }

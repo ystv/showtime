@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/ystv/showtime/ffmpeg"
@@ -12,7 +13,22 @@ import (
 // Forward a livestream to it's linked platforms.
 func (ls *Livestreamer) Forward(ctx context.Context, strm ConsumeLivestream) error {
 	if strm.MCRLinkID != "" {
+		playoutID, err := strconv.Atoi(strm.MCRLinkID)
+		if err != nil {
+			return fmt.Errorf("failed to parse string to int: %w", err)
+		}
+		po, err := ls.mcr.GetPlayout(ctx, playoutID)
+		if err != nil {
+			return fmt.Errorf("failed to get playout: %w", err)
+		}
 
+		go func() {
+			time.Sleep(1 * time.Second)
+			err = ls.mcr.PlayPlayoutSource(ctx, po)
+			if err != nil {
+				log.Printf("failed to start mcr playout source: %w", err)
+			}
+		}()
 	}
 
 	if strm.YouTubeLinkID != "" {

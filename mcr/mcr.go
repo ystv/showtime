@@ -37,6 +37,7 @@ CREATE TABLE channels (
 CREATE TABLE playouts (
 	playout_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
 	channel_id integer NOT NULL,
+	brave_input_id integer NOT NULL,
 	source_type text NOT NULL,
 	source_uri text NOT NULL,
 	title text NOT NULL,

@@ -24,12 +24,16 @@
         <h1 class="title is-2">{{ .StreamKey }}</h1>
       </div>
     </div>
+    {{ if eq .Status "pending" }}
     <form action="/livestreams/{{ .LivestreamID }}/start" method="post">
       <input type="submit" value="Start stream" />
     </form>
+    {{ end }}
+    {{ if eq .Status "stream-started"}}
     <form action="/livestreams/{{ .LivestreamID }}/end" method="post">
         <input type="submit" value="End stream" />
     </form>
+    {{ end }}
     <form action="/livestreams/{{ .LivestreamID }}/manage">
         <input type="submit" value="Manage stream" />
     </form>

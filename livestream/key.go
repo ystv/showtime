@@ -19,7 +19,7 @@ func (ls *Livestreamer) GetByStreamKey(ctx context.Context, streamKey string) (C
 	err := ls.db.GetContext(ctx, &strm, `
 		SELECT
 			stream_key,
-			website_link_id,
+			mcr_link_id,
 			youtube_link_id
 		FROM
 			livestreams

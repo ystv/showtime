@@ -83,7 +83,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create youtube client: %+v", err)
 	}
-	ls := livestream.New(conf.livestream, db, yt)
+	ls := livestream.New(conf.livestream, db, mcr, yt)
 
 	templatesFS, err := fs.Sub(content, "public/templates")
 	if err != nil {

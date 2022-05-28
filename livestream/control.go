@@ -3,6 +3,7 @@ package livestream
 import (
 	"context"
 	"fmt"
+	"strconv"
 )
 
 // Start tiggers a start condition on all linked services.
@@ -13,10 +14,19 @@ func (ls *Livestreamer) Start(ctx context.Context, livestreamID int) error {
 	}
 
 	if strm.MCRLinkID != "" {
-		// err = ls.mcr.StartPlayout(ctx, strm.WebsiteLinkID)
-		// if err != nil {
-		//	return fmt.Errorf("website failed to start playout: %w", err)
-		// }
+		playoutID, err := strconv.Atoi(strm.MCRLinkID)
+		if err != nil {
+			return fmt.Errorf("failed to parse string to int: %w", err)
+		}
+		po, err := ls.mcr.GetPlayout(ctx, playoutID)
+		if err != nil {
+			return fmt.Errorf("failed to get playout: %w", err)
+		}
+
+		err = ls.mcr.StartPlayout(ctx, po)
+		if err != nil {
+			return fmt.Errorf("mcr failed to start playout: %w", err)
+		}
 	}
 
 	if strm.YouTubeLinkID != "" {
@@ -24,6 +34,11 @@ func (ls *Livestreamer) Start(ctx context.Context, livestreamID int) error {
 		if err != nil {
 			return fmt.Errorf("youtube failed to start broadcast: %w", err)
 		}
+	}
+
+	err = ls.updateStatus(ctx, livestreamID, "stream-started")
+	if err != nil {
+		return fmt.Errorf("failed to update status: %w", err)
 	}
 
 	return nil
@@ -37,9 +52,19 @@ func (ls *Livestreamer) End(ctx context.Context, livestreamID int) error {
 	}
 
 	if strm.MCRLinkID != "" {
-		// err = ls.mcr.StartPlayout(ctx, strm.MCRLinkID)
-		// if err != nil {
-		//	return fmt.Errorf("website failed to start playout: %w", err)
+		playoutID, err := strconv.Atoi(strm.MCRLinkID)
+		if err != nil {
+			return fmt.Errorf("failed to parse string to int: %w", err)
+		}
+		po, err := ls.mcr.GetPlayout(ctx, playoutID)
+		if err != nil {
+			return fmt.Errorf("failed to get playout: %w", err)
+		}
+
+		err = ls.mcr.EndPlayout(ctx, po)
+		if err != nil {
+			return fmt.Errorf("website failed to end playout: %w", err)
+		}
 	}
 
 	if strm.YouTubeLinkID != "" {
@@ -47,6 +72,11 @@ func (ls *Livestreamer) End(ctx context.Context, livestreamID int) error {
 		if err != nil {
 			return fmt.Errorf("youtube failed to end broadcast: %w", err)
 		}
+	}
+
+	err = ls.updateStatus(ctx, livestreamID, "stream-ended")
+	if err != nil {
+		return fmt.Errorf("failed to update status: %w", err)
 	}
 
 	return nil

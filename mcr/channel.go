@@ -10,7 +10,6 @@ type (
 	Channel struct {
 		ID      int    `db:"channel_id" json:"channelID"`
 		Title   string `db:"title" json:"title"`
-		Type    string `db:"type" json:"type"`
 		MixerID int    `db:"mixer_id" json:"mixerID"`
 	}
 
@@ -46,6 +45,19 @@ func (mcr *MCR) NewChannel(ctx context.Context, ch NewChannel) (int, error) {
 	}
 
 	return channelID, nil
+}
+
+// GetChannel returns a channel.
+func (mcr *MCR) GetChannel(ctx context.Context, channelID int) (Channel, error) {
+	ch := Channel{}
+	err := mcr.db.GetContext(ctx, &ch, `
+		SELECT channel_id, title, channel_id, mixer_id
+		FROM channels
+		WHERE channel_id  = $1;`, channelID)
+	if err != nil {
+		return Channel{}, fmt.Errorf("failed to get channel: %w", err)
+	}
+	return ch, nil
 }
 
 // ListChannels retrieves a list of all channels.
