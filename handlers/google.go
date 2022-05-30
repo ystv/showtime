@@ -52,6 +52,5 @@ func (h *Handlers) callbackGoogle(c echo.Context) error {
 		err = fmt.Errorf("failed to create youtube account reference: %w", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-
-	return c.String(http.StatusOK, "login successful!")
+	return c.Render(http.StatusOK, "successful-integration", nil)
 }
