@@ -7,6 +7,7 @@ import (
 
 // ChannelInfo is a brief summary of a channel.
 type ChannelInfo struct {
+	AccountID   int
 	Name        string
 	Description string
 	Link        string
@@ -35,6 +36,7 @@ func (y *YouTuber) About(ctx context.Context) ([]ChannelInfo, error) {
 	}
 	for _, ch := range chs.Items {
 		info = append(info, ChannelInfo{
+			AccountID:   y.accountID,
 			Name:        ch.Snippet.Title,
 			Description: ch.Snippet.Description,
 			Link:        "https://youtube.com/channel/" + ch.Id,

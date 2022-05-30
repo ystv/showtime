@@ -190,6 +190,31 @@ func (y *YouTuber) GetBroadcastDetails(ctx context.Context, broadcastID string) 
 	return details, nil
 }
 
+// GetTotalLinkedBroadcasts returns the total count of linked broadcasts.
+func (y *YouTuber) GetTotalLinkedBroadcasts(ctx context.Context) (int, error) {
+	total := 0
+	err := y.db.GetContext(ctx, &total, `
+		SELECT COUNT(*)
+		FROM youtube_broadcasts
+		WHERE account_id = $1;
+	`, y.accountID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get total linked broadcasts: %w", err)
+	}
+	return total, nil
+}
+
+// ListShowTimedBroadcasts returns a list of broadcasts that have ShowTime enabled.
+func (y *YouTuber) ListShowTimedBroadcasts(ctx context.Context) ([]string, error) {
+	broadcasts := []string{}
+	err := y.db.SelectContext(ctx, &broadcasts, `
+		SELECT broadcast_id
+		FROM youtube_broadcasts
+		WHERE account_id = $1;
+	`, y.accountID)
+	return broadcasts, err
+}
+
 // PrettyDateTime formats dates to a more readable string.
 func (b *Broadcast) PrettyDateTime() string {
 	ts, err := time.Parse(time.RFC3339, b.StartTime)

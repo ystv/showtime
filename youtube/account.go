@@ -37,6 +37,21 @@ func (y *YouTube) NewAccount(ctx context.Context, tokenID int) error {
 	return nil
 }
 
+// DeleteAccount removes a youtube account from ShowTime management.
+func (y *YouTube) DeleteAccount(ctx context.Context, accountID int) error {
+	_, err := y.db.ExecContext(ctx, `
+		DELETE FROM youtube_accounts
+		WHERE account_id = $1;
+	`, accountID)
+	if err != nil {
+		return fmt.Errorf("failed to delete account from store: %w", err)
+	}
+
+	delete(y.youtubers, accountID)
+
+	return nil
+}
+
 func (y *YouTube) listAccounts(ctx context.Context) ([]Account, error) {
 	accounts := []Account{}
 	err := y.db.SelectContext(ctx, &accounts, `

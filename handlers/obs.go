@@ -295,3 +295,69 @@ func (h *Handlers) obsListIntegrations(c echo.Context) error {
 	}
 	return c.Render(http.StatusOK, "list-integrations", data)
 }
+
+func (h *Handlers) obsDeleteYouTubeIntegration(c echo.Context) error {
+	ctx := c.Request().Context()
+	accountID, err := strconv.Atoi(c.Param("accountID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	yt, err := h.yt.GetYouTuber(accountID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, err)
+	}
+	info, err := yt.About(ctx)
+	if err != nil {
+		err = fmt.Errorf("failed to get about info: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	total, err := yt.GetTotalLinkedBroadcasts(ctx)
+	if err != nil {
+		err = fmt.Errorf("failed to get total linked broadcasts: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	data := struct {
+		About           []youtube.ChannelInfo
+		TotalBroadcasts int
+	}{
+		info,
+		total,
+	}
+	return c.Render(http.StatusOK, "delete-integration", data)
+}
+
+func (h *Handlers) obsDeleteYouTubeIntegrationConfirm(c echo.Context) error {
+	ctx := c.Request().Context()
+	accountID, err := strconv.Atoi(c.Param("accountID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	yt, err := h.yt.GetYouTuber(accountID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, err)
+	}
+
+	b, err := yt.ListShowTimedBroadcasts(ctx)
+	if err != nil {
+		err = fmt.Errorf("failed to list showtimed broadcasts: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	for _, broadcastID := range b {
+		err = yt.DeleteExistingBroadcast(ctx, broadcastID)
+		if err != nil {
+			err = fmt.Errorf("failed to unlink broadcast: %w", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
+	}
+
+	err = h.yt.DeleteAccount(ctx, accountID)
+	if err != nil {
+		err = fmt.Errorf("failed to delete account: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.Render(http.StatusOK, "successful-unintegration", nil)
+}

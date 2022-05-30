@@ -101,6 +101,8 @@ func (h *Handlers) Start() {
 		internal.POST("/channels/new", h.obsNewChannelSubmit)
 
 		internal.GET("/integrations", h.obsListIntegrations)
+		internal.GET("/integrations/unlink/youtube/:accountID", h.obsDeleteYouTubeIntegration)
+		internal.POST("/integrations/unlink/youtube/:accountID", h.obsDeleteYouTubeIntegrationConfirm)
 
 		// API endpoints
 		api := internal.Group("/api")
