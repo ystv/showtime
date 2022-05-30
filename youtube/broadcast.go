@@ -18,7 +18,7 @@ type (
 		BroadcastID   string `db:"broadcast_id"`
 		AccountID     int    `db:"account_id"`
 		IngestAddress string `db:"ingest_address"`
-		StreamName    string `db:"stream_name"`
+		IngestKey     string `db:"ingest_key"`
 	}
 )
 
@@ -164,7 +164,7 @@ func (y *YouTuber) ListBroadcasts(ctx context.Context) ([]Broadcast, error) {
 func (y *YouTube) GetBroadcastDetails(ctx context.Context, broadcastID string) (BroadcastDetails, error) {
 	details := BroadcastDetails{}
 	err := y.db.GetContext(ctx, &details, `
-		SELECT broadcast_id, account_id, ingest_address, stream_name
+		SELECT broadcast_id, account_id, ingest_address, ingest_key
 		FROM youtube_broadcasts
 		WHERE broadcast_id = $1;
 	`, broadcastID)
@@ -180,7 +180,7 @@ func (y *YouTube) GetBroadcastDetails(ctx context.Context, broadcastID string) (
 func (y *YouTuber) GetBroadcastDetails(ctx context.Context, broadcastID string) (BroadcastDetails, error) {
 	details := BroadcastDetails{}
 	err := y.db.GetContext(ctx, &details, `
-		SELECT broadcast_id, account_id, ingest_address, stream_name
+		SELECT broadcast_id, account_id, ingest_address, ingest_key
 		FROM youtube_broadcasts
 		WHERE broadcast_id = $1;
 	`, broadcastID)

@@ -173,36 +173,83 @@ func (h *Handlers) obsUnlinkFromMCR(c echo.Context) error {
 	return c.Render(http.StatusOK, "successful-unlink", c.Param("livestreamID"))
 }
 
-func (h *Handlers) obsLinkToYouTube(c echo.Context) error {
+func (h *Handlers) obsLinkToYouTubeSelectAccount(c echo.Context) error {
+	ctx := c.Request().Context()
 	strmID, err := strconv.Atoi(c.Param("livestreamID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	strm, err := h.ls.Get(c.Request().Context(), strmID)
+
+	strm, err := h.ls.Get(ctx, strmID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	broadcasts, err := h.yt.ListBroadcasts(c.Request().Context())
+	ch, err := h.yt.About(ctx)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	data := struct {
+		Livestream livestream.Livestream
+		Channels   []youtube.ChannelInfo
+	}{
+		Livestream: strm,
+		Channels:   ch,
+	}
+	return c.Render(http.StatusOK, "set-youtube-link-account", data)
+}
+
+func (h *Handlers) obsLinkToYouTubeSelectBroadcast(c echo.Context) error {
+	ctx := c.Request().Context()
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	strm, err := h.ls.Get(ctx, strmID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	accountID, err := strconv.Atoi(c.FormValue("accountID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	yt, err := h.yt.GetYouTuber(accountID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, err)
+	}
+
+	broadcasts, err := yt.ListBroadcasts(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get youtube broadcasts: %w", err)
 	}
 	data := struct {
+		AccountID  int
 		Livestream livestream.Livestream
 		Broadcasts []youtube.Broadcast
 	}{
+		AccountID:  accountID,
 		Livestream: strm,
 		Broadcasts: broadcasts,
 	}
-	return c.Render(http.StatusOK, "set-youtube-link", data)
+	return c.Render(http.StatusOK, "set-youtube-link-broadcast", data)
 }
 
 func (h *Handlers) obsLinkToYouTubeConfirm(c echo.Context) error {
 	ctx := c.Request().Context()
-	accountID, err := strconv.Atoi(c.Param("accountID"))
+
+	newExistingBroadcast := struct {
+		ID        string `form:"broadcastID"`
+		AccountID string `form:"accountID"`
+	}{}
+	err := c.Bind(&newExistingBroadcast)
+	if err != nil {
+		err = fmt.Errorf("failed to bind form response: %w", err)
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	accountID, err := strconv.Atoi(newExistingBroadcast.AccountID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	broadcastID := c.FormValue("broadcastID")
 	strmID, err := strconv.Atoi(c.Param("livestreamID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -213,11 +260,11 @@ func (h *Handlers) obsLinkToYouTubeConfirm(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, err)
 	}
 
-	err = yt.NewExistingBroadcast(ctx, broadcastID)
+	err = yt.NewExistingBroadcast(ctx, newExistingBroadcast.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	err = h.ls.UpdateYouTubeLink(ctx, strmID, broadcastID)
+	err = h.ls.UpdateYouTubeLink(ctx, strmID, newExistingBroadcast.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}

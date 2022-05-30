@@ -1,0 +1,33 @@
+{{ define "set-youtube-link-account" }}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Link {{ .Livestream.Title }} to YouTube</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css"
+/>
+<script
+  defer
+  src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"
+></script>
+  </head>
+  <body>
+  <div class="column has-text-centered">
+    <a href="/livestreams/{{ .Livestream.LivestreamID }}/manage">🔙 Back</a>
+    <h1 class="title">{{ .Livestream.Title }}</h1>
+    <form action="/livestreams/{{ .Livestream.LivestreamID }}/link/youtube" method="post">
+        <label for="accountID">Select a channel to link to:</label>
+        <select name="accountID">
+            {{ range .Channels }}
+                <option value="{{ .AccountID }}">{{ .Name }}</option>
+            {{ end }}
+        </select>
+        <input class="button" type="submit" value="Confirm channel" />
+    </form>
+    </div>
+  </body>
+</html>
+{{ end }}

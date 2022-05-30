@@ -38,7 +38,7 @@ func (ls *Livestreamer) Forward(ctx context.Context, strm ConsumeLivestream) err
 		}
 
 		srcURL := ls.ingestAddress + "/" + strm.StreamKey
-		dstURL := details.IngestAddress + "/" + details.StreamName
+		dstURL := details.IngestAddress + "/" + details.IngestKey
 
 		go func() {
 			time.Sleep(1 * time.Second)

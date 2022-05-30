@@ -92,7 +92,8 @@ func (h *Handlers) Start() {
 			strm.GET("/link/mcr", h.obsLinkToMCR)
 			strm.POST("/link/mcr/confirm", h.obsLinkToMCRConfirm)
 			strm.POST("/unlink/mcr/:linkID", h.obsUnlinkFromMCR)
-			strm.GET("/link/youtube", h.obsLinkToYouTube)
+			strm.GET("/link/youtube", h.obsLinkToYouTubeSelectAccount)
+			strm.POST("/link/youtube", h.obsLinkToYouTubeSelectBroadcast)
 			strm.POST("/link/youtube/confirm", h.obsLinkToYouTubeConfirm)
 			strm.POST("/unlink/youtube/:linkID", h.obsUnlinkFromYouTube)
 		}
