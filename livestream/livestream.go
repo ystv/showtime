@@ -21,7 +21,7 @@ type (
 		ingestAddress string
 		db            *sqlx.DB
 		mcr           *mcr.MCR
-		yt            *youtube.YouTuber
+		yt            *youtube.YouTube
 	}
 	// NewLivestream creates a new livestream.
 	NewLivestream struct {
@@ -58,7 +58,7 @@ CREATE TABLE livestreams(
 `
 
 // New creates an instance of livestreamer.
-func New(c Config, db *sqlx.DB, mcr *mcr.MCR, yt *youtube.YouTuber) *Livestreamer {
+func New(c Config, db *sqlx.DB, mcr *mcr.MCR, yt *youtube.YouTube) *Livestreamer {
 	return &Livestreamer{
 		ingestAddress: c.IngestAddress,
 		db:            db,

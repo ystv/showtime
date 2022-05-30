@@ -24,7 +24,7 @@ type (
 		auth      *auth.Auther
 		mcr       *mcr.MCR
 		ls        *livestream.Livestreamer
-		yt        *youtube.YouTuber
+		yt        *youtube.YouTube
 		mux       *echo.Echo
 	}
 
@@ -51,7 +51,7 @@ type (
 )
 
 // New creates a new handler instance.
-func New(conf *Config, auth *auth.Auther, ls *livestream.Livestreamer, mcr *mcr.MCR, yt *youtube.YouTuber, t *Templater) *Handlers {
+func New(conf *Config, auth *auth.Auther, ls *livestream.Livestreamer, mcr *mcr.MCR, yt *youtube.YouTube, t *Templater) *Handlers {
 	e := echo.New()
 	e.Renderer = t
 	e.Debug = conf.Debug
@@ -99,6 +99,8 @@ func (h *Handlers) Start() {
 		internal.GET("/channels", h.obsListChannels)
 		internal.GET("/channels/new", h.obsNewChannel)
 		internal.POST("/channels/new", h.obsNewChannelSubmit)
+
+		internal.GET("/integrations", h.obsListIntegrations)
 
 		// API endpoints
 		api := internal.Group("/api")

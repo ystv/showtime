@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"io/fs"
 	"log"
@@ -58,6 +59,11 @@ func main() {
 		},
 	}
 
+	db, err := db.New()
+	if err != nil {
+		log.Fatalf("unable to create database: %+v", err)
+	}
+
 	b, err := os.ReadFile("credentials.json")
 	if err != nil {
 		log.Fatalf("unable to read client secret file: %+v", err)
@@ -67,19 +73,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create youtube config: %+v", err)
 	}
-	auth := auth.NewAuther(ytConfig)
-
-	db, err := db.New()
-	if err != nil {
-		log.Fatalf("unable to create database: %+v", err)
-	}
+	auth := auth.NewAuther(db, ytConfig)
 
 	brave, err := brave.New(conf.brave)
 	if err != nil {
 		log.Fatalf("failed to create brave client: %+v", err)
 	}
 	mcr := mcr.NewMCR(db, brave)
-	yt, err := youtube.New(db, auth)
+	yt, err := youtube.New(context.Background(), db, auth)
 	if err != nil {
 		log.Fatalf("failed to create youtube client: %+v", err)
 	}

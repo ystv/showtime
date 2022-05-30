@@ -1,0 +1,42 @@
+{{ define "list-integrations" }}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Integrations</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css"
+/>
+<script
+  defer
+  src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"
+></script>
+  </head>
+  <body>
+    <div class="columns is-centered">
+      <div class="column is-half">
+        <div class="container">
+        <a href="/">🔙 Back</a>
+        <h1 class="title">Integrations</h1>
+        </div>
+        <nav class="panel">
+          <p class="panel-heading">YouTube</p>
+          {{ range .Integrations.YouTube  }}
+          <a target="_blank" href="{{ .Link }}" class="panel-block">
+            <span class="panel-icon">
+              <img src="{{ .Image }}">
+            </span>
+            {{ .Name }}
+          </a>
+          {{ end }}
+          <a href="/oauth/google/login" class="button is-link is-outlined is-fullwidth">
+            Add channel
+          </a>
+        </nav>
+      </div>
+    </div>
+  </body>
+</html>
+{{ end }}

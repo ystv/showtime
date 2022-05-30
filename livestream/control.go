@@ -30,7 +30,15 @@ func (ls *Livestreamer) Start(ctx context.Context, livestreamID int) error {
 	}
 
 	if strm.YouTubeLinkID != "" {
-		err = ls.yt.StartBroadcast(ctx, strm.YouTubeLinkID)
+		b, err := ls.yt.GetBroadcastDetails(ctx, strm.YouTubeLinkID)
+		if err != nil {
+			return fmt.Errorf("failed to get broadcast: %w", err)
+		}
+		yt, err := ls.yt.GetYouTuber(b.AccountID)
+		if err != nil {
+			return fmt.Errorf("failed to get youtuber: %w", err)
+		}
+		err = yt.StartBroadcast(ctx, strm.YouTubeLinkID)
 		if err != nil {
 			return fmt.Errorf("youtube failed to start broadcast: %w", err)
 		}
@@ -68,7 +76,15 @@ func (ls *Livestreamer) End(ctx context.Context, livestreamID int) error {
 	}
 
 	if strm.YouTubeLinkID != "" {
-		err = ls.yt.EndBroadcast(ctx, strm.YouTubeLinkID)
+		b, err := ls.yt.GetBroadcastDetails(ctx, strm.YouTubeLinkID)
+		if err != nil {
+			return fmt.Errorf("failed to get broadcast: %w", err)
+		}
+		yt, err := ls.yt.GetYouTuber(b.AccountID)
+		if err != nil {
+			return fmt.Errorf("failed to get youtuber: %w", err)
+		}
+		err = yt.EndBroadcast(ctx, strm.YouTubeLinkID)
 		if err != nil {
 			return fmt.Errorf("youtube failed to end broadcast: %w", err)
 		}

@@ -182,7 +182,7 @@ func (h *Handlers) obsLinkToYouTube(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	broadcasts, err := h.yt.GetBroadcasts(c.Request().Context())
+	broadcasts, err := h.yt.ListBroadcasts(c.Request().Context())
 	if err != nil {
 		return fmt.Errorf("failed to get youtube broadcasts: %w", err)
 	}
@@ -197,35 +197,52 @@ func (h *Handlers) obsLinkToYouTube(c echo.Context) error {
 }
 
 func (h *Handlers) obsLinkToYouTubeConfirm(c echo.Context) error {
-	err := h.yt.EnableShowTimeForBroadcast(c.Request().Context(), c.FormValue("broadcastID"))
+	ctx := c.Request().Context()
+	accountID, err := strconv.Atoi(c.Param("accountID"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
+	broadcastID := c.FormValue("broadcastID")
 	strmID, err := strconv.Atoi(c.Param("livestreamID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	err = h.ls.UpdateYouTubeLink(c.Request().Context(), strmID, c.FormValue("broadcastID"))
+
+	yt, err := h.yt.GetYouTuber(accountID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, err)
+	}
+
+	err = yt.NewExistingBroadcast(ctx, broadcastID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	return c.Render(http.StatusCreated, "successful-link", c.Param("livestreamID"))
+	err = h.ls.UpdateYouTubeLink(ctx, strmID, broadcastID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.Render(http.StatusCreated, "successful-link", strmID)
 }
 
 func (h *Handlers) obsUnlinkFromYouTube(c echo.Context) error {
-	err := h.yt.DisableShowTimeForBroadcast(c.Request().Context(), c.Param("linkID"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
+	ctx := c.Request().Context()
+	linkID := c.Param("linkID")
 	strmID, err := strconv.Atoi(c.Param("livestreamID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	err = h.ls.UpdateYouTubeLink(c.Request().Context(), strmID, "")
+
+	err = h.yt.DeleteExistingBroadcast(ctx, linkID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	return c.Render(http.StatusOK, "successful-unlink", c.Param("livestreamID"))
+	err = h.ls.UpdateYouTubeLink(ctx, strmID, "")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.Render(http.StatusOK, "successful-unlink", strmID)
 }
 
 func (h *Handlers) obsListChannels(c echo.Context) error {
@@ -256,4 +273,25 @@ func (h *Handlers) obsNewChannelSubmit(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	return h.obsListChannels(c)
+}
+
+type integrations struct {
+	YouTube []youtube.ChannelInfo
+}
+
+type listIntegrationsResponse struct {
+	Integrations integrations
+}
+
+func (h *Handlers) obsListIntegrations(c echo.Context) error {
+	info, err := h.yt.About(c.Request().Context())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	data := listIntegrationsResponse{
+		Integrations: integrations{
+			YouTube: info,
+		},
+	}
+	return c.Render(http.StatusOK, "list-integrations", data)
 }

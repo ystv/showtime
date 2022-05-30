@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/ystv/showtime/auth"
 	"github.com/ystv/showtime/db"
 	"github.com/ystv/showtime/livestream"
 	"github.com/ystv/showtime/mcr"
@@ -25,6 +26,10 @@ func main() {
 	_, err = db.ExecContext(ctx, mcr.Schema)
 	if err != nil {
 		log.Fatalf("failed to create channel schema: %+v", err)
+	}
+	_, err = db.ExecContext(ctx, auth.Schema)
+	if err != nil {
+		log.Fatalf("failed to create auth schema: %+v", err)
 	}
 	_, err = db.ExecContext(ctx, youtube.Schema)
 	if err != nil {
