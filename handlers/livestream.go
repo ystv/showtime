@@ -2,22 +2,23 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ystv/showtime/livestream"
 )
 
 func (h *Handlers) newLivestream(c echo.Context) error {
-	strm := livestream.NewLivestream{}
+	strm := livestream.EditLivestream{}
 	err := c.Bind(&strm)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	err = h.ls.New(c.Request().Context(), strm)
+	strmID, err := h.ls.New(c.Request().Context(), strm)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	return nil
+	return c.JSON(http.StatusCreated, strmID)
 }
 
 func (h *Handlers) listLivestreams(c echo.Context) error {
@@ -29,12 +30,16 @@ func (h *Handlers) listLivestreams(c echo.Context) error {
 }
 
 func (h *Handlers) updateLivestream(c echo.Context) error {
-	strm := livestream.Livestream{}
-	err := c.Bind(&strm)
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	err = h.ls.Update(c.Request().Context(), strm)
+	strm := livestream.EditLivestream{}
+	err = c.Bind(&strm)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	err = h.ls.Update(c.Request().Context(), strmID, strm)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}

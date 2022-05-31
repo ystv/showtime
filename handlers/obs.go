@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ystv/showtime/livestream"
@@ -39,17 +40,64 @@ func (h *Handlers) obsNewLivestream(c echo.Context) error {
 	return c.Render(http.StatusOK, "new-livestream", nil)
 }
 
+type (
+	newLivestreamForm struct {
+		Fields NewLivestreamFormFields
+		Errors []string
+	}
+	// NewLivestreamFormFields are fields on the form.
+	NewLivestreamFormFields struct {
+		Title          string `form:"title"`
+		Description    string `form:"description"`
+		ScheduledStart string `form:"scheduledStart"`
+		ScheduledEnd   string `form:"scheduledEnd"`
+		Visibility     string `form:"visibility"`
+	}
+)
+
 func (h *Handlers) obsNewLivestreamSubmit(c echo.Context) error {
-	strm := livestream.NewLivestream{}
-	err := c.Bind(&strm)
+	form := newLivestreamForm{}
+
+	err := c.Bind(&form.Fields)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		form.Errors = append(form.Errors, err.Error())
+		return c.Render(http.StatusBadRequest, "new-livestream", form)
 	}
-	err = h.ls.New(c.Request().Context(), strm)
+
+	if form.Fields.ScheduledStart == "" {
+		form.Errors = append(form.Errors, "scheduled start is required")
+	}
+	if form.Fields.ScheduledEnd == "" {
+		form.Errors = append(form.Errors, "scheduled end is required")
+	}
+
+	if len(form.Errors) != 0 {
+		return c.Render(http.StatusBadRequest, "new-livestream", form)
+	}
+	scheduledStart, err := time.Parse(time.RFC3339, form.Fields.ScheduledStart+":00Z")
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		form.Errors = append(form.Errors, err.Error())
+		return c.Render(http.StatusBadRequest, "new-livestream", form)
 	}
-	return h.obsListLivestreams(c)
+	scheduledEnd, err := time.Parse(time.RFC3339, fmt.Sprintf("%s:00Z", form.Fields.ScheduledEnd))
+	if err != nil {
+		form.Errors = append(form.Errors, err.Error())
+		return c.Render(http.StatusBadRequest, "new-livestream", form)
+	}
+
+	strm := livestream.EditLivestream{
+		Title:          form.Fields.Title,
+		Description:    form.Fields.Description,
+		ScheduledStart: scheduledStart,
+		ScheduledEnd:   scheduledEnd,
+		Visibility:     form.Fields.Visibility,
+	}
+	strmID, err := h.ls.New(c.Request().Context(), strm)
+	if err != nil {
+		form.Errors = append(form.Errors, err.Error())
+		return c.Render(http.StatusBadRequest, "new-livestream", form)
+	}
+	return c.Redirect(http.StatusFound, fmt.Sprintf("/livestreams/%d", strmID))
 }
 
 func (h *Handlers) obsStartLivestream(c echo.Context) error {
