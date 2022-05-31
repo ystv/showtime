@@ -37,16 +37,47 @@ func (h *Handlers) obsGetLivestream(c echo.Context) error {
 }
 
 func (h *Handlers) obsNewLivestream(c echo.Context) error {
-	return c.Render(http.StatusOK, "new-livestream", nil)
+	return c.Render(http.StatusOK, "edit-livestream", editLivestreamForm{
+		Title:  "New",
+		Action: "Create",
+	})
+}
+
+func (h *Handlers) obsEditLivestream(c echo.Context) error {
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	strm, err := h.ls.Get(c.Request().Context(), strmID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.Render(http.StatusOK, "edit-livestream", editLivestreamForm{
+		Fields: EditLivestreamFormFields{
+			Title:          strm.Title,
+			Description:    strm.Description,
+			ScheduledStart: strm.ScheduledStart.Format("2006-01-02T15:04"),
+			ScheduledEnd:   strm.ScheduledEnd.Format("2006-01-02T15:04"),
+			Visibility:     strm.Visibility,
+		},
+		ID:     strmID,
+		Title:  "Edit",
+		Action: "Save",
+	})
 }
 
 type (
-	newLivestreamForm struct {
-		Fields NewLivestreamFormFields
+	editLivestreamForm struct {
+		Fields EditLivestreamFormFields
+		ID     int
+		Title  string
+		Action string
 		Errors []string
 	}
-	// NewLivestreamFormFields are fields on the form.
-	NewLivestreamFormFields struct {
+	// EditLivestreamFormFields are fields on the form.
+	EditLivestreamFormFields struct {
 		Title          string `form:"title"`
 		Description    string `form:"description"`
 		ScheduledStart string `form:"scheduledStart"`
@@ -56,12 +87,15 @@ type (
 )
 
 func (h *Handlers) obsNewLivestreamSubmit(c echo.Context) error {
-	form := newLivestreamForm{}
+	form := editLivestreamForm{
+		Title:  "New",
+		Action: "Create",
+	}
 
 	err := c.Bind(&form.Fields)
 	if err != nil {
 		form.Errors = append(form.Errors, err.Error())
-		return c.Render(http.StatusBadRequest, "new-livestream", form)
+		return c.Render(http.StatusBadRequest, "edit-livestream", form)
 	}
 
 	if form.Fields.ScheduledStart == "" {
@@ -72,17 +106,17 @@ func (h *Handlers) obsNewLivestreamSubmit(c echo.Context) error {
 	}
 
 	if len(form.Errors) != 0 {
-		return c.Render(http.StatusBadRequest, "new-livestream", form)
+		return c.Render(http.StatusBadRequest, "edit-livestream", form)
 	}
 	scheduledStart, err := time.Parse(time.RFC3339, form.Fields.ScheduledStart+":00Z")
 	if err != nil {
 		form.Errors = append(form.Errors, err.Error())
-		return c.Render(http.StatusBadRequest, "new-livestream", form)
+		return c.Render(http.StatusBadRequest, "edit-livestream", form)
 	}
 	scheduledEnd, err := time.Parse(time.RFC3339, fmt.Sprintf("%s:00Z", form.Fields.ScheduledEnd))
 	if err != nil {
 		form.Errors = append(form.Errors, err.Error())
-		return c.Render(http.StatusBadRequest, "new-livestream", form)
+		return c.Render(http.StatusBadRequest, "edit-livestream", form)
 	}
 
 	strm := livestream.EditLivestream{
@@ -95,7 +129,60 @@ func (h *Handlers) obsNewLivestreamSubmit(c echo.Context) error {
 	strmID, err := h.ls.New(c.Request().Context(), strm)
 	if err != nil {
 		form.Errors = append(form.Errors, err.Error())
-		return c.Render(http.StatusBadRequest, "new-livestream", form)
+		return c.Render(http.StatusBadRequest, "edit-livestream", form)
+	}
+	return c.Redirect(http.StatusFound, fmt.Sprintf("/livestreams/%d", strmID))
+}
+
+func (h *Handlers) obsEditLivestreamSubmit(c echo.Context) error {
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	form := editLivestreamForm{
+		ID:     strmID,
+		Title:  "Edit",
+		Action: "Save",
+	}
+
+	err = c.Bind(&form.Fields)
+	if err != nil {
+		form.Errors = append(form.Errors, err.Error())
+		return c.Render(http.StatusBadRequest, "edit-livestream", form)
+	}
+
+	if form.Fields.ScheduledStart == "" {
+		form.Errors = append(form.Errors, "scheduled start is required")
+	}
+	if form.Fields.ScheduledEnd == "" {
+		form.Errors = append(form.Errors, "scheduled end is required")
+	}
+
+	if len(form.Errors) != 0 {
+		return c.Render(http.StatusBadRequest, "edit-livestream", form)
+	}
+	scheduledStart, err := time.Parse(time.RFC3339, form.Fields.ScheduledStart+":00Z")
+	if err != nil {
+		form.Errors = append(form.Errors, err.Error())
+		return c.Render(http.StatusBadRequest, "edit-livestream", form)
+	}
+	scheduledEnd, err := time.Parse(time.RFC3339, fmt.Sprintf("%s:00Z", form.Fields.ScheduledEnd))
+	if err != nil {
+		form.Errors = append(form.Errors, err.Error())
+		return c.Render(http.StatusBadRequest, "edit-livestream", form)
+	}
+
+	strm := livestream.EditLivestream{
+		Title:          form.Fields.Title,
+		Description:    form.Fields.Description,
+		ScheduledStart: scheduledStart,
+		ScheduledEnd:   scheduledEnd,
+		Visibility:     form.Fields.Visibility,
+	}
+	err = h.ls.Update(c.Request().Context(), strmID, strm)
+	if err != nil {
+		form.Errors = append(form.Errors, err.Error())
+		return c.Render(http.StatusBadRequest, "edit-livestream", form)
 	}
 	return c.Redirect(http.StatusFound, fmt.Sprintf("/livestreams/%d", strmID))
 }

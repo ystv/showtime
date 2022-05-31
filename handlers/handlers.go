@@ -86,8 +86,10 @@ func (h *Handlers) Start() {
 		strm := internal.Group("/livestreams/:livestreamID")
 		{
 			strm.GET("", h.obsGetLivestream)
-			strm.POST("/start", h.obsStartLivestream)
-			strm.POST("/end", h.obsEndLivestream)
+			strm.GET("/start", h.obsStartLivestream)
+			strm.GET("/end", h.obsEndLivestream)
+			strm.GET("/edit", h.obsEditLivestream)
+			strm.POST("/edit", h.obsEditLivestreamSubmit)
 			strm.GET("/manage", h.obsManageLivestream)
 			strm.GET("/link/mcr", h.obsLinkToMCR)
 			strm.POST("/link/mcr/confirm", h.obsLinkToMCRConfirm)

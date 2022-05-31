@@ -44,7 +44,7 @@ type (
 		Description    string    `db:"description" json:"description"`
 		ScheduledStart time.Time `db:"scheduled_start" json:"scheduledStart"`
 		ScheduledEnd   time.Time `db:"scheduled_end" json:"scheduledEnd"`
-		Visibility     string    `db:"visbility" json:"visbility"`
+		Visibility     string    `db:"visibility" json:"visbility"`
 		MCRLinkID      string    `db:"mcr_link_id" json:"mcrLinkID"`         // MCR's playoutID
 		YouTubeLinkID  string    `db:"youtube_link_id" json:"youtubeLinkID"` // YT's broadcastID
 	}
@@ -64,8 +64,8 @@ CREATE TABLE livestreams(
 	stream_key text NOT NULL UNIQUE,
 	title text NOT NULL,
 	description text NOT NULL,
-	scheduled_start text NOT NULL,
-	scheduled_end text NOT NULL,
+	scheduled_start datetime NOT NULL,
+	scheduled_end datetime NOT NULL,
 	visibility text NOT NULL,
 	mcr_link_id text NOT NULL,
 	youtube_link_id text NOT NULL
@@ -143,7 +143,8 @@ func (ls *Livestreamer) New(ctx context.Context, strm EditLivestream) (int, erro
 func (ls *Livestreamer) Get(ctx context.Context, livestreamID int) (Livestream, error) {
 	strm := Livestream{}
 	err := ls.db.GetContext(ctx, &strm, `
-		SELECT livestream_id, stream_key, status, title, mcr_link_id, youtube_link_id
+		SELECT livestream_id, stream_key, status, title, description, scheduled_start,
+					 scheduled_end, visibility, mcr_link_id, youtube_link_id
 		FROM livestreams
 		WHERE livestream_id  = $1;
 	`, livestreamID)
@@ -168,6 +169,24 @@ func (ls *Livestreamer) List(ctx context.Context) ([]Livestream, error) {
 
 // Update a livestream.
 func (ls *Livestreamer) Update(ctx context.Context, livestreamID int, strm EditLivestream) error {
+	if strm.Title == "" {
+		return ErrTitleEmpty
+	}
+	if len(strm.Title) > 100 {
+		return ErrTitleTooLong
+	}
+	if len(strm.Description) > 5000 {
+		return ErrDescriptionTooLong
+	}
+	if strm.Visibility != "public" && strm.Visibility != "unlisted" && strm.Visibility != "private" {
+		return ErrVisibilityInvalid
+	}
+	if !strm.ScheduledStart.Before(strm.ScheduledEnd) {
+		return ErrStartAfterEnd
+	}
+	if strm.ScheduledStart.Before(time.Now()) {
+		return ErrStartInPast
+	}
 	_, err := ls.db.ExecContext(ctx, `
 		UPDATE livestreams SET
 			title = $1,
@@ -175,7 +194,7 @@ func (ls *Livestreamer) Update(ctx context.Context, livestreamID int, strm EditL
 			scheduled_start = $3,
 			scheduled_end = $4,
 			visibility = $5
-		WHERE playout_id = $6;`, strm.Title, strm.Description, strm.ScheduledStart,
+		WHERE livestream_id = $6;`, strm.Title, strm.Description, strm.ScheduledStart,
 		strm.ScheduledEnd, strm.Visibility, livestreamID)
 	if err != nil {
 		return fmt.Errorf("failed to update livestream: %w", err)

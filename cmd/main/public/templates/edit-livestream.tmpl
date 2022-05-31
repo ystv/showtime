@@ -1,8 +1,8 @@
-{{ define "new-livestream" }}
+{{ define "edit-livestream" }}
 <!DOCTYPE html>
 <html>
   <head>
-    <title>New livestream</title>
+    <title>{{ .Title }} livestream</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link
@@ -16,8 +16,8 @@
   </head>
   <body>
   <div class="column has-text-centered">
-    <h1 class="title">New livestream</h1>
-    <form action="/livestreams/new" method="post">
+    <h1 class="title">{{ .Title }} livestream</h1>
+    <form method="post">
       <div class="field">
         <label class="label" for="title">Title</label>
         <div class="control">
@@ -54,10 +54,10 @@
       </div>
       <div class="field is-grouped">
         <div class="control">
-          <a href="/livestreams" class="input is-link is-light">Cancel</a>
+          <a href="/livestreams{{ if eq .Action "Save" }}/{{ .ID }}{{ end }}" class="input is-link is-light">Cancel</a>
         </div>
         <div class="control">
-          <input class="button is-link" type="submit" value="Create" />
+          <input class="button is-link" type="submit" value="{{ .Action }}" />
         </div>
       </div>
     </form>
