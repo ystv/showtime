@@ -139,7 +139,11 @@ func newContinuityCard(card newContinuityCardParams) error {
 		return fmt.Errorf("failed to load font face: %w", err)
 	}
 
-	dc.DrawStringAnchored("Upcoming content", float64(card.X)/2, float64(card.Y)/2-float64(card.Y)/8, 0.5, 0.5)
+	if len(card.Playouts) != 0 {
+		dc.DrawStringAnchored("Upcoming content", float64(card.X)/2, float64(card.Y)/2-float64(card.Y)/8, 0.5, 0.5)
+	} else {
+		dc.DrawStringAnchored("No content scheduled right now, check back soon!", float64(card.X)/2, float64(card.Y)/2+float64(card.Y)/8, 0.5, 0.5)
+	}
 
 	yPos := float64(card.Y) / 2
 
