@@ -10,12 +10,22 @@ import (
 	"net/url"
 )
 
+// NewMixerParams are fields configuring the mixer.
+type NewMixerParams struct {
+	Width  int
+	Height int
+}
+
 // NewMixer creates a mixer object in brave and returns it's ID.
-func (b *Braver) NewMixer(ctx context.Context) (Mixer, error) {
+func (b *Braver) NewMixer(ctx context.Context, p NewMixerParams) (Mixer, error) {
 	data := struct {
 		Pattern string `json:"pattern"`
+		Width   int    `json:"width"`
+		Height  int    `json:"height"`
 	}{
 		Pattern: "0",
+		Width:   p.Width,
+		Height:  p.Height,
 	}
 
 	body, err := json.Marshal(data)

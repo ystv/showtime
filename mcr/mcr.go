@@ -2,6 +2,8 @@ package mcr
 
 import (
 	"errors"
+	"fmt"
+	"net/url"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/ystv/showtime/brave"
@@ -10,8 +12,13 @@ import (
 type (
 	// MCR manages multiple channels.
 	MCR struct {
-		db    *sqlx.DB
-		brave *brave.Braver
+		baseServeURL *url.URL
+		db           *sqlx.DB
+		brave        *brave.Braver
+	}
+	// Config to configure Brave.
+	Config struct {
+		BaseServeURL string
 	}
 )
 
@@ -31,7 +38,11 @@ var Schema = `
 CREATE TABLE channels (
 	channel_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
 	title text NOT NULL,
-	mixer_id integer NOT NULL
+	res_width integer NOT NULL,
+	res_height integer NOT NULL,
+	mixer_id integer NOT NULL,
+	program_input_id integer NOT NULL,
+	continuity_input_id integer NOT NULL
 );
 
 CREATE TABLE playouts (
@@ -51,9 +62,14 @@ CREATE TABLE playouts (
 `
 
 // NewMCR creates a new channel manager.
-func NewMCR(db *sqlx.DB, brave *brave.Braver) *MCR {
-	return &MCR{
-		db:    db,
-		brave: brave,
+func NewMCR(c *Config, db *sqlx.DB, brave *brave.Braver) (*MCR, error) {
+	u, err := url.Parse(c.BaseServeURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid serve url: %w", err)
 	}
+	return &MCR{
+		baseServeURL: u,
+		db:           db,
+		brave:        brave,
+	}, nil
 }

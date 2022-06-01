@@ -17,6 +17,9 @@ ST_DEBUG=true or false
 # Nginx RTMP live application that is configured with a hook to ShowTime!
 ST_INGEST_ADDR=rtmp://stream.example.com/ingest
 
+# Address of where ShowTime! is being run, allows Brave to pull assets
+ST_BASE_SERVE_ADDR=example.com
+
 # Brave instance to support redundancy and channels
 ST_BRAVE_ADDR=brave.example.com
 
@@ -36,6 +39,19 @@ go run cmd/init/init.go
 ```
 
 A new sqlite database "showtime.db" will appear in the working directory.
+
+Create the folder structure to serve assets.
+
+```sh
+mkdir -p assets/ch
+```
+
+Add an image in the last directory that will be used for channel backgrounds
+and save it as:
+
+```
+0-card-bg.jpg
+```
 
 ## Running
 

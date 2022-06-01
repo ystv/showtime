@@ -24,6 +24,7 @@ var content embed.FS
 // Config for ShowTime!
 type Config struct {
 	livestream livestream.Config
+	mcr        *mcr.Config
 	brave      brave.Config
 	handlers   *handlers.Config
 }
@@ -46,6 +47,9 @@ func main() {
 	conf := Config{
 		livestream: livestream.Config{
 			IngestAddress: os.Getenv("ST_INGEST_ADDR"),
+		},
+		mcr: &mcr.Config{
+			BaseServeURL: os.Getenv("ST_BASE_SERVE_ADDR"),
 		},
 		brave: brave.Config{
 			Endpoint: os.Getenv("ST_BRAVE_ADDR"),
@@ -79,7 +83,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create brave client: %+v", err)
 	}
-	mcr := mcr.NewMCR(db, brave)
+	mcr, err := mcr.NewMCR(conf.mcr, db, brave)
+	if err != nil {
+		log.Fatalf("failed to create mcr: %+v", err)
+	}
 	yt, err := youtube.New(context.Background(), db, auth)
 	if err != nil {
 		log.Fatalf("failed to create youtube client: %+v", err)

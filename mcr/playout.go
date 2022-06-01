@@ -3,6 +3,7 @@ package mcr
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -91,7 +92,7 @@ func (mcr *MCR) PlayPlayoutSource(ctx context.Context, po Playout) error {
 // NewPlayout creates a new playout on a channel.
 func (mcr *MCR) NewPlayout(ctx context.Context, po NewPlayout) (int, error) {
 	if po.ChannelID == "" {
-		return 0, ErrSrcURIEmpty
+		return 0, ErrChannelIDEmpty
 	}
 	if po.SrcURI == "" {
 		return 0, ErrSrcURIEmpty
@@ -101,6 +102,11 @@ func (mcr *MCR) NewPlayout(ctx context.Context, po NewPlayout) (int, error) {
 	}
 	if po.Visibility == "" {
 		return 0, ErrVisibilityEmpty
+	}
+
+	channelID, err := strconv.Atoi(po.ChannelID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to convert channel id: %w", err)
 	}
 
 	input, err := mcr.brave.NewURIInput(ctx, po.SrcURI)
@@ -121,6 +127,12 @@ func (mcr *MCR) NewPlayout(ctx context.Context, po NewPlayout) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert playout: %w", err)
 	}
+
+	err = mcr.refreshContinuityCard(ctx, channelID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to refresh continuity card: %w", err)
+	}
+
 	return playoutID, nil
 }
 
@@ -141,11 +153,17 @@ func (mcr *MCR) GetPlayout(ctx context.Context, playoutID int) (Playout, error) 
 
 // DeletePlayout removes a playout.
 func (mcr *MCR) DeletePlayout(ctx context.Context, playoutID int) error {
-	_, err := mcr.db.ExecContext(ctx, `
+	channelID := 0
+	err := mcr.db.GetContext(ctx, &channelID, `
 		DELETE FROM playouts
-		WHERE playout_id = $1;`, playoutID)
+		WHERE playout_id = $1
+		RETURNING channel_id;`, playoutID)
 	if err != nil {
 		return fmt.Errorf("failed to delete playout: %w", err)
+	}
+	err = mcr.refreshContinuityCard(ctx, channelID)
+	if err != nil {
+		return fmt.Errorf("failed to refresh continuity card: %w", err)
 	}
 	return nil
 }

@@ -124,6 +124,7 @@ func (h *Handlers) Start() {
 	h.mux.POST("/api/nginx/hook", h.hookStreamStart)
 	h.mux.GET("/oauth/google/login", h.loginGoogle)
 	h.mux.GET("/oauth/google/callback", h.callbackGoogle)
+	h.mux.Static("/assets", "assets")
 
 	corsConfig := middleware.CORSConfig{
 		AllowCredentials: true,
