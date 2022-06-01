@@ -3,26 +3,33 @@ package mcr
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 type (
 	// Playout are the individual media streams that make up a channel.
 	Playout struct {
-		ID           int    `db:"playout_id" json:"playoutID"`
-		ChannelID    int    `db:"channel_id" json:"channelID"`
-		BraveInputID int    `db:"brave_input_id" json:"braveInputID"`
-		SrcType      string `db:"source_type" json:"srcType"`
-		SrcURI       string `db:"source_uri" json:"srcURI"`
-		Title        string `db:"title" json:"title"`
-		Visibility   string `db:"visibility" json:"visibility"`
-		Status       string `db:"status" json:"status"`
+		ID             int       `db:"playout_id" json:"playoutID"`
+		ChannelID      int       `db:"channel_id" json:"channelID"`
+		BraveInputID   int       `db:"brave_input_id" json:"braveInputID"`
+		SrcType        string    `db:"source_type" json:"srcType"`
+		SrcURI         string    `db:"source_uri" json:"srcURI"`
+		Status         string    `db:"status" json:"status"`
+		Title          string    `db:"title" json:"title"`
+		Description    string    `db:"description" json:"description"`
+		ScheduledStart time.Time `db:"scheduled_start" json:"scheduledStart"`
+		ScheduledEnd   time.Time `db:"scheduled_end" json:"scheduledEnd"`
+		Visibility     string    `db:"visibility" json:"visibility"`
 	}
 	// NewPlayout creates a new playout on a given channel.
 	NewPlayout struct {
-		ChannelID  string `json:"channelID" form:"channelID"`
-		SrcURI     string `json:"srcURI" form:"srcURI"`
-		Title      string `json:"title" form:"title"`
-		Visibility string `json:"visibility" form:"visibility"`
+		ChannelID      string    `json:"channelID" form:"channelID"`
+		SrcURI         string    `json:"srcURI" form:"srcURI"`
+		Title          string    `json:"title" form:"title"`
+		Description    string    `json:"description" form:"description"`
+		ScheduledStart time.Time `json:"scheduledStart" form:"scheduledStart"`
+		ScheduledEnd   time.Time `json:"scheduledEnd" form:"scheduledEnd"`
+		Visibility     string    `json:"visibility" form:"visibility"`
 	}
 )
 
@@ -40,9 +47,8 @@ func (mcr *MCR) StartPlayout(ctx context.Context, po Playout) error {
 
 	_, err = mcr.db.ExecContext(ctx, `
 		UPDATE playouts
-		SET
-			status = 'live'
-		WHERE playout_id = $1
+		SET status = 'live'
+		WHERE playout_id = $1;
 	`, po.ID)
 	if err != nil {
 		return fmt.Errorf("failed to update status: %w", err)
@@ -105,10 +111,13 @@ func (mcr *MCR) NewPlayout(ctx context.Context, po NewPlayout) (int, error) {
 	playoutID := 0
 	err = mcr.db.GetContext(ctx, &playoutID, `
 		INSERT INTO playouts (
-			brave_input_id, channel_id, source_type, source_uri, title, visibility, status
+			brave_input_id, channel_id, source_type, source_uri, status, title,
+			description, scheduled_start, scheduled_end, visibility
 		)
-		VALUES ($1, $2, 'live', $3, $4, $5, 'scheduled')
-		RETURNING playout_id;`, input.ID, po.ChannelID, po.SrcURI, po.Title, po.Visibility)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		RETURNING playout_id;`,
+		input.ID, po.ChannelID, "uri", po.SrcURI, "scheduled", po.Title,
+		po.Description, po.ScheduledStart, po.ScheduledEnd, po.Visibility)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert playout: %w", err)
 	}
@@ -119,7 +128,9 @@ func (mcr *MCR) NewPlayout(ctx context.Context, po NewPlayout) (int, error) {
 func (mcr *MCR) GetPlayout(ctx context.Context, playoutID int) (Playout, error) {
 	po := Playout{}
 	err := mcr.db.GetContext(ctx, &po, `
-		SELECT playout_id, brave_input_id, channel_id, source_uri, title 
+		SELECT
+			brave_input_id, channel_id, source_type, source_uri, status, title,
+			description, scheduled_start, scheduled_end, visibility
 		FROM playouts
 		WHERE playout_id  = $1;`, playoutID)
 	if err != nil {

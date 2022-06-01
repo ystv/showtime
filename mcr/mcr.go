@@ -40,9 +40,12 @@ CREATE TABLE playouts (
 	brave_input_id integer NOT NULL,
 	source_type text NOT NULL,
 	source_uri text NOT NULL,
-	title text NOT NULL,
-	visibility text NOT NULL,
 	status text NOT NULL,
+	title text NOT NULL,
+	description text NOT NULL,
+	scheduled_start datetime NOT NULL,
+	scheduled_end datetime NOT NULL,
+	visibility text NOT NULL,
 	FOREIGN KEY(channel_id) REFERENCES channels(channel_id)
 );
 `
