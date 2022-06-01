@@ -153,15 +153,24 @@ func (mcr *MCR) GetPlayout(ctx context.Context, playoutID int) (Playout, error) 
 
 // DeletePlayout removes a playout.
 func (mcr *MCR) DeletePlayout(ctx context.Context, playoutID int) error {
-	channelID := 0
-	err := mcr.db.GetContext(ctx, &channelID, `
-		DELETE FROM playouts
-		WHERE playout_id = $1
-		RETURNING channel_id;`, playoutID)
+	po, err := mcr.GetPlayout(ctx, playoutID)
 	if err != nil {
-		return fmt.Errorf("failed to delete playout: %w", err)
+		return fmt.Errorf("failed to get playout: %w", err)
 	}
-	err = mcr.refreshContinuityCard(ctx, channelID)
+
+	_, err = mcr.db.ExecContext(ctx, `
+		DELETE FROM playouts
+		WHERE playout_id = $1;`, playoutID)
+	if err != nil {
+		return fmt.Errorf("failed to delete playout from store: %w", err)
+	}
+
+	err = mcr.brave.DeleteInput(ctx, po.BraveInputID)
+	if err != nil {
+		return fmt.Errorf("failed to delete input from brave: %w", err)
+	}
+
+	err = mcr.refreshContinuityCard(ctx, po.ChannelID)
 	if err != nil {
 		return fmt.Errorf("failed to refresh continuity card: %w", err)
 	}
