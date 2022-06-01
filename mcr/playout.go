@@ -59,7 +59,23 @@ func (mcr *MCR) StartPlayout(ctx context.Context, po Playout) error {
 
 // EndPlayout triggers a playout to stopped being played on a channel.
 func (mcr *MCR) EndPlayout(ctx context.Context, po Playout) error {
-	err := mcr.brave.DeleteInput(ctx, po.BraveInputID)
+	// TODO: Re-approach this.
+
+	continuityInputID := 0
+	err := mcr.db.GetContext(ctx, &continuityInputID, `
+		SELECT continuity_input_id
+		FROM channels
+		WHERE channel_id = $1;`, po.ChannelID)
+	if err != nil {
+		return fmt.Errorf("failed to get continuity input id: %w", err)
+	}
+
+	err = mcr.setChannelProgram(ctx, po.ChannelID, continuityInputID)
+	if err != nil {
+		return fmt.Errorf("failed to set channel program to continuity: %w", err)
+	}
+
+	err = mcr.brave.DeleteInput(ctx, po.BraveInputID)
 	if err != nil {
 		return fmt.Errorf("failed to delete input: %w", err)
 	}
