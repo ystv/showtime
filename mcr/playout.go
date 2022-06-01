@@ -41,7 +41,7 @@ func (mcr *MCR) StartPlayout(ctx context.Context, po Playout) error {
 		return fmt.Errorf("failed to get channel: %w", err)
 	}
 
-	err = mcr.brave.CutMixerToInput(ctx, ch.MixerID, po.BraveInputID)
+	err = mcr.setChannelProgram(ctx, po.ChannelID, po.BraveInputID)
 	if err != nil {
 		return fmt.Errorf("failed to cut mixer \"%d\" to input \"%d\": %w", ch.MixerID, po.BraveInputID, err)
 	}

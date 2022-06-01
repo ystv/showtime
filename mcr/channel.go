@@ -23,6 +23,28 @@ type (
 	}
 )
 
+// setChannelProgram
+func (mcr *MCR) setChannelProgram(ctx context.Context, channelID int, inputID int) error {
+	mixerID := 0
+	err := mcr.db.GetContext(ctx, &mixerID, `
+		SELECT mixer_id
+		FROM channels
+		WHERE channel_id = $1`, channelID)
+	err = mcr.brave.CutMixerToInput(ctx, mixerID, inputID)
+	if err != nil {
+		return fmt.Errorf("failed to cut mixer to input: %w", err)
+	}
+	_, err = mcr.db.ExecContext(ctx, `
+		UPDATE channels
+			SET program_input_id = $1
+		WHERE channel_id = $2;
+	`, inputID, channelID)
+	if err != nil {
+		return fmt.Errorf("failed to update program input in store: %w", err)
+	}
+	return nil
+}
+
 // NewChannel creates a new channel including a mixer.
 func (mcr *MCR) NewChannel(ctx context.Context, ch NewChannel) (int, error) {
 	if len(ch.Title) == 0 {

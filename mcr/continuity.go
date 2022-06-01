@@ -65,9 +65,9 @@ func (mcr *MCR) refreshContinuityCard(ctx context.Context, channelID int) error 
 	// If there is no currently an input or the continuity card is on, update
 	// channel's program.
 	if cr.ProgramInputID == 0 || cr.ProgramInputID == cr.ContinuityInputID {
-		err = mcr.brave.CutMixerToInput(ctx, cr.MixerID, i.ID)
+		err = mcr.setChannelProgram(ctx, channelID, i.ID)
 		if err != nil {
-			return fmt.Errorf("failed to cut mixer to input: %w", err)
+			return fmt.Errorf("failed to set channel program: %w", err)
 		}
 	}
 
