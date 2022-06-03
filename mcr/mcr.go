@@ -23,8 +23,8 @@ type (
 )
 
 var (
-	// ErrChannelIDEmpty validation error when channel ID is empty.
-	ErrChannelIDEmpty = errors.New("channel id is empty")
+	// ErrChannelIDInvalid validation error when channel ID is invalid i.e. 0.
+	ErrChannelIDInvalid = errors.New("channel id is invalid")
 	// ErrSrcURIEmpty validation error when source URI is empty.
 	ErrSrcURIEmpty = errors.New("source uri is empty")
 	// ErrTitleEmpty validation error when title is empty.

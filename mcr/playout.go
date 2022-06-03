@@ -2,8 +2,8 @@ package mcr
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strconv"
 	"time"
 )
 
@@ -22,9 +22,9 @@ type (
 		ScheduledEnd   time.Time `db:"scheduled_end" json:"scheduledEnd"`
 		Visibility     string    `db:"visibility" json:"visibility"`
 	}
-	// NewPlayout creates a new playout on a given channel.
-	NewPlayout struct {
-		ChannelID      string    `json:"channelID" form:"channelID"`
+	// EditPlayout creates or updates a playout on a given channel.
+	EditPlayout struct {
+		ChannelID      int       `json:"channelID" form:"channelID"`
 		SrcURI         string    `json:"srcURI" form:"srcURI"`
 		Title          string    `json:"title" form:"title"`
 		Description    string    `json:"description" form:"description"`
@@ -32,6 +32,11 @@ type (
 		ScheduledEnd   time.Time `json:"scheduledEnd" form:"scheduledEnd"`
 		Visibility     string    `json:"visibility" form:"visibility"`
 	}
+)
+
+var (
+	// ErrSourceOnAir when a source is currently live, it cannot be removed.
+	ErrSourceOnAir = errors.New("cannot remove source that is on air")
 )
 
 // StartPlayout triggers a playout to be played on a channel.
@@ -54,6 +59,12 @@ func (mcr *MCR) StartPlayout(ctx context.Context, po Playout) error {
 	if err != nil {
 		return fmt.Errorf("failed to update status: %w", err)
 	}
+
+	err = mcr.refreshContinuityCard(ctx, po.ChannelID)
+	if err != nil {
+		return fmt.Errorf("failed to refresh continuity card: %w", err)
+	}
+
 	return nil
 }
 
@@ -85,7 +96,7 @@ func (mcr *MCR) EndPlayout(ctx context.Context, po Playout) error {
 		SET
 			brave_input_id = 0,
 			status = 'stream-ended'
-		WHERE playout_id = $1
+		WHERE playout_id = $1;
 	`, po.ID)
 	if err != nil {
 		return fmt.Errorf("failed to update status: %w", err)
@@ -106,9 +117,9 @@ func (mcr *MCR) PlayPlayoutSource(ctx context.Context, po Playout) error {
 }
 
 // NewPlayout creates a new playout on a channel.
-func (mcr *MCR) NewPlayout(ctx context.Context, po NewPlayout) (int, error) {
-	if po.ChannelID == "" {
-		return 0, ErrChannelIDEmpty
+func (mcr *MCR) NewPlayout(ctx context.Context, po EditPlayout) (int, error) {
+	if po.ChannelID == 0 {
+		return 0, ErrChannelIDInvalid
 	}
 	if po.SrcURI == "" {
 		return 0, ErrSrcURIEmpty
@@ -118,11 +129,6 @@ func (mcr *MCR) NewPlayout(ctx context.Context, po NewPlayout) (int, error) {
 	}
 	if po.Visibility == "" {
 		return 0, ErrVisibilityEmpty
-	}
-
-	channelID, err := strconv.Atoi(po.ChannelID)
-	if err != nil {
-		return 0, fmt.Errorf("failed to convert channel id: %w", err)
 	}
 
 	input, err := mcr.brave.NewURIInput(ctx, po.SrcURI)
@@ -144,7 +150,7 @@ func (mcr *MCR) NewPlayout(ctx context.Context, po NewPlayout) (int, error) {
 		return 0, fmt.Errorf("failed to insert playout: %w", err)
 	}
 
-	err = mcr.refreshContinuityCard(ctx, channelID)
+	err = mcr.refreshContinuityCard(ctx, po.ChannelID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to refresh continuity card: %w", err)
 	}
@@ -157,14 +163,83 @@ func (mcr *MCR) GetPlayout(ctx context.Context, playoutID int) (Playout, error) 
 	po := Playout{}
 	err := mcr.db.GetContext(ctx, &po, `
 		SELECT
-			brave_input_id, channel_id, source_type, source_uri, status, title,
-			description, scheduled_start, scheduled_end, visibility
+			playout_id, brave_input_id, channel_id, source_type, source_uri, status,
+			title, description, scheduled_start, scheduled_end, visibility
 		FROM playouts
 		WHERE playout_id  = $1;`, playoutID)
 	if err != nil {
 		return Playout{}, fmt.Errorf("failed to get playout: %w", err)
 	}
 	return po, nil
+}
+
+// UpdatePlayout updates an existing playout.
+func (mcr *MCR) UpdatePlayout(ctx context.Context, playoutID int, po EditPlayout) error {
+	if po.Title == "" {
+		return ErrTitleEmpty
+	}
+	if po.Visibility == "" {
+		return ErrVisibilityEmpty
+	}
+
+	oldPo, err := mcr.GetPlayout(ctx, playoutID)
+	if err != nil {
+		return fmt.Errorf("failed to get existing playout: %w", err)
+	}
+
+	// Defaults if none are provided.
+	if po.ChannelID == 0 {
+		po.ChannelID = oldPo.ChannelID
+	}
+
+	if po.SrcURI == "" {
+		po.SrcURI = oldPo.SrcURI
+	}
+
+	// Check if we need to upate the playout's input
+	inputID := 0
+
+	if po.SrcURI != oldPo.SrcURI {
+		if oldPo.Status == "live" {
+			return ErrSourceOnAir
+		}
+		err = mcr.brave.DeleteInput(ctx, oldPo.BraveInputID)
+		if err != nil {
+			return fmt.Errorf("failed to delete input: %w", err)
+		}
+		i, err := mcr.brave.NewURIInput(ctx, po.SrcURI)
+		if err != nil {
+			return fmt.Errorf("failed to create new input: %w", err)
+		}
+		inputID = i.ID
+	} else {
+		inputID = oldPo.BraveInputID
+	}
+
+	_, err = mcr.db.ExecContext(ctx, `
+		UPDATE playouts SET
+			brave_input_id = $1,
+			channel_id = $2,
+			source_type = $3,
+			source_uri = $4,
+			title = $5,
+			description = $6,
+			scheduled_start = $7,
+			scheduled_end = $8,
+			visibility = $9
+		WHERE playout_id = $10;`,
+		inputID, po.ChannelID, "uri", po.SrcURI, po.Title, po.Description,
+		po.ScheduledStart, po.ScheduledEnd, po.Visibility, playoutID)
+	if err != nil {
+		return fmt.Errorf("failed to update playout: %w", err)
+	}
+
+	err = mcr.refreshContinuityCard(ctx, po.ChannelID)
+	if err != nil {
+		return fmt.Errorf("failed to refresh continuity card: %w", err)
+	}
+
+	return nil
 }
 
 // DeletePlayout removes a playout.

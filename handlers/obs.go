@@ -261,18 +261,21 @@ func (h *Handlers) obsLinkToMCRConfirm(c echo.Context) error {
 	}
 
 	res := struct {
-		ChannelID string `form:"channelID"`
+		ChannelID int `form:"channelID"`
 	}{}
 	err = c.Bind(&res)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	po := mcr.NewPlayout{
-		ChannelID:  res.ChannelID,
-		SrcURI:     h.conf.IngestAddress + "/" + strm.StreamKey,
-		Title:      strm.Title,
-		Visibility: "public",
+	po := mcr.EditPlayout{
+		ChannelID:      res.ChannelID,
+		SrcURI:         h.conf.IngestAddress + "/" + strm.StreamKey,
+		Title:          strm.Title,
+		Description:    strm.Description,
+		ScheduledStart: strm.ScheduledStart,
+		ScheduledEnd:   strm.ScheduledEnd,
+		Visibility:     strm.Visibility,
 	}
 	playoutID, err := h.mcr.NewPlayout(c.Request().Context(), po)
 	if err != nil {

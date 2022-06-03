@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -187,7 +188,13 @@ func (ls *Livestreamer) Update(ctx context.Context, livestreamID int, strm EditL
 	if strm.ScheduledStart.Before(time.Now()) {
 		return ErrStartInPast
 	}
-	_, err := ls.db.ExecContext(ctx, `
+
+	strmOld, err := ls.Get(ctx, livestreamID)
+	if err != nil {
+		return fmt.Errorf("failed to get livestream: %w", err)
+	}
+
+	_, err = ls.db.ExecContext(ctx, `
 		UPDATE livestreams SET
 			title = $1,
 			description = $2,
@@ -199,6 +206,25 @@ func (ls *Livestreamer) Update(ctx context.Context, livestreamID int, strm EditL
 	if err != nil {
 		return fmt.Errorf("failed to update livestream: %w", err)
 	}
+
+	if strmOld.MCRLinkID != "" {
+		playoutID, err := strconv.Atoi(strmOld.MCRLinkID)
+		if err != nil {
+			return fmt.Errorf("failed to parse string to int: %w", err)
+		}
+
+		err = ls.mcr.UpdatePlayout(ctx, playoutID, mcr.EditPlayout{
+			Title:          strm.Title,
+			Description:    strm.Description,
+			ScheduledStart: strm.ScheduledStart,
+			ScheduledEnd:   strm.ScheduledEnd,
+			Visibility:     strm.Visibility,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to update playout: %w", err)
+		}
+	}
+
 	return nil
 }
 
