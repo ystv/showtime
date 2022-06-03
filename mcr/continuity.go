@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/fogleman/gg"
+	"github.com/ystv/showtime/ffmpeg"
 )
 
 const lineSpacing = 30
@@ -44,11 +45,12 @@ func (mcr *MCR) refreshContinuityCard(ctx context.Context, channelID int) error 
 		return fmt.Errorf("failed to get channel rundown: %w", err)
 	}
 
+	dstImgPath := fmt.Sprintf("assets/ch/%d-card-continuity.png", channelID)
 	err = newContinuityCard(newContinuityCardParams{
 		X:               cr.Width,
 		Y:               cr.Height,
 		BackgroundPath:  "assets/ch/0-card-bg.jpg",
-		DestinationPath: fmt.Sprintf("assets/ch/%d-card-continuity.png", channelID),
+		DestinationPath: dstImgPath,
 		Title:           cr.Title,
 		Playouts:        cr.Playouts,
 	})
@@ -56,18 +58,34 @@ func (mcr *MCR) refreshContinuityCard(ctx context.Context, channelID int) error 
 		return fmt.Errorf("failed to generate card: %w", err)
 	}
 
-	imgURI := mcr.baseServeURL.ResolveReference(&url.URL{Path: fmt.Sprintf("/assets/ch/%d-card-continuity.png", channelID)})
-	i, err := mcr.brave.NewImageInput(ctx, imgURI.String())
+	dstVidPath := fmt.Sprintf("assets/ch/%d-card-continuity.mp4", channelID)
+	err = ffmpeg.NewVideoFromSingleImage(dstImgPath, dstVidPath)
+	if err != nil {
+		return fmt.Errorf("failed to create video from card image: %w", err)
+	}
+
+	cardURI := mcr.baseServeURL.ResolveReference(&url.URL{Path: dstVidPath})
+	i, err := mcr.brave.NewURIInput(ctx, cardURI.String(), true)
 	if err != nil {
 		return fmt.Errorf("failed to create image input in brave: %w", err)
+	}
+	err = mcr.brave.PlayInput(ctx, i.ID)
+	if err != nil {
+		return fmt.Errorf("failed to play input: %w", err)
 	}
 
 	// If there is no currently an input or the continuity card is on, update
 	// channel's program.
 	if cr.ProgramInputID == 0 || cr.ProgramInputID == cr.ContinuityInputID {
+		time.Sleep(time.Millisecond * 2500)
 		err = mcr.setChannelProgram(ctx, channelID, i.ID)
 		if err != nil {
 			return fmt.Errorf("failed to set channel program: %w", err)
+		}
+		time.Sleep(time.Millisecond * 500)
+		err = mcr.brave.PauseInput(ctx, i.ID)
+		if err != nil {
+			return fmt.Errorf("failed to pause input: %w", err)
 		}
 	}
 

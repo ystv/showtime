@@ -131,7 +131,7 @@ func (mcr *MCR) NewPlayout(ctx context.Context, po EditPlayout) (int, error) {
 		return 0, ErrVisibilityEmpty
 	}
 
-	input, err := mcr.brave.NewURIInput(ctx, po.SrcURI)
+	input, err := mcr.brave.NewURIInput(ctx, po.SrcURI, false)
 	if err != nil {
 		return 0, fmt.Errorf("failed to create uri input: %w", err)
 	}
@@ -207,7 +207,7 @@ func (mcr *MCR) UpdatePlayout(ctx context.Context, playoutID int, po EditPlayout
 		if err != nil {
 			return fmt.Errorf("failed to delete input: %w", err)
 		}
-		i, err := mcr.brave.NewURIInput(ctx, po.SrcURI)
+		i, err := mcr.brave.NewURIInput(ctx, po.SrcURI, false)
 		if err != nil {
 			return fmt.Errorf("failed to create new input: %w", err)
 		}
