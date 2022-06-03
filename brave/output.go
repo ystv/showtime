@@ -10,15 +10,25 @@ import (
 	"net/url"
 )
 
+// Output provides output from a mixer.
+type Output struct {
+	ID  int
+	Src string
+}
+
 // NewOutput creates an output of a mixer.
 func (b *Braver) NewOutput(ctx context.Context, m Mixer) (Output, error) {
 	data := struct {
 		Type   string `json:"type"`
 		Host   string `json:"host"`
+		Width  int    `json:"width"`
+		Height int    `json:"height"`
 		Source string `json:"source"`
 	}{
 		Type:   "tcp",
 		Host:   "0.0.0.0",
+		Width:  m.width,
+		Height: m.height,
 		Source: fmt.Sprintf("mixer%d", m.ID),
 	}
 

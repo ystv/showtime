@@ -17,16 +17,6 @@ type (
 	Config struct {
 		Endpoint string
 	}
-
-	// Mixer provides media mixing.
-	Mixer struct {
-		ID int
-	}
-	// Output provides output from a mixer.
-	Output struct {
-		ID  int
-		Src string
-	}
 )
 
 var (

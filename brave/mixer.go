@@ -10,11 +10,20 @@ import (
 	"net/url"
 )
 
-// NewMixerParams are fields configuring the mixer.
-type NewMixerParams struct {
-	Width  int
-	Height int
-}
+type (
+	// Mixer provides media mixing.
+	Mixer struct {
+		ID     int
+		width  int
+		height int
+	}
+
+	// NewMixerParams are fields configuring the mixer.
+	NewMixerParams struct {
+		Width  int
+		Height int
+	}
+)
 
 // NewMixer creates a mixer object in brave and returns it's ID.
 func (b *Braver) NewMixer(ctx context.Context, p NewMixerParams) (Mixer, error) {
@@ -57,7 +66,9 @@ func (b *Braver) NewMixer(ctx context.Context, p NewMixerParams) (Mixer, error) 
 			return Mixer{}, fmt.Errorf("failed to decode response: %w", err)
 		}
 		return Mixer{
-			ID: resp.ID,
+			ID:     resp.ID,
+			width:  p.Width,
+			height: p.Height,
 		}, nil
 	case http.StatusBadRequest:
 		resBytes, err := io.ReadAll(res.Body)
