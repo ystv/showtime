@@ -102,7 +102,9 @@ func (mcr *MCR) getChannelRundown(ctx context.Context, channelID int) (channelRu
 	err = mcr.db.SelectContext(ctx, &cr.Playouts, `
 		SELECT title, scheduled_start
 		FROM playouts
-		WHERE channel_id = $1;
+		WHERE channel_id = $1
+		AND visibility = 'public'
+		AND status = 'scheduled';
 	`, channelID)
 	if err != nil {
 		return channelRundown{}, fmt.Errorf("failed to get channel playouts: %w", err)
