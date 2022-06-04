@@ -122,7 +122,10 @@ func (mcr *MCR) getChannelRundown(ctx context.Context, channelID int) (channelRu
 		FROM playouts
 		WHERE channel_id = $1
 		AND visibility = 'public'
-		AND status = 'scheduled';
+		AND status = 'scheduled'
+		ORDER BY
+			scheduled_start ASC,
+			scheduled_end ASC;
 	`, channelID)
 	if err != nil {
 		return channelRundown{}, fmt.Errorf("failed to get channel playouts: %w", err)
@@ -176,7 +179,12 @@ func newContinuityCard(card newContinuityCardParams) error {
 	yPos = float64(card.Y) / 2
 
 	for _, po := range card.Playouts {
-		playout := po.ScheduledStart.Format("2 January - 3:04PM")
+		playout := ""
+		if po.ScheduledStart.Day() == time.Now().Day() {
+			playout = po.ScheduledStart.Format("Today - 3:04PM")
+		} else {
+			playout = po.ScheduledStart.Format("2 January - 3:04PM")
+		}
 		dc.DrawStringAnchored(playout, float64(card.X)/2+float64(card.X)/4, yPos, 0.5, 0.5)
 		yPos += lineSpacing + dc.FontHeight()
 	}
