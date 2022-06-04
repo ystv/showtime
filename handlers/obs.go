@@ -430,6 +430,31 @@ func (h *Handlers) obsUnlinkFromYouTube(c echo.Context) error {
 	return c.Render(http.StatusOK, "successful-unlink", strmID)
 }
 
+func (h *Handlers) obsGetChannel(c echo.Context) error {
+	ctx := c.Request().Context()
+	channelID, err := strconv.Atoi(c.Param("channelID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	ch, err := h.mcr.GetChannel(ctx, channelID)
+	if err != nil {
+		err = fmt.Errorf("failed to get channel: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	po, err := h.mcr.GetPlayoutsForChannel(ctx, ch)
+	if err != nil {
+		return fmt.Errorf("failed to get playuts: %w", err)
+	}
+	data := struct {
+		Channel  mcr.Channel
+		Playouts []mcr.Playout
+	}{
+		Channel:  ch,
+		Playouts: po,
+	}
+	return c.Render(http.StatusOK, "get-channel", data)
+}
+
 func (h *Handlers) obsListChannels(c echo.Context) error {
 	ch, err := h.mcr.ListChannels(c.Request().Context())
 	if err != nil {

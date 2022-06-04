@@ -41,14 +41,9 @@ var (
 
 // StartPlayout triggers a playout to be played on a channel.
 func (mcr *MCR) StartPlayout(ctx context.Context, po Playout) error {
-	ch, err := mcr.GetChannel(ctx, po.ChannelID)
+	err := mcr.setChannelProgram(ctx, po.ChannelID, po.BraveInputID)
 	if err != nil {
-		return fmt.Errorf("failed to get channel: %w", err)
-	}
-
-	err = mcr.setChannelProgram(ctx, po.ChannelID, po.BraveInputID)
-	if err != nil {
-		return fmt.Errorf("failed to cut mixer \"%d\" to input \"%d\": %w", ch.MixerID, po.BraveInputID, err)
+		return fmt.Errorf("failed to cut ch \"%d\" to input \"%d\": %w", po.ChannelID, po.BraveInputID, err)
 	}
 
 	_, err = mcr.db.ExecContext(ctx, `
@@ -173,6 +168,24 @@ func (mcr *MCR) GetPlayout(ctx context.Context, playoutID int) (Playout, error) 
 	return po, nil
 }
 
+// GetPlayoutsForChannel returns a list of playouts for a channel.
+func (mcr *MCR) GetPlayoutsForChannel(ctx context.Context, ch Channel) ([]Playout, error) {
+	po := []Playout{}
+	err := mcr.db.SelectContext(ctx, &po, `
+		SELECT
+			playout_id, brave_input_id, channel_id, source_type, source_uri, status,
+			title, description, scheduled_start, scheduled_end, visibility
+		FROM playouts
+		WHERE channel_id  = $1
+		ORDER BY
+			scheduled_start ASC,
+			scheduled_end ASC;`, ch.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list playouts: %w", err)
+	}
+	return po, nil
+}
+
 // UpdatePlayout updates an existing playout.
 func (mcr *MCR) UpdatePlayout(ctx context.Context, playoutID int, po EditPlayout) error {
 	if po.Title == "" {
@@ -266,4 +279,12 @@ func (mcr *MCR) DeletePlayout(ctx context.Context, playoutID int) error {
 		return fmt.Errorf("failed to refresh continuity card: %w", err)
 	}
 	return nil
+}
+
+// PrettyDateTime formats dates to a more readable string.
+func (po *Playout) PrettyDateTime(ts time.Time) string {
+	if ts.After(time.Now().Add(time.Hour * 24)) {
+		return ts.Format("15:04 02/01")
+	}
+	return ts.Format("15:04")
 }
