@@ -49,7 +49,8 @@ func main() {
 			IngestAddress: os.Getenv("ST_INGEST_ADDR"),
 		},
 		mcr: &mcr.Config{
-			BaseServeURL: os.Getenv("ST_BASE_SERVE_ADDR"),
+			BaseServeURL:  os.Getenv("ST_BASE_SERVE_ADDR"),
+			OutputAddress: os.Getenv("ST_OUTPUT_ADDR"),
 		},
 		brave: brave.Config{
 			Endpoint: os.Getenv("ST_BRAVE_ADDR"),

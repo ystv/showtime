@@ -2,6 +2,7 @@ package mcr
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ystv/showtime/brave"
@@ -12,6 +13,7 @@ type (
 	Channel struct {
 		ID                int    `db:"channel_id"`
 		Title             string `db:"title"`
+		OutputURL         string `db:"url_name"`
 		MixerID           int    `db:"mixer_id"`
 		ProgramInputID    int    `db:"program_input_id"`
 		ContinuityInputID int    `db:"continuity_input_id"`
@@ -19,8 +21,14 @@ type (
 
 	// NewChannel creates a new instance of a channel.
 	NewChannel struct {
-		Title string `json:"title" form:"title"`
+		Title   string `json:"title" form:"title"`
+		URLName string `json:"urlName" form:"urlName"`
 	}
+)
+
+var (
+	// ErrURLNameEmpty when the URL name is empty.
+	ErrURLNameEmpty = errors.New("url name is empty")
 )
 
 // setChannelProgram
@@ -51,6 +59,10 @@ func (mcr *MCR) NewChannel(ctx context.Context, ch NewChannel) (int, error) {
 		return 0, ErrTitleEmpty
 	}
 
+	if len(ch.URLName) == 0 {
+		return 0, ErrURLNameEmpty
+	}
+
 	p := brave.NewMixerParams{
 		Width:  1920,
 		Height: 1080,
@@ -61,7 +73,7 @@ func (mcr *MCR) NewChannel(ctx context.Context, ch NewChannel) (int, error) {
 		return 0, fmt.Errorf("failed to create mixer: %w", err)
 	}
 
-	_, err = mcr.brave.NewOutput(ctx, m)
+	_, err = mcr.brave.NewRTMPOutput(ctx, m, fmt.Sprintf("%s/ch-%s", mcr.outputAddress.String(), ch.URLName))
 	if err != nil {
 		return 0, fmt.Errorf("failed to create output: %w", err)
 	}
@@ -69,10 +81,10 @@ func (mcr *MCR) NewChannel(ctx context.Context, ch NewChannel) (int, error) {
 	channelID := 0
 	err = mcr.db.GetContext(ctx, &channelID, `
 		INSERT INTO channels (
-			title, res_width, res_height, mixer_id, program_input_id,
+			title, url_name, res_width, res_height, mixer_id, program_input_id,
 			continuity_input_id)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING channel_id;`, ch.Title, p.Width, p.Height, m.ID, 0, 0)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING channel_id;`, ch.Title, ch.URLName, p.Width, p.Height, m.ID, 0, 0)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert channel: %w", err)
 	}
@@ -89,12 +101,13 @@ func (mcr *MCR) NewChannel(ctx context.Context, ch NewChannel) (int, error) {
 func (mcr *MCR) GetChannel(ctx context.Context, channelID int) (Channel, error) {
 	ch := Channel{}
 	err := mcr.db.GetContext(ctx, &ch, `
-		SELECT channel_id, title, channel_id, mixer_id
+		SELECT channel_id, title, url_name, channel_id, mixer_id
 		FROM channels
 		WHERE channel_id  = $1;`, channelID)
 	if err != nil {
 		return Channel{}, fmt.Errorf("failed to get channel: %w", err)
 	}
+	ch.OutputURL = mcr.outputAddress.String() + "/ch-" + ch.OutputURL
 	return ch, nil
 }
 

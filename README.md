@@ -14,8 +14,11 @@ Create a `.env` file with the following parameters:
 # Toggles authentication and displaying of errors
 ST_DEBUG=true or false
 
-# Nginx RTMP live application that is configured with a hook to ShowTime!
+# Nginx RTMP live application that is configured with a on_publish hook to ShowTime!
 ST_INGEST_ADDR=rtmp://stream.example.com/ingest
+
+# Nginx RTMP live application for Brave to output too
+ST_OUTPUT_ADDR=rtmp://stream.example.com/output
 
 # Address of where ShowTime! is being run, allows Brave to pull assets
 ST_BASE_SERVE_ADDR=example.com

@@ -12,13 +12,15 @@ import (
 type (
 	// MCR manages multiple channels.
 	MCR struct {
-		baseServeURL *url.URL
-		db           *sqlx.DB
-		brave        *brave.Braver
+		baseServeURL  *url.URL
+		outputAddress *url.URL
+		db            *sqlx.DB
+		brave         *brave.Braver
 	}
 	// Config to configure Brave.
 	Config struct {
-		BaseServeURL string
+		BaseServeURL  string
+		OutputAddress string
 	}
 )
 
@@ -38,6 +40,7 @@ var Schema = `
 CREATE TABLE channels (
 	channel_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
 	title text NOT NULL,
+	url_name text NOT NULL,
 	res_width integer NOT NULL,
 	res_height integer NOT NULL,
 	mixer_id integer NOT NULL,
@@ -63,13 +66,18 @@ CREATE TABLE playouts (
 
 // NewMCR creates a new channel manager.
 func NewMCR(c *Config, db *sqlx.DB, brave *brave.Braver) (*MCR, error) {
-	u, err := url.Parse(c.BaseServeURL)
+	baseServe, err := url.Parse(c.BaseServeURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid serve url: %w", err)
 	}
+	output, err := url.Parse(c.OutputAddress)
+	if err != nil {
+		return nil, fmt.Errorf("invalid output url: %w", err)
+	}
 	return &MCR{
-		baseServeURL: u,
-		db:           db,
-		brave:        brave,
+		baseServeURL:  baseServe,
+		outputAddress: output,
+		db:            db,
+		brave:         brave,
 	}, nil
 }
