@@ -40,7 +40,7 @@ var Schema = `
 CREATE TABLE channels (
 	channel_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
 	title text NOT NULL,
-	url_name text NOT NULL,
+	url_name text NOT NULL UNIQUE,
 	res_width integer NOT NULL,
 	res_height integer NOT NULL,
 	mixer_id integer NOT NULL,
