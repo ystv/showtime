@@ -38,7 +38,7 @@ type (
 	// Livestream is the metadata of a stream and the links to external
 	// platforms.
 	Livestream struct {
-		LivestreamID   int       `db:"livestream_id" json:"livestreamID"`
+		ID             int       `db:"livestream_id" json:"livestreamID"`
 		StreamKey      string    `db:"stream_key" json:"streamKey"`
 		Status         string    `db:"status" json:"status"`
 		Title          string    `db:"title" json:"title"`
@@ -46,14 +46,11 @@ type (
 		ScheduledStart time.Time `db:"scheduled_start" json:"scheduledStart"`
 		ScheduledEnd   time.Time `db:"scheduled_end" json:"scheduledEnd"`
 		Visibility     string    `db:"visibility" json:"visbility"`
-		MCRLinkID      string    `db:"mcr_link_id" json:"mcrLinkID"`         // MCR's playoutID
-		YouTubeLinkID  string    `db:"youtube_link_id" json:"youtubeLinkID"` // YT's broadcastID
 	}
 	// ConsumeLivestream provides the links of a given stream key.
 	ConsumeLivestream struct {
-		StreamKey     string `db:"stream_key" json:"streamKey"`
-		MCRLinkID     string `db:"mcr_link_id" json:"mcrLinkID"`
-		YouTubeLinkID string `db:"youtube_link_id" json:"youtubeLinkID"`
+		ID        int    `db:"livestream_id" json:"livestreamID"`
+		StreamKey string `db:"stream_key" json:"streamKey"`
 	}
 )
 
@@ -67,9 +64,16 @@ CREATE TABLE livestreams(
 	description text NOT NULL,
 	scheduled_start datetime NOT NULL,
 	scheduled_end datetime NOT NULL,
-	visibility text NOT NULL,
-	mcr_link_id text NOT NULL,
-	youtube_link_id text NOT NULL
+	visibility text NOT NULL
+);
+
+CREATE TABLE links(
+	link_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+	livestream_id integer NOT NULL,
+	integration_type text NOT NULL,
+	integration_id text NOT NULL UNIQUE,
+	FOREIGN KEY (livestream_id) REFERENCES livestreams(livestream_id)
+	UNIQUE (integration_type, integration_id)
 );
 `
 
@@ -128,10 +132,8 @@ func (ls *Livestreamer) New(ctx context.Context, strm EditLivestream) (int, erro
 			description,
 			scheduled_start,
 			scheduled_end,
-			visibility,
-			mcr_link_id,
-			youtube_link_id
-			) VALUES ($1, 'pending', $2, $3, $4, $5, $6, '', '')
+			visibility
+			) VALUES ($1, 'pending', $2, $3, $4, $5, $6)
 			RETURNING livestream_id;`, ingestKey, strm.Title,
 		strm.Description, strm.ScheduledStart, strm.ScheduledEnd, strm.Visibility)
 	if err != nil {
@@ -144,8 +146,9 @@ func (ls *Livestreamer) New(ctx context.Context, strm EditLivestream) (int, erro
 func (ls *Livestreamer) Get(ctx context.Context, livestreamID int) (Livestream, error) {
 	strm := Livestream{}
 	err := ls.db.GetContext(ctx, &strm, `
-		SELECT livestream_id, stream_key, status, title, description, scheduled_start,
-					 scheduled_end, visibility, mcr_link_id, youtube_link_id
+		SELECT
+			livestream_id, stream_key, status, title, description, scheduled_start,
+			scheduled_end, visibility
 		FROM livestreams
 		WHERE livestream_id  = $1;
 	`, livestreamID)
@@ -159,7 +162,7 @@ func (ls *Livestreamer) Get(ctx context.Context, livestreamID int) (Livestream, 
 func (ls *Livestreamer) List(ctx context.Context) ([]Livestream, error) {
 	strms := []Livestream{}
 	err := ls.db.SelectContext(ctx, &strms, `
-		SELECT livestream_id, stream_key, status, title, mcr_link_id, youtube_link_id
+		SELECT livestream_id, stream_key, status, title 
 		FROM livestreams;
 	`)
 	if err != nil {
@@ -189,12 +192,7 @@ func (ls *Livestreamer) Update(ctx context.Context, livestreamID int, strm EditL
 		return ErrStartInPast
 	}
 
-	strmOld, err := ls.Get(ctx, livestreamID)
-	if err != nil {
-		return fmt.Errorf("failed to get livestream: %w", err)
-	}
-
-	_, err = ls.db.ExecContext(ctx, `
+	_, err := ls.db.ExecContext(ctx, `
 		UPDATE livestreams SET
 			title = $1,
 			description = $2,
@@ -207,48 +205,35 @@ func (ls *Livestreamer) Update(ctx context.Context, livestreamID int, strm EditL
 		return fmt.Errorf("failed to update livestream: %w", err)
 	}
 
-	if strmOld.MCRLinkID != "" {
-		playoutID, err := strconv.Atoi(strmOld.MCRLinkID)
-		if err != nil {
-			return fmt.Errorf("failed to parse string to int: %w", err)
-		}
-
-		err = ls.mcr.UpdatePlayout(ctx, playoutID, mcr.EditPlayout{
-			Title:          strm.Title,
-			Description:    strm.Description,
-			ScheduledStart: strm.ScheduledStart,
-			ScheduledEnd:   strm.ScheduledEnd,
-			Visibility:     strm.Visibility,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to update playout: %w", err)
-		}
-	}
-
-	return nil
-}
-
-// UpdateMCRLink updates only the MCR playout link on a livestream.
-func (ls *Livestreamer) UpdateMCRLink(ctx context.Context, livestreamID int, linkID string) error {
-	_, err := ls.db.ExecContext(ctx, `
-	UPDATE livestreams SET
-		mcr_link_id = $1
-	WHERE livestream_id = $2;`, linkID, livestreamID)
+	links, err := ls.ListLinks(ctx, livestreamID)
 	if err != nil {
-		return fmt.Errorf("failed to update mcr link id: %w", err)
+		return fmt.Errorf("failed to list links: %w", err)
 	}
-	return nil
-}
 
-// UpdateYouTubeLink updates only the YouTube link on a livestream.
-func (ls *Livestreamer) UpdateYouTubeLink(ctx context.Context, livestreamID int, linkID string) error {
-	_, err := ls.db.ExecContext(ctx, `
-	UPDATE livestreams SET
-		youtube_link_id = $1
-	WHERE livestream_id = $2;`, linkID, livestreamID)
-	if err != nil {
-		return fmt.Errorf("failed to update youtube link id: %w", err)
+	for _, link := range links {
+		switch link.IntegrationType {
+		case MCR:
+			playoutID, err := strconv.Atoi(link.IntegrationID)
+			if err != nil {
+				return fmt.Errorf("failed to parse string to int: %w", err)
+			}
+
+			err = ls.mcr.UpdatePlayout(ctx, playoutID, mcr.EditPlayout{
+				Title:          strm.Title,
+				Description:    strm.Description,
+				ScheduledStart: strm.ScheduledStart,
+				ScheduledEnd:   strm.ScheduledEnd,
+				Visibility:     strm.Visibility,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to update playout: %w", err)
+			}
+
+		default:
+			return ErrUnkownIntegrationType
+		}
 	}
+
 	return nil
 }
 
@@ -262,4 +247,12 @@ func (ls *Livestreamer) updateStatus(ctx context.Context, livestreamID int, stat
 		return fmt.Errorf("failed to update status: %w", err)
 	}
 	return nil
+}
+
+// PrettyDateTime formats dates to a more readable string.
+func (strm Livestream) PrettyDateTime(ts time.Time) string {
+	if ts.After(time.Now().Add(time.Hour * 24)) {
+		return ts.Format("15:04 02/01")
+	}
+	return ts.Format("15:04")
 }

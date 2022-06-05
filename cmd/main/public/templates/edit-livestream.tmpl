@@ -54,7 +54,7 @@
       </div>
       <div class="field is-grouped">
         <div class="control">
-          <a href="/livestreams{{ if eq .Action "Save" }}/{{ .ID }}{{ end }}" class="input is-link is-light">Cancel</a>
+          <a href="/livestreams{{ if eq .Action "Save" }}/{{ .ID }}/manage{{ end }}" class="input is-link is-light">Cancel</a>
         </div>
         <div class="control">
           <input class="button is-link" type="submit" value="{{ .Action }}" />

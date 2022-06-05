@@ -18,22 +18,21 @@
   <div class="column has-text-centered">
     <a href="/livestreams">🔙 Back</a>
     <h3 class="title is-5">{{ .Title }}</h1>
-    <h2 class="title is-4">Stream Key</h3>
-    <div class="container">
+    <h2 class="title is-4">Stream key</h3>
+    <div class="container block">
       <div class="notification is-primary">
         <h1 class="title is-2">{{ .StreamKey }}</h1>
       </div>
     </div>
     <div class="buttons">
       {{ if eq .Status "pending" }}
-        <a href="/livestreams/{{ .LivestreamID }}/start" class="button is-danger">Start stream</a>
+        <a href="/livestreams/{{ .ID }}/start" class="button is-danger">Start stream</a>
       {{ end }}
       {{ if eq .Status "stream-started"}}
-        <a href="/livestreams/{{ .LivestreamID }}/end" class="button is-danger">End stream</a>
+        <a href="/livestreams/{{ .ID }}/end" class="button is-danger">End stream</a>
       </form>
       {{ end }}
-      <a href="/livestreams/{{ .LivestreamID }}/manage" class="button is-info">Manage distribution</a>
-      <a href="/livestreams/{{ .LivestreamID }}/edit" class="button is-info">Edit stream</a>
+      <a href="/livestreams/{{ .ID }}/manage" class="button is-info">Manage stream</a>
     </div>
     <p>
         Don't know how to add a stream key? Follow the guide 

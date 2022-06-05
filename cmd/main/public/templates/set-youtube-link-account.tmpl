@@ -16,9 +16,9 @@
   </head>
   <body>
   <div class="column has-text-centered">
-    <a href="/livestreams/{{ .Livestream.LivestreamID }}/manage">🔙 Back</a>
+    <a href="/livestreams/{{ .Livestream.ID }}/manage">🔙 Back</a>
     <h1 class="title">{{ .Livestream.Title }}</h1>
-    <form action="/livestreams/{{ .Livestream.LivestreamID }}/link/youtube" method="post">
+    <form action="/livestreams/{{ .Livestream.ID }}/link/youtube" method="post">
         <label for="accountID">Select a channel to link to:</label>
         <select name="accountID">
             {{ range .Channels }}

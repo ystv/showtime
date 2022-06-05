@@ -20,7 +20,7 @@
     <h1 class="title">Select a livestream</h1>
     <ul>
     {{ range . }}
-      <a href="/livestreams/{{ .LivestreamID }}">{{ .Title }} ({{ .Status }})</a>
+      <a href="/livestreams/{{ .ID }}">{{ .Title }} ({{ .Status }})</a>
     {{ end }}
     </ul>
     <p>or create a <a href="/livestreams/new">new</a> one.</p>

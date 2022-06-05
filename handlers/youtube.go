@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
+	"github.com/ystv/showtime/livestream"
 )
 
 func (h *Handlers) listYouTubeBroadcasts(c echo.Context) error {
@@ -31,15 +32,23 @@ func (h *Handlers) enableYouTube(c echo.Context) error {
 
 	yt, err := h.yt.GetYouTuber(accountID)
 	if err != nil {
+		err = fmt.Errorf("failed to get youtuber: %w", err)
 		return echo.NewHTTPError(http.StatusNotFound, err)
 	}
 
 	err = yt.NewExistingBroadcast(ctx, broadcastID)
 	if err != nil {
+		err = fmt.Errorf("failed to create new existing broadcast: %w", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	err = h.ls.UpdateYouTubeLink(ctx, strmID, broadcastID)
+
+	_, err = h.ls.NewLink(ctx, livestream.NewLinkParams{
+		LivestreamID:    strmID,
+		IntegrationType: livestream.YTExisting,
+		IntegrationID:   broadcastID,
+	})
 	if err != nil {
+		err = fmt.Errorf("failed to create new link: %w", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	return c.NoContent(http.StatusCreated)
@@ -47,18 +56,25 @@ func (h *Handlers) enableYouTube(c echo.Context) error {
 
 func (h *Handlers) disableYouTube(c echo.Context) error {
 	ctx := c.Request().Context()
-	linkID := c.Param("linkID")
-	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	linkID, err := strconv.Atoi(c.Param("linkID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	err = h.yt.DeleteExistingBroadcast(ctx, linkID)
+	link, err := h.ls.GetLink(ctx, linkID)
+	if err != nil {
+		err = fmt.Errorf("failed to get link: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	err = h.yt.DeleteExistingBroadcast(ctx, link.IntegrationID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	err = h.ls.UpdateYouTubeLink(ctx, strmID, "")
+
+	err = h.ls.DeleteLink(ctx, linkID)
 	if err != nil {
+		err = fmt.Errorf("failed to delete link: %w", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	return c.NoContent(http.StatusOK)
