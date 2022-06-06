@@ -292,7 +292,7 @@ func (h *Handlers) obsUnlink(c echo.Context) error {
 		playoutID, err := strconv.Atoi(link.IntegrationID)
 		if err != nil {
 			err = fmt.Errorf("failed to convert integration id to playout id: %w", err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 
 		err = h.mcr.DeletePlayout(ctx, playoutID)
@@ -309,6 +309,16 @@ func (h *Handlers) obsUnlink(c echo.Context) error {
 		}
 
 	case livestream.LinkRTMPOutput:
+		rtmpOutputID, err := strconv.Atoi(link.IntegrationID)
+		if err != nil {
+			err = fmt.Errorf("failed to convert integration id to rtmp output id: %w", err)
+			return echo.NewHTTPError(http.StatusBadRequest, err)
+		}
+		err = h.ls.DeleteRTMPOutput(ctx, rtmpOutputID)
+		if err != nil {
+			err = fmt.Errorf("failed to delete rtmp output: %w", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
 
 	default:
 		err = livestream.ErrUnkownIntegrationType
