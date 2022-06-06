@@ -23,7 +23,15 @@
     <h2 class="subtitle">{{ .Channel.OutputURL }}</h2>
     <div class="buttons">
       <a href="/channels/{{ .Channel.ID }}/edit" class="button is-info">Edit channel</a>
-      <a href="/channels/{{ .Channel.ID }}/restart" class="button is-warning">Restart engine</a>
+      {{ if  eq .Channel.Status "off-air" }}
+        <form action="/channels/{{ .Channel.ID }}/on-air" method="post">
+      <button class="button is-warning">On-air</button>
+      </form>
+      {{ else }}
+      <form action="/channels/{{ .Channel.ID }}/off-air" method="post">
+      <button class="button is-warning">Off-air</button>
+      </form>
+      {{ end }}
     </div>
   </section>
   <section class="section">

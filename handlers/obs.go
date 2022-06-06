@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -524,6 +525,58 @@ func (h *Handlers) obsGetChannel(c echo.Context) error {
 		Playouts: po,
 	}
 	return c.Render(http.StatusOK, "get-channel", data)
+}
+
+func (h *Handlers) obsSetChannelOnAir(c echo.Context) error {
+	ctx := c.Request().Context()
+	channelID, err := strconv.Atoi(c.Param("channelID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	ch, err := h.mcr.GetChannel(ctx, channelID)
+	if err != nil {
+		err = fmt.Errorf("failed to get channel: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	if ch.Status == "on-air" {
+		err = errors.New("channel already on-air")
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	err = h.mcr.SetChannelOnAir(ctx, ch)
+	if err != nil {
+		err = fmt.Errorf("failed to set channel on-air: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.Redirect(http.StatusFound, fmt.Sprintf("/channels/%d", ch.ID))
+}
+
+func (h *Handlers) obsSetChannelOffAir(c echo.Context) error {
+	ctx := c.Request().Context()
+	channelID, err := strconv.Atoi(c.Param("channelID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	ch, err := h.mcr.GetChannel(ctx, channelID)
+	if err != nil {
+		err = fmt.Errorf("failed to get channel: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	if ch.Status == "off-air" {
+		err = errors.New("channel already off-air")
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	err = h.mcr.SetChannelOffAir(ctx, ch)
+	if err != nil {
+		err = fmt.Errorf("failed to set channel off-air: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.Redirect(http.StatusFound, fmt.Sprintf("/channels/%d", ch.ID))
 }
 
 func (h *Handlers) obsListChannels(c echo.Context) error {

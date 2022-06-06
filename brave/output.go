@@ -139,3 +139,29 @@ func (b *Braver) NewTCPOutput(ctx context.Context, m Mixer, port int) (Output, e
 func (b *Braver) ListOutputs(ctx context.Context) ([]Output, error) {
 	return nil, nil
 }
+
+// DeleteOutput delete an output in Brave.
+func (b *Braver) DeleteOutput(ctx context.Context, outputID int) error {
+	u := b.baseURL.ResolveReference(&url.URL{Path: fmt.Sprintf("/api/outputs/%d", outputID)})
+	req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
+	if err != nil {
+		return ErrRequestFailed
+	}
+	req.Header.Add("Accept", "application/json")
+
+	res, err := b.c.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to do request: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		resBytes, err := io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("failed to decode response: %w", err)
+		}
+		return fmt.Errorf("bad request: %s", string(resBytes))
+	}
+
+	return nil
+}

@@ -17,7 +17,6 @@ type (
 		width  int
 		height int
 	}
-
 	// NewMixerParams are fields configuring the mixer.
 	NewMixerParams struct {
 		Width  int
@@ -98,6 +97,32 @@ func (b *Braver) CutMixerToInput(ctx context.Context, mixerID int, inputID int) 
 	req, err := http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrRequestFailed, err)
+	}
+	req.Header.Add("Accept", "application/json")
+
+	res, err := b.c.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to do request: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		resBytes, err := io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("failed to decode response: %w", err)
+		}
+		return fmt.Errorf("bad request: %s", string(resBytes))
+	}
+
+	return nil
+}
+
+// DeleteMixer delete an mixer in Brave.
+func (b *Braver) DeleteMixer(ctx context.Context, mixerID int) error {
+	u := b.baseURL.ResolveReference(&url.URL{Path: fmt.Sprintf("/api/mixers/%d", mixerID)})
+	req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
+	if err != nil {
+		return ErrRequestFailed
 	}
 	req.Header.Add("Accept", "application/json")
 

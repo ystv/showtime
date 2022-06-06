@@ -102,7 +102,12 @@ func (h *Handlers) Start() {
 		internal.GET("/channels", h.obsListChannels)
 		internal.GET("/channels/new", h.obsNewChannel)
 		internal.POST("/channels/new", h.obsNewChannelSubmit)
-		internal.GET("/channels/:channelID", h.obsGetChannel)
+		ch := internal.Group("/channels/:channelID")
+		{
+			ch.GET("", h.obsGetChannel)
+			ch.POST("/on-air", h.obsSetChannelOnAir)
+			ch.POST("/off-air", h.obsSetChannelOffAir)
+		}
 
 		internal.GET("/integrations", h.obsListIntegrations)
 		internal.GET("/integrations/unlink/youtube/:accountID", h.obsDeleteYouTubeIntegration)

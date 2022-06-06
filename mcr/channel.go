@@ -12,17 +12,23 @@ type (
 	// Channel add redundancy to a stream.
 	Channel struct {
 		ID                int    `db:"channel_id"`
-		Title             string `db:"title"`
+		Status            string `db:"status"`
 		OutputURL         string `db:"url_name"`
+		Width             int    `db:"res_width"`
+		Height            int    `db:"res_height"`
+		Title             string `db:"title"`
 		MixerID           int    `db:"mixer_id"`
 		ProgramInputID    int    `db:"program_input_id"`
 		ContinuityInputID int    `db:"continuity_input_id"`
+		ProgramOutputID   int    `db:"program_output_id"`
 	}
 
 	// NewChannel creates a new instance of a channel.
 	NewChannel struct {
 		Title   string `json:"title" form:"title"`
 		URLName string `json:"urlName" form:"urlName"`
+		Width   int
+		Height  int
 	}
 )
 
@@ -53,6 +59,67 @@ func (mcr *MCR) setChannelProgram(ctx context.Context, channelID int, inputID in
 	return nil
 }
 
+// SetChannelOnAir starts the channel's broadcast.
+func (mcr *MCR) SetChannelOnAir(ctx context.Context, ch Channel) error {
+	p := brave.NewMixerParams{
+		Width:  ch.Width,
+		Height: ch.Height,
+	}
+
+	m, err := mcr.brave.NewMixer(ctx, p)
+	if err != nil {
+		return fmt.Errorf("failed to create mixer: %w", err)
+	}
+
+	o, err := mcr.brave.NewRTMPOutput(ctx, m, ch.OutputURL)
+	if err != nil {
+		return fmt.Errorf("failed to create output: %w", err)
+	}
+
+	_, err = mcr.db.ExecContext(ctx, `
+		UPDATE channels SET
+			status = 'on-air',
+			mixer_id = $1,
+			program_output_id = $2
+		WHERE channel_id = $3;
+	`, m.ID, o.ID, ch.ID)
+	if err != nil {
+		return fmt.Errorf("failed to update channel in store: %w", err)
+	}
+
+	err = mcr.refreshContinuityCard(ctx, ch.ID)
+	if err != nil {
+		return fmt.Errorf("failed to refresh continuity card: %w", err)
+	}
+
+	return nil
+}
+
+// SetChannelOffAir ends the channel's broadcast.
+func (mcr *MCR) SetChannelOffAir(ctx context.Context, ch Channel) error {
+	err := mcr.brave.DeleteOutput(ctx, ch.ProgramOutputID)
+	if err != nil {
+		return fmt.Errorf("failed to delete program output: %w", err)
+	}
+	err = mcr.brave.DeleteMixer(ctx, ch.MixerID)
+	if err != nil {
+		return fmt.Errorf("failed to delete mixer: %w", err)
+	}
+
+	_, err = mcr.db.ExecContext(ctx, `
+		UPDATE channels SET
+			status = 'off-air',
+			mixer_id = 0,
+			program_output_id = 0
+		WHERE channel_id = $1;
+	`, ch.ID)
+	if err != nil {
+		return fmt.Errorf("failed to delete channel in store", err)
+	}
+
+	return nil
+}
+
 // NewChannel creates a new channel including a mixer.
 func (mcr *MCR) NewChannel(ctx context.Context, ch NewChannel) (int, error) {
 	if len(ch.Title) == 0 {
@@ -63,35 +130,23 @@ func (mcr *MCR) NewChannel(ctx context.Context, ch NewChannel) (int, error) {
 		return 0, ErrURLNameEmpty
 	}
 
-	p := brave.NewMixerParams{
-		Width:  1920,
-		Height: 1080,
+	// Sensible defaults.
+	if ch.Width == 0 {
+		ch.Width = 1920
 	}
-
-	m, err := mcr.brave.NewMixer(ctx, p)
-	if err != nil {
-		return 0, fmt.Errorf("failed to create mixer: %w", err)
-	}
-
-	_, err = mcr.brave.NewRTMPOutput(ctx, m, fmt.Sprintf("%s/ch-%s", mcr.outputAddress.String(), ch.URLName))
-	if err != nil {
-		return 0, fmt.Errorf("failed to create output: %w", err)
+	if ch.Height == 0 {
+		ch.Height = 1080
 	}
 
 	channelID := 0
-	err = mcr.db.GetContext(ctx, &channelID, `
+	err := mcr.db.GetContext(ctx, &channelID, `
 		INSERT INTO channels (
-			title, url_name, res_width, res_height, mixer_id, program_input_id,
-			continuity_input_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING channel_id;`, ch.Title, ch.URLName, p.Width, p.Height, m.ID, 0, 0)
+			status, title, url_name, res_width, res_height, mixer_id, program_input_id,
+			continuity_input_id, program_output_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING channel_id;`, "off-air", ch.Title, ch.URLName, ch.Width, ch.Height, 0, 0, 0, 0)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert channel: %w", err)
-	}
-
-	err = mcr.refreshContinuityCard(ctx, channelID)
-	if err != nil {
-		return 0, fmt.Errorf("failed to refresh continuity card: %w", err)
 	}
 
 	return channelID, nil
@@ -101,7 +156,8 @@ func (mcr *MCR) NewChannel(ctx context.Context, ch NewChannel) (int, error) {
 func (mcr *MCR) GetChannel(ctx context.Context, channelID int) (Channel, error) {
 	ch := Channel{}
 	err := mcr.db.GetContext(ctx, &ch, `
-		SELECT channel_id, title, url_name, channel_id, mixer_id
+		SELECT channel_id, status, title, url_name, res_width, res_height, mixer_id,
+					 program_input_id, continuity_input_id, program_output_id
 		FROM channels
 		WHERE channel_id  = $1;`, channelID)
 	if err != nil {

@@ -39,13 +39,15 @@ var (
 var Schema = `
 CREATE TABLE channels (
 	channel_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+	status text NOT NULL,
 	title text NOT NULL,
 	url_name text NOT NULL UNIQUE,
 	res_width integer NOT NULL,
 	res_height integer NOT NULL,
 	mixer_id integer NOT NULL,
 	program_input_id integer NOT NULL,
-	continuity_input_id integer NOT NULL
+	continuity_input_id integer NOT NULL,
+	program_output_id integer NOT NULL
 );
 
 CREATE TABLE playouts (
