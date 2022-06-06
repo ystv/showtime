@@ -71,9 +71,14 @@ CREATE TABLE links(
 	link_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
 	livestream_id integer NOT NULL,
 	integration_type text NOT NULL,
-	integration_id text NOT NULL UNIQUE,
+	integration_id text NOT NULL,
 	FOREIGN KEY (livestream_id) REFERENCES livestreams(livestream_id)
 	UNIQUE (integration_type, integration_id)
+);
+
+CREATE TABLE rtmp_outputs (
+	rtmp_output_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+	output_url text NOT NULL
 );
 `
 
@@ -212,7 +217,7 @@ func (ls *Livestreamer) Update(ctx context.Context, livestreamID int, strm EditL
 
 	for _, link := range links {
 		switch link.IntegrationType {
-		case MCR:
+		case LinkMCR:
 			playoutID, err := strconv.Atoi(link.IntegrationID)
 			if err != nil {
 				return fmt.Errorf("failed to parse string to int: %w", err)
@@ -228,9 +233,6 @@ func (ls *Livestreamer) Update(ctx context.Context, livestreamID int, strm EditL
 			if err != nil {
 				return fmt.Errorf("failed to update playout: %w", err)
 			}
-
-		default:
-			return ErrUnkownIntegrationType
 		}
 	}
 

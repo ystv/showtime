@@ -288,7 +288,7 @@ func (h *Handlers) obsUnlink(c echo.Context) error {
 	}
 
 	switch link.IntegrationType {
-	case livestream.MCR:
+	case livestream.LinkMCR:
 		playoutID, err := strconv.Atoi(link.IntegrationID)
 		if err != nil {
 			err = fmt.Errorf("failed to convert integration id to playout id: %w", err)
@@ -301,12 +301,14 @@ func (h *Handlers) obsUnlink(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 
-	case livestream.YTExisting:
+	case livestream.LinkYTExisting:
 		err = h.yt.DeleteExistingBroadcast(ctx, link.IntegrationID)
 		if err != nil {
 			err = fmt.Errorf("failed to delete existing broadcast: %w", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
+
+	case livestream.LinkRTMPOutput:
 
 	default:
 		err = livestream.ErrUnkownIntegrationType
@@ -384,7 +386,7 @@ func (h *Handlers) obsLinkToMCRConfirm(c echo.Context) error {
 
 	_, err = h.ls.NewLink(ctx, livestream.NewLinkParams{
 		LivestreamID:    strmID,
-		IntegrationType: livestream.MCR,
+		IntegrationType: livestream.LinkMCR,
 		IntegrationID:   strconv.Itoa(playoutID),
 	})
 	if err != nil {
@@ -491,8 +493,59 @@ func (h *Handlers) obsLinkToYouTubeConfirm(c echo.Context) error {
 
 	_, err = h.ls.NewLink(ctx, livestream.NewLinkParams{
 		LivestreamID:    strmID,
-		IntegrationType: livestream.YTExisting,
+		IntegrationType: livestream.LinkYTExisting,
 		IntegrationID:   newExistingBroadcast.ID,
+	})
+	if err != nil {
+		err = fmt.Errorf("failed to create new link: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.Render(http.StatusCreated, "successful-link", strmID)
+}
+
+func (h *Handlers) obsLinkToRTMP(c echo.Context) error {
+	ctx := c.Request().Context()
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	strm, err := h.ls.Get(ctx, strmID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	data := struct {
+		Livestream livestream.Livestream
+	}{
+		Livestream: strm,
+	}
+	return c.Render(http.StatusOK, "set-rtmp-output-link", data)
+}
+
+func (h *Handlers) obsLinkToRTMPConfirm(c echo.Context) error {
+	ctx := c.Request().Context()
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	strm, err := h.ls.Get(ctx, strmID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	outputURL := c.FormValue("outputURL")
+
+	rtmpOutput, err := h.ls.NewRTMPOutput(ctx, outputURL)
+	if err != nil {
+		err = fmt.Errorf("failed to create new rtmp output: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	_, err = h.ls.NewLink(ctx, livestream.NewLinkParams{
+		LivestreamID:    strm.ID,
+		IntegrationType: livestream.LinkRTMPOutput,
+		IntegrationID:   strconv.Itoa(rtmpOutput.ID),
 	})
 	if err != nil {
 		err = fmt.Errorf("failed to create new link: %w", err)

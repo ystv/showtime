@@ -15,7 +15,7 @@ func (ls *Livestreamer) Start(ctx context.Context, strm Livestream) error {
 
 	for _, link := range links {
 		switch link.IntegrationType {
-		case MCR:
+		case LinkMCR:
 			playoutID, err := strconv.Atoi(link.IntegrationID)
 			if err != nil {
 				return fmt.Errorf("failed to parse string to int: %w", err)
@@ -30,7 +30,7 @@ func (ls *Livestreamer) Start(ctx context.Context, strm Livestream) error {
 				return fmt.Errorf("mcr failed to start playout: %w", err)
 			}
 
-		case YTExisting:
+		case LinkYTExisting:
 			broadcastID := link.IntegrationID
 			b, err := ls.yt.GetBroadcastDetails(ctx, broadcastID)
 			if err != nil {
@@ -44,10 +44,6 @@ func (ls *Livestreamer) Start(ctx context.Context, strm Livestream) error {
 			if err != nil {
 				return fmt.Errorf("youtube failed to start broadcast: %w", err)
 			}
-
-		default:
-			return ErrUnkownIntegrationType
-
 		}
 	}
 
@@ -68,7 +64,7 @@ func (ls *Livestreamer) End(ctx context.Context, strm Livestream) error {
 
 	for _, link := range links {
 		switch link.IntegrationType {
-		case MCR:
+		case LinkMCR:
 			playoutID, err := strconv.Atoi(link.IntegrationID)
 			if err != nil {
 				return fmt.Errorf("failed to parse string to int: %w", err)
@@ -83,7 +79,7 @@ func (ls *Livestreamer) End(ctx context.Context, strm Livestream) error {
 				return fmt.Errorf("website failed to end playout: %w", err)
 			}
 
-		case YTExisting:
+		case LinkYTExisting:
 			broadcastID := link.IntegrationID
 			b, err := ls.yt.GetBroadcastDetails(ctx, broadcastID)
 			if err != nil {
@@ -97,9 +93,6 @@ func (ls *Livestreamer) End(ctx context.Context, strm Livestream) error {
 			if err != nil {
 				return fmt.Errorf("youtube failed to end broadcast: %w", err)
 			}
-
-		default:
-			return ErrUnkownIntegrationType
 		}
 	}
 

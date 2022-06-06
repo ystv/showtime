@@ -44,7 +44,7 @@ func (h *Handlers) enableYouTube(c echo.Context) error {
 
 	_, err = h.ls.NewLink(ctx, livestream.NewLinkParams{
 		LivestreamID:    strmID,
-		IntegrationType: livestream.YTExisting,
+		IntegrationType: livestream.LinkYTExisting,
 		IntegrationID:   broadcastID,
 	})
 	if err != nil {

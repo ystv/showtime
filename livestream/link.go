@@ -23,10 +23,12 @@ type (
 )
 
 const (
-	// MCR enables full integration with MCR.
-	MCR IntegrationType = "mcr"
-	// YTExisting enables partial integration with an existing YouTube broadcast.
-	YTExisting IntegrationType = "yt-existing"
+	// LinkMCR enables full integration with MCR.
+	LinkMCR IntegrationType = "mcr"
+	// LinkYTExisting enables partial integration with an existing YouTube broadcast.
+	LinkYTExisting IntegrationType = "yt-existing"
+	// LinkRTMPOutput enables partial integration to an RTMP endpoint.
+	LinkRTMPOutput IntegrationType = "rtmp"
 )
 
 var (

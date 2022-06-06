@@ -98,6 +98,8 @@ func (h *Handlers) Start() {
 			strm.GET("/link/youtube", h.obsLinkToYouTubeSelectAccount)
 			strm.POST("/link/youtube", h.obsLinkToYouTubeSelectBroadcast)
 			strm.POST("/link/youtube/confirm", h.obsLinkToYouTubeConfirm)
+			strm.GET("/link/rtmp", h.obsLinkToRTMP)
+			strm.POST("/link/rtmp", h.obsLinkToRTMPConfirm)
 		}
 		internal.GET("/channels", h.obsListChannels)
 		internal.GET("/channels/new", h.obsNewChannel)
