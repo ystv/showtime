@@ -142,7 +142,7 @@ func (y *YouTube) ListBroadcasts(ctx context.Context) ([]Broadcast, error) {
 func (y *YouTuber) ListBroadcasts(ctx context.Context) ([]Broadcast, error) {
 	broadcasts := []Broadcast{}
 	req := y.yt.LiveBroadcasts.List([]string{"id,snippet"})
-	req.BroadcastStatus("all")
+	req.BroadcastStatus("upcoming")
 	ytBroadcasts, err := req.Do()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list broadcasts: %w", err)
@@ -219,7 +219,7 @@ func (y *YouTuber) ListShowTimedBroadcasts(ctx context.Context) ([]string, error
 func (b *Broadcast) PrettyDateTime() string {
 	ts, err := time.Parse(time.RFC3339, b.StartTime)
 	if err != nil {
-		return err.Error()
+		return "start time not set"
 	}
 
 	return ts.Format(time.RFC822)
