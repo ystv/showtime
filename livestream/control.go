@@ -30,19 +30,16 @@ func (ls *Livestreamer) Start(ctx context.Context, strm Livestream) error {
 				return fmt.Errorf("mcr failed to start playout: %w", err)
 			}
 
+		case LinkYTNew:
+			err = ls.ytStartBroadcast(ctx, link.IntegrationID)
+			if err != nil {
+				return fmt.Errorf("failed to start yt-new broadcast: %w", err)
+			}
+
 		case LinkYTExisting:
-			broadcastID := link.IntegrationID
-			b, err := ls.yt.GetBroadcastDetails(ctx, broadcastID)
+			err = ls.ytStartBroadcast(ctx, link.IntegrationID)
 			if err != nil {
-				return fmt.Errorf("failed to get broadcast: %w", err)
-			}
-			yt, err := ls.yt.GetYouTuber(b.AccountID)
-			if err != nil {
-				return fmt.Errorf("failed to get youtuber: %w", err)
-			}
-			err = yt.StartBroadcast(ctx, broadcastID)
-			if err != nil {
-				return fmt.Errorf("youtube failed to start broadcast: %w", err)
+				return fmt.Errorf("failed to start yt-existing broadcast: %w", err)
 			}
 		}
 	}
@@ -52,6 +49,22 @@ func (ls *Livestreamer) Start(ctx context.Context, strm Livestream) error {
 		return fmt.Errorf("failed to update status: %w", err)
 	}
 
+	return nil
+}
+
+func (ls *Livestreamer) ytStartBroadcast(ctx context.Context, broadcastID string) error {
+	b, err := ls.yt.GetBroadcast(ctx, broadcastID)
+	if err != nil {
+		return fmt.Errorf("failed to get broadcast: %w", err)
+	}
+	yt, err := ls.yt.GetYouTuber(b.AccountID)
+	if err != nil {
+		return fmt.Errorf("failed to get youtuber: %w", err)
+	}
+	err = yt.StartBroadcast(ctx, b)
+	if err != nil {
+		return fmt.Errorf("youtube failed to start broadcast: %w", err)
+	}
 	return nil
 }
 
@@ -79,19 +92,16 @@ func (ls *Livestreamer) End(ctx context.Context, strm Livestream) error {
 				return fmt.Errorf("website failed to end playout: %w", err)
 			}
 
+		case LinkYTNew:
+			err = ls.ytEndBroadcast(ctx, link.IntegrationID)
+			if err != nil {
+				return fmt.Errorf("failed to end yt-new: %w", err)
+			}
+
 		case LinkYTExisting:
-			broadcastID := link.IntegrationID
-			b, err := ls.yt.GetBroadcastDetails(ctx, broadcastID)
+			err = ls.ytEndBroadcast(ctx, link.IntegrationID)
 			if err != nil {
-				return fmt.Errorf("failed to get broadcast: %w", err)
-			}
-			yt, err := ls.yt.GetYouTuber(b.AccountID)
-			if err != nil {
-				return fmt.Errorf("failed to get youtuber: %w", err)
-			}
-			err = yt.EndBroadcast(ctx, broadcastID)
-			if err != nil {
-				return fmt.Errorf("youtube failed to end broadcast: %w", err)
+				return fmt.Errorf("failed to end yt-existing: %w", err)
 			}
 		}
 	}
@@ -101,5 +111,21 @@ func (ls *Livestreamer) End(ctx context.Context, strm Livestream) error {
 		return fmt.Errorf("failed to update status: %w", err)
 	}
 
+	return nil
+}
+
+func (ls *Livestreamer) ytEndBroadcast(ctx context.Context, broadcastID string) error {
+	b, err := ls.yt.GetBroadcast(ctx, broadcastID)
+	if err != nil {
+		return fmt.Errorf("failed to get broadcast: %w", err)
+	}
+	yt, err := ls.yt.GetYouTuber(b.AccountID)
+	if err != nil {
+		return fmt.Errorf("failed to get youtuber: %w", err)
+	}
+	err = yt.EndBroadcast(ctx, b)
+	if err != nil {
+		return fmt.Errorf("youtube failed to end broadcast: %w", err)
+	}
 	return nil
 }

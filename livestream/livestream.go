@@ -26,7 +26,7 @@ type (
 		mcr           *mcr.MCR
 		yt            *youtube.YouTube
 	}
-	// EditLivestream creates a new livestream.
+	// EditLivestream are parameters required to create or update a livestream.
 	EditLivestream struct {
 		Title          string    `form:"title" form:"title"`
 		Description    string    `json:"description" form:"description"`
@@ -232,6 +232,26 @@ func (ls *Livestreamer) Update(ctx context.Context, livestreamID int, strm EditL
 			})
 			if err != nil {
 				return fmt.Errorf("failed to update playout: %w", err)
+			}
+
+		case LinkYTNew:
+			b, err := ls.yt.GetBroadcast(ctx, link.IntegrationID)
+			if err != nil {
+				return fmt.Errorf("failed to get broadcast: %w", err)
+			}
+			yt, err := ls.yt.GetYouTuber(b.AccountID)
+			if err != nil {
+				return fmt.Errorf("failed to get youtuber: %w", err)
+			}
+			err = yt.UpdateBroadcast(ctx, b.ID, youtube.EditBroadcast{
+				Title:          strm.Title,
+				Description:    strm.Description,
+				ScheduledStart: strm.ScheduledStart,
+				ScheduledEnd:   strm.ScheduledEnd,
+				Visibility:     strm.Visibility,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to update yt-new broadcast: %w", err)
 			}
 		}
 	}

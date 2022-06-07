@@ -37,22 +37,17 @@ func (ls *Livestreamer) Forward(ctx context.Context, strm ConsumeLivestream) err
 				}
 			}()
 
-		case LinkYTExisting:
-			details, err := ls.yt.GetBroadcastDetails(ctx, link.IntegrationID)
+		case LinkYTNew:
+			err = ls.ytForward(ctx, strm.StreamKey, link.IntegrationID)
 			if err != nil {
-				return fmt.Errorf("failed to get broadcast details: %w", err)
+				return fmt.Errorf("failed to forward to yt-new: %w", err)
 			}
 
-			srcURL := ls.ingestAddress + "/" + strm.StreamKey
-			dstURL := details.IngestAddress + "/" + details.IngestKey
-
-			go func() {
-				time.Sleep(1 * time.Second)
-				err = ffmpeg.NewForwardStream(srcURL, dstURL)
-				if err != nil {
-					log.Printf("failed to forward youtube stream: %+v", err)
-				}
-			}()
+		case LinkYTExisting:
+			err = ls.ytForward(ctx, strm.StreamKey, link.IntegrationID)
+			if err != nil {
+				return fmt.Errorf("failed to forward to yt-existing: %w", err)
+			}
 
 		case LinkRTMPOutput:
 			customRTMPOutputID, err := strconv.Atoi(link.IntegrationID)
@@ -76,6 +71,26 @@ func (ls *Livestreamer) Forward(ctx context.Context, strm ConsumeLivestream) err
 			}()
 		}
 	}
+
+	return nil
+}
+
+func (ls *Livestreamer) ytForward(ctx context.Context, streamKey string, broadcastID string) error {
+	b, err := ls.yt.GetBroadcast(ctx, broadcastID)
+	if err != nil {
+		return fmt.Errorf("failed to get broadcast details: %w", err)
+	}
+
+	srcURL := ls.ingestAddress + "/" + streamKey
+	dstURL := b.IngestAddress + "/" + b.IngestKey
+
+	go func() {
+		time.Sleep(1 * time.Second)
+		err = ffmpeg.NewForwardStream(srcURL, dstURL)
+		if err != nil {
+			log.Printf("failed to forward youtube stream: %+v", err)
+		}
+	}()
 
 	return nil
 }

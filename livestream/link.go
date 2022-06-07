@@ -25,6 +25,8 @@ type (
 const (
 	// LinkMCR enables full integration with MCR.
 	LinkMCR IntegrationType = "mcr"
+	// LinkYTNew enables full integration with YouTube, creating a new YouTube broadcast.
+	LinkYTNew IntegrationType = "yt-new"
 	// LinkYTExisting enables partial integration with an existing YouTube broadcast.
 	LinkYTExisting IntegrationType = "yt-existing"
 	// LinkRTMPOutput enables partial integration to an RTMP endpoint.

@@ -301,6 +301,13 @@ func (h *Handlers) obsUnlink(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 
+	case livestream.LinkYTNew:
+		err = h.yt.DeleteBroadcast(ctx, link.IntegrationID)
+		if err != nil {
+			err = fmt.Errorf("failed to delete broadcast: %w", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
+
 	case livestream.LinkYTExisting:
 		err = h.yt.DeleteExistingBroadcast(ctx, link.IntegrationID)
 		if err != nil {
@@ -407,7 +414,7 @@ func (h *Handlers) obsLinkToMCRConfirm(c echo.Context) error {
 	return c.Render(http.StatusCreated, "successful-link", strmID)
 }
 
-func (h *Handlers) obsLinkToYouTubeSelectAccount(c echo.Context) error {
+func (h *Handlers) obsLinkToYouTube(c echo.Context) error {
 	ctx := c.Request().Context()
 	strmID, err := strconv.Atoi(c.Param("livestreamID"))
 	if err != nil {
@@ -426,14 +433,93 @@ func (h *Handlers) obsLinkToYouTubeSelectAccount(c echo.Context) error {
 	data := struct {
 		Livestream livestream.Livestream
 		Channels   []youtube.ChannelInfo
+		Action     string
 	}{
 		Livestream: strm,
 		Channels:   ch,
+		Action:     "create",
 	}
 	return c.Render(http.StatusOK, "set-youtube-link-account", data)
 }
 
-func (h *Handlers) obsLinkToYouTubeSelectBroadcast(c echo.Context) error {
+func (h *Handlers) obsLinkToYouTubeConfirm(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	accountID, err := strconv.Atoi(c.FormValue("accountID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	strm, err := h.ls.Get(ctx, strmID)
+	if err != nil {
+		err = fmt.Errorf("failed to get livestream: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	yt, err := h.yt.GetYouTuber(accountID)
+	if err != nil {
+		err = fmt.Errorf("failed to get youtuber: %w", err)
+		return echo.NewHTTPError(http.StatusNotFound, err)
+	}
+
+	b, err := yt.NewBroadcast(ctx, youtube.EditBroadcast{
+		Title:          strm.Title,
+		Description:    strm.Description,
+		ScheduledStart: strm.ScheduledStart,
+		ScheduledEnd:   strm.ScheduledEnd,
+		Visibility:     strm.Visibility,
+	})
+	if err != nil {
+		err = fmt.Errorf("failed to create new broadcast: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	_, err = h.ls.NewLink(ctx, livestream.NewLinkParams{
+		LivestreamID:    strmID,
+		IntegrationType: livestream.LinkYTNew,
+		IntegrationID:   b.ID,
+	})
+	if err != nil {
+		err = fmt.Errorf("failed to create new link: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.Render(http.StatusCreated, "successful-link", strmID)
+}
+
+func (h *Handlers) obsLinkToYouTubeExistingSelectAccount(c echo.Context) error {
+	ctx := c.Request().Context()
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	strm, err := h.ls.Get(ctx, strmID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	ch, err := h.yt.About(ctx)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	data := struct {
+		Livestream livestream.Livestream
+		Channels   []youtube.ChannelInfo
+		Action     string
+	}{
+		Livestream: strm,
+		Channels:   ch,
+		Action:     "select-broadcast",
+	}
+	return c.Render(http.StatusOK, "set-youtube-link-account", data)
+}
+
+func (h *Handlers) obsLinkToYouTubeExistingSelectBroadcast(c echo.Context) error {
 	ctx := c.Request().Context()
 	strmID, err := strconv.Atoi(c.Param("livestreamID"))
 	if err != nil {
@@ -468,7 +554,7 @@ func (h *Handlers) obsLinkToYouTubeSelectBroadcast(c echo.Context) error {
 	return c.Render(http.StatusOK, "set-youtube-link-broadcast", data)
 }
 
-func (h *Handlers) obsLinkToYouTubeConfirm(c echo.Context) error {
+func (h *Handlers) obsLinkToYouTubeExistingConfirm(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	newExistingBroadcast := struct {

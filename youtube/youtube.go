@@ -38,6 +38,11 @@ CREATE TABLE youtube_broadcasts (
 	account_id text NOT NULL,
 	ingest_address text NOT NULL,
 	ingest_key text NOT NULL,
+	title text NOT NULL,
+	description text NOT NULL,
+	scheduled_start text NOT NULL,
+	scheduled_end text NOT NULL,
+	visibility text NOT NULL,
 	FOREIGN KEY(account_id) REFERENCES youtube_accounts(account_id)
 );
 `
