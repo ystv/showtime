@@ -7,7 +7,7 @@ Stream integration and safety maker.
 Download the OAuth client from the Google Cloud Console (APIs and services /
     Credentials) and save it as `credentials.json` in the project directory.
 
-Create an empty postgrs database.
+Create an empty postgres database.
 
 Create a `.env` file with the following parameters:
 
@@ -44,7 +44,7 @@ ST_SIGNING_KEY=something-long-and-random
 ST_DOMAIN_NAME=example.com
 ```
 
-Initialise a postgres database with the `init` program.
+Initialise the postgres database with the `init` program.
 
 ```sh
 go run cmd/init/init.go
