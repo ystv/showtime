@@ -91,6 +91,8 @@ func (h *Handlers) Start() {
 			strm.GET("/edit", h.obsEditLivestream)
 			strm.POST("/edit", h.obsEditLivestreamSubmit)
 			strm.GET("/manage", h.obsManageLivestream)
+			strm.GET("/delete", h.obsDeleteLivestream)
+			strm.POST("/delete", h.obsDeleteLivestreamSubmit)
 			strm.GET("/link", h.obsLink)
 			strm.GET("/unlink/:linkID", h.obsUnlink)
 			strm.GET("/link/mcr", h.obsLinkToMCR)

@@ -271,6 +271,31 @@ func (ls *Livestreamer) updateStatus(ctx context.Context, livestreamID int, stat
 	return nil
 }
 
+// Delete removes a livestream and it's associated links.
+func (ls *Livestreamer) Delete(ctx context.Context, strm Livestream) error {
+	links, err := ls.ListLinks(ctx, strm.ID)
+	if err != nil {
+		return fmt.Errorf("failed to list links: %w", err)
+	}
+
+	for _, link := range links {
+		err = ls.DeleteLink(ctx, link)
+		if err != nil {
+			return fmt.Errorf("failed to delete link: %w", err)
+		}
+	}
+
+	_, err = ls.db.ExecContext(ctx, `
+		DELETE FROM livestreams
+		WHERE livestream_id = $1;
+	`, strm.ID)
+	if err != nil {
+		return fmt.Errorf("failed to delete livestream from store: %w", err)
+	}
+
+	return nil
+}
+
 // PrettyDateTime formats dates to a more readable string.
 func (strm Livestream) PrettyDateTime(ts time.Time) string {
 	if ts.After(time.Now().Add(time.Hour * 24)) {

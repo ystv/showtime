@@ -72,7 +72,7 @@ func (h *Handlers) disableYouTube(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	err = h.ls.DeleteLink(ctx, linkID)
+	err = h.ls.DeleteLink(ctx, link)
 	if err != nil {
 		err = fmt.Errorf("failed to delete link: %w", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)

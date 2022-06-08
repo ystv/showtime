@@ -3,6 +3,8 @@ package livestream
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strconv"
 )
 
 type (
@@ -76,10 +78,50 @@ func (ls *Livestreamer) ListLinks(ctx context.Context, livestreamID int) ([]Link
 }
 
 // DeleteLink removes a relationship between a livestream and an integration.
-func (ls *Livestreamer) DeleteLink(ctx context.Context, linkID int) error {
+func (ls *Livestreamer) DeleteLink(ctx context.Context, link Link) error {
+	switch link.IntegrationType {
+	case LinkMCR:
+		playoutID, err := strconv.Atoi(link.IntegrationID)
+		if err != nil {
+			return fmt.Errorf("failed to convert integration id to playout id: %w", err)
+		}
+
+		err = ls.mcr.DeletePlayout(ctx, playoutID)
+		if err != nil {
+			return fmt.Errorf("failed to delete playout: %w", err)
+		}
+
+	case LinkYTNew:
+		err := ls.yt.DeleteBroadcast(ctx, link.IntegrationID)
+		if err != nil {
+			return fmt.Errorf("failed to delete broadcast: %w", err)
+		}
+
+	case LinkYTExisting:
+		err := ls.yt.DeleteExistingBroadcast(ctx, link.IntegrationID)
+		if err != nil {
+			return fmt.Errorf("failed to delete existing broadcast: %w", err)
+		}
+
+	case LinkRTMPOutput:
+		rtmpOutputID, err := strconv.Atoi(link.IntegrationID)
+		if err != nil {
+			return fmt.Errorf("failed to convert integration id to rtmp output id: %w", err)
+		}
+		err = ls.DeleteRTMPOutput(ctx, rtmpOutputID)
+		if err != nil {
+			return fmt.Errorf("failed to delete rtmp output: %w", err)
+		}
+
+	default:
+		return ErrUnkownIntegrationType
+	}
 	_, err := ls.db.ExecContext(ctx, `
 		DELETE FROM links
 		WHERE link_id = $1;
-	`, linkID)
+	`, link.ID)
+	if err != nil {
+		return fmt.Errorf("failed to delete link from store: %w", err)
+	}
 	return err
 }

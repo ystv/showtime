@@ -256,6 +256,53 @@ func (h *Handlers) obsManageLivestream(c echo.Context) error {
 	return c.Render(http.StatusOK, "manage-livestream", data)
 }
 
+func (h *Handlers) obsDeleteLivestream(c echo.Context) error {
+	ctx := c.Request().Context()
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	strm, err := h.ls.Get(ctx, strmID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	links, err := h.ls.ListLinks(ctx, strmID)
+	if err != nil {
+		return fmt.Errorf("failed to get stream links: %w", err)
+	}
+
+	data := struct {
+		Livestream livestream.Livestream
+		TotalLinks int
+	}{
+		Livestream: strm,
+		TotalLinks: len(links),
+	}
+	return c.Render(http.StatusOK, "delete-livestream", data)
+}
+
+func (h *Handlers) obsDeleteLivestreamSubmit(c echo.Context) error {
+	ctx := c.Request().Context()
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	strm, err := h.ls.Get(ctx, strmID)
+	if err != nil {
+		err = fmt.Errorf("failed to get livestream: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	err = h.ls.Delete(ctx, strm)
+	if err != nil {
+		err = fmt.Errorf("failed to delete livestream: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.Render(http.StatusOK, "successful-livestream-delete", nil)
+}
+
 func (h *Handlers) obsLink(c echo.Context) error {
 	ctx := c.Request().Context()
 	strmID, err := strconv.Atoi(c.Param("livestreamID"))
@@ -287,52 +334,7 @@ func (h *Handlers) obsUnlink(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	switch link.IntegrationType {
-	case livestream.LinkMCR:
-		playoutID, err := strconv.Atoi(link.IntegrationID)
-		if err != nil {
-			err = fmt.Errorf("failed to convert integration id to playout id: %w", err)
-			return echo.NewHTTPError(http.StatusBadRequest, err)
-		}
-
-		err = h.mcr.DeletePlayout(ctx, playoutID)
-		if err != nil {
-			err = fmt.Errorf("failed to delete playout: %w", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
-		}
-
-	case livestream.LinkYTNew:
-		err = h.yt.DeleteBroadcast(ctx, link.IntegrationID)
-		if err != nil {
-			err = fmt.Errorf("failed to delete broadcast: %w", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
-		}
-
-	case livestream.LinkYTExisting:
-		err = h.yt.DeleteExistingBroadcast(ctx, link.IntegrationID)
-		if err != nil {
-			err = fmt.Errorf("failed to delete existing broadcast: %w", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
-		}
-
-	case livestream.LinkRTMPOutput:
-		rtmpOutputID, err := strconv.Atoi(link.IntegrationID)
-		if err != nil {
-			err = fmt.Errorf("failed to convert integration id to rtmp output id: %w", err)
-			return echo.NewHTTPError(http.StatusBadRequest, err)
-		}
-		err = h.ls.DeleteRTMPOutput(ctx, rtmpOutputID)
-		if err != nil {
-			err = fmt.Errorf("failed to delete rtmp output: %w", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
-		}
-
-	default:
-		err = livestream.ErrUnkownIntegrationType
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
-
-	err = h.ls.DeleteLink(ctx, linkID)
+	err = h.ls.DeleteLink(ctx, link)
 	if err != nil {
 		err = fmt.Errorf("failed to delete link: %w", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
