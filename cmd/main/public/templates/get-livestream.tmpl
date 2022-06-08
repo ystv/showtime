@@ -24,16 +24,19 @@
         <h1 class="title is-2">{{ .StreamKey }}</h1>
       </div>
     </div>
-    <div class="buttons">
-      {{ if eq .Status "pending" }}
-        <a href="/livestreams/{{ .ID }}/start" class="button is-danger">Start stream</a>
-      {{ end }}
-      {{ if eq .Status "stream-started"}}
-        <a href="/livestreams/{{ .ID }}/end" class="button is-danger">End stream</a>
-      </form>
-      {{ end }}
-      <a href="/livestreams/{{ .ID }}/manage" class="button is-info">Manage stream</a>
-    </div>
+    <nav class="level">
+      <div class="level-item">
+        <div class="buttons">
+          {{ if eq .Status "pending" }}
+          <a href="/livestreams/{{ .ID }}/start" class="button is-danger">Start stream</a>
+          {{ end }}
+          {{ if eq .Status "stream-started"}}
+          <a href="/livestreams/{{ .ID }}/end" class="button is-danger">End stream</a>
+          {{ end }}
+          <a href="/livestreams/{{ .ID }}/manage" class="button is-info">Manage stream</a>
+        </div>
+      </div>
+    </nav>
     <p>
         Don't know how to add a stream key? Follow the guide 
         <a href="https://docs.ystv.co.uk/wiki/How_to_add_a_stream_key_to_OBS">here</a>.
