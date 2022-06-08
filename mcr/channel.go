@@ -42,14 +42,14 @@ func (mcr *MCR) setChannelProgram(ctx context.Context, channelID int, inputID in
 	mixerID := 0
 	err := mcr.db.GetContext(ctx, &mixerID, `
 		SELECT mixer_id
-		FROM channels
+		FROM mcr.channels
 		WHERE channel_id = $1`, channelID)
 	err = mcr.brave.CutMixerToInput(ctx, mixerID, inputID)
 	if err != nil {
 		return fmt.Errorf("failed to cut mixer to input: %w", err)
 	}
 	_, err = mcr.db.ExecContext(ctx, `
-		UPDATE channels
+		UPDATE mcr.channels
 			SET program_input_id = $1
 		WHERE channel_id = $2;
 	`, inputID, channelID)
@@ -77,7 +77,7 @@ func (mcr *MCR) SetChannelOnAir(ctx context.Context, ch Channel) error {
 	}
 
 	_, err = mcr.db.ExecContext(ctx, `
-		UPDATE channels SET
+		UPDATE mcr.channels SET
 			status = 'on-air',
 			mixer_id = $1,
 			program_output_id = $2
@@ -107,7 +107,7 @@ func (mcr *MCR) SetChannelOffAir(ctx context.Context, ch Channel) error {
 	}
 
 	_, err = mcr.db.ExecContext(ctx, `
-		UPDATE channels SET
+		UPDATE mcr.channels SET
 			status = 'off-air',
 			mixer_id = 0,
 			program_output_id = 0
@@ -140,7 +140,7 @@ func (mcr *MCR) NewChannel(ctx context.Context, ch NewChannel) (int, error) {
 
 	channelID := 0
 	err := mcr.db.GetContext(ctx, &channelID, `
-		INSERT INTO channels (
+		INSERT INTO mcr.channels (
 			status, title, url_name, res_width, res_height, mixer_id, program_input_id,
 			continuity_input_id, program_output_id)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -158,7 +158,7 @@ func (mcr *MCR) GetChannel(ctx context.Context, channelID int) (Channel, error) 
 	err := mcr.db.GetContext(ctx, &ch, `
 		SELECT channel_id, status, title, url_name, res_width, res_height, mixer_id,
 					 program_input_id, continuity_input_id, program_output_id
-		FROM channels
+		FROM mcr.channels
 		WHERE channel_id  = $1;`, channelID)
 	if err != nil {
 		return Channel{}, fmt.Errorf("failed to get channel: %w", err)
@@ -172,7 +172,7 @@ func (mcr *MCR) ListChannels(ctx context.Context) ([]Channel, error) {
 	ch := []Channel{}
 	err := mcr.db.SelectContext(ctx, &ch, `
 		SELECT channel_id, title, mixer_id
-		FROM channels;
+		FROM mcr.channels;
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get list of channels: %w", err)

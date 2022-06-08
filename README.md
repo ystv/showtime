@@ -4,9 +4,10 @@ Stream integration and safety maker.
 
 ## Setup
 
-You will need to download the OAuth client from the Google Cloud Console
-(APIs and services / Credentials) and save it as `credentials.json` in
-the project directory.
+Download the OAuth client from the Google Cloud Console (APIs and services /
+    Credentials) and save it as `credentials.json` in the project directory.
+
+Create an empty postgrs database.
 
 Create a `.env` file with the following parameters:
 
@@ -26,6 +27,14 @@ ST_BASE_SERVE_ADDR=example.com
 # Brave instance to support redundancy and channels
 ST_BRAVE_ADDR=brave.example.com
 
+# Database connection details
+ST_DB_HOST=db.example.com
+ST_DB_PORT=5432
+ST_DB_SSLMODE=require
+ST_DB_DBNAME=showtime
+ST_DB_USERNAME=showtime_user
+ST_DB_PASSWORD=something-long-and-random
+
 # Note: these two don't need to be filled if debug is enabled.
 
 # Verify web-auth tokens
@@ -35,13 +44,13 @@ ST_SIGNING_KEY=something-long-and-random
 ST_DOMAIN_NAME=example.com
 ```
 
-Create the database with the `init` program.
+Initialise a postgres database with the `init` program.
 
 ```sh
 go run cmd/init/init.go
 ```
 
-A new sqlite database "showtime.db" will appear in the working directory.
+Schemas and tables should now be present in the given database.
 
 Create the folder structure to serve assets.
 

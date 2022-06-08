@@ -37,8 +37,10 @@ var (
 
 // Schema represents the mcr package in the database.
 var Schema = `
-CREATE TABLE channels (
-	channel_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+CREATE SCHEMA mcr;
+
+CREATE TABLE mcr.channels (
+	channel_id bigint GENERATED ALWAYS AS IDENTITY,
 	status text NOT NULL,
 	title text NOT NULL,
 	url_name text NOT NULL UNIQUE,
@@ -47,22 +49,24 @@ CREATE TABLE channels (
 	mixer_id integer NOT NULL,
 	program_input_id integer NOT NULL,
 	continuity_input_id integer NOT NULL,
-	program_output_id integer NOT NULL
+	program_output_id integer NOT NULL,
+	PRIMARY KEY (channel_id)
 );
 
-CREATE TABLE playouts (
-	playout_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-	channel_id integer NOT NULL,
+CREATE TABLE mcr.playouts (
+	playout_id bigint GENERATED ALWAYS AS IDENTITY,
+	channel_id bigint NOT NULL,
 	brave_input_id integer NOT NULL,
 	source_type text NOT NULL,
 	source_uri text NOT NULL,
 	status text NOT NULL,
 	title text NOT NULL,
 	description text NOT NULL,
-	scheduled_start datetime NOT NULL,
-	scheduled_end datetime NOT NULL,
+	scheduled_start timestamptz NOT NULL,
+	scheduled_end timestamptz NOT NULL,
 	visibility text NOT NULL,
-	FOREIGN KEY(channel_id) REFERENCES channels(channel_id)
+	PRIMARY KEY (playout_id),
+	CONSTRAINT fk_channel FOREIGN KEY(channel_id) REFERENCES mcr.channels(channel_id)
 );
 `
 

@@ -56,29 +56,33 @@ type (
 
 // Schema represents the livestream package in the database.
 var Schema = `
-CREATE TABLE livestreams(
-	livestream_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE livestreams (
+	livestream_id bigint GENERATED ALWAYS AS IDENTITY,
 	status text NOT NULL,
-	stream_key text NOT NULL UNIQUE,
+	stream_key text NOT NULL,
 	title text NOT NULL,
 	description text NOT NULL,
-	scheduled_start datetime NOT NULL,
-	scheduled_end datetime NOT NULL,
-	visibility text NOT NULL
+	scheduled_start timestamptz NOT NULL,
+	scheduled_end timestamptz NOT NULL,
+	visibility text NOT NULL,
+	PRIMARY KEY(livestream_id),
+	UNIQUE(stream_key)
 );
 
-CREATE TABLE links(
-	link_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE links (
+	link_id bigint GENERATED ALWAYS AS IDENTITY,
 	livestream_id integer NOT NULL,
 	integration_type text NOT NULL,
 	integration_id text NOT NULL,
-	FOREIGN KEY (livestream_id) REFERENCES livestreams(livestream_id)
+	PRIMARY KEY(link_id),
+	CONSTRAINT fk_livestream FOREIGN KEY(livestream_id) REFERENCES livestreams(livestream_id),
 	UNIQUE (integration_type, integration_id)
 );
 
 CREATE TABLE rtmp_outputs (
-	rtmp_output_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-	output_url text NOT NULL
+	rtmp_output_id bigint GENERATED ALWAYS AS IDENTITY,
+	output_url text NOT NULL,
+	PRIMARY KEY(rtmp_output_id)
 );
 `
 

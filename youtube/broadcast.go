@@ -87,7 +87,7 @@ func (y *YouTuber) NewBroadcast(ctx context.Context, p EditBroadcast) (Broadcast
 	}
 
 	_, err = y.db.ExecContext(ctx, `
-		INSERT INTO youtube_broadcasts (
+		INSERT INTO youtube.broadcasts (
 			broadcast_id,	account_id,	ingest_address, ingest_key, title, description,
 			scheduled_start, scheduled_end, visibility
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`, ytBroadcast.Id,
@@ -131,7 +131,7 @@ func (y *YouTuber) UpdateBroadcast(ctx context.Context, broadcastID string, p Ed
 	}
 
 	_, err = y.db.ExecContext(ctx, `
-		UPDATE youtube_broadcasts SET
+		UPDATE youtube.broadcasts SET
 			title = $1,
 			description = $2,
 			scheduled_start = $3,
@@ -174,7 +174,7 @@ func (y *YouTuber) DeleteBroadcast(ctx context.Context, b Broadcast) error {
 	}
 
 	_, err = y.db.ExecContext(ctx, `
-		DELETE FROM youtube_broadcasts
+		DELETE FROM youtube.broadcasts
 		WHERE broadcast_id = $1;`, b.ID)
 	if err != nil {
 		return fmt.Errorf("failed to delete broadcast in store: %w", err)
@@ -204,7 +204,7 @@ func (y *YouTuber) NewExistingBroadcast(ctx context.Context, broadcastID string)
 	}
 
 	_, err = y.db.ExecContext(ctx, `
-		INSERT INTO youtube_broadcasts (
+		INSERT INTO youtube.broadcasts (
 			broadcast_id,	account_id,	ingest_address, ingest_key,	title, description,
 			scheduled_start, scheduled_end,	visibility
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
@@ -243,7 +243,7 @@ func (y *YouTuber) DeleteExistingBroadcast(ctx context.Context, b Broadcast) err
 	}
 
 	_, err = y.db.ExecContext(ctx, `
-		DELETE FROM youtube_broadcasts
+		DELETE FROM youtube.broadcasts
 		WHERE broadcast_id = $1;`, b.ID)
 	if err != nil {
 		return fmt.Errorf("failed to delete broadcast: %w", err)
@@ -300,7 +300,7 @@ func (y *YouTube) GetBroadcast(ctx context.Context, broadcastID string) (Broadca
 	err := y.db.GetContext(ctx, &b, `
 		SELECT broadcast_id, account_id, ingest_address, ingest_key, title,
 					 description, scheduled_start, scheduled_end, visibility
-		FROM youtube_broadcasts
+		FROM youtube.broadcasts
 		WHERE broadcast_id = $1;
 	`, broadcastID)
 	return b, err
@@ -314,7 +314,7 @@ func (y *YouTuber) GetBroadcast(ctx context.Context, broadcastID string) (Broadc
 	err := y.db.GetContext(ctx, &b, `
 		SELECT broadcast_id, account_id, ingest_address, ingest_key, title,
 					 description, scheduled_start, scheduled_end, visbility
-		FROM youtube_broadcasts
+		FROM youtube.broadcasts
 		WHERE broadcast_id = $1;
 	`, broadcastID)
 	return b, err
@@ -339,7 +339,7 @@ func (y *YouTuber) GetTotalLinkedBroadcasts(ctx context.Context) (int, error) {
 	total := 0
 	err := y.db.GetContext(ctx, &total, `
 		SELECT COUNT(*)
-		FROM youtube_broadcasts
+		FROM youtube.broadcasts
 		WHERE account_id = $1;
 	`, y.accountID)
 	if err != nil {
@@ -353,7 +353,7 @@ func (y *YouTuber) ListShowTimedBroadcasts(ctx context.Context) ([]Broadcast, er
 	broadcasts := []Broadcast{}
 	err := y.db.SelectContext(ctx, &broadcasts, `
 		SELECT broadcast_id
-		FROM youtube_broadcasts
+		FROM youtube.broadcasts
 		WHERE account_id = $1;
 	`, y.accountID)
 	return broadcasts, err

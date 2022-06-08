@@ -25,7 +25,7 @@ func (y *YouTube) NewAccount(ctx context.Context, tokenID int) error {
 
 	accountID := 0
 	err = y.db.GetContext(ctx, &accountID, `
-		INSERT INTO youtube_accounts(token_id)
+		INSERT INTO youtube.accounts(token_id)
 		VALUES ($1)
 		RETURNING account_id;
 	`, tokenID)
@@ -40,7 +40,7 @@ func (y *YouTube) NewAccount(ctx context.Context, tokenID int) error {
 // DeleteAccount removes a youtube account from ShowTime management.
 func (y *YouTube) DeleteAccount(ctx context.Context, accountID int) error {
 	_, err := y.db.ExecContext(ctx, `
-		DELETE FROM youtube_accounts
+		DELETE FROM youtube.accounts
 		WHERE account_id = $1;
 	`, accountID)
 	if err != nil {
@@ -56,7 +56,7 @@ func (y *YouTube) listAccounts(ctx context.Context) ([]Account, error) {
 	accounts := []Account{}
 	err := y.db.SelectContext(ctx, &accounts, `
 		SELECT account_id, token_id
-		FROM youtube_accounts;`)
+		FROM youtube.accounts;`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list accounts in store: %w", err)
 	}

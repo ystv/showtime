@@ -110,7 +110,7 @@ func (mcr *MCR) getChannelRundown(ctx context.Context, channelID int) (channelRu
 	err := mcr.db.GetContext(ctx, &cr, `
 		SELECT title, res_width, res_height, mixer_id, program_input_id,
 		continuity_input_id
-		FROM channels
+		FROM mcr.channels
 		WHERE channel_id = $1;
 	`, channelID)
 	if err != nil {
@@ -119,7 +119,7 @@ func (mcr *MCR) getChannelRundown(ctx context.Context, channelID int) (channelRu
 
 	err = mcr.db.SelectContext(ctx, &cr.Playouts, `
 		SELECT title, scheduled_start
-		FROM playouts
+		FROM mcr.playouts
 		WHERE channel_id = $1
 		AND visibility = 'public'
 		AND status = 'scheduled'
@@ -135,7 +135,7 @@ func (mcr *MCR) getChannelRundown(ctx context.Context, channelID int) (channelRu
 
 func (mcr *MCR) updateContinuityInput(ctx context.Context, channelID int, inputID int) error {
 	_, err := mcr.db.ExecContext(ctx, `
-		UPDATE channels
+		UPDATE mcr.channels
 			SET continuity_input_id = $1
 		WHERE channel_id = $2;
 	`, inputID, channelID)

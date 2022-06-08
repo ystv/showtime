@@ -24,9 +24,12 @@ type (
 
 // Schema represents the auth package in the database.
 var Schema = `
-CREATE TABLE auth_tokens (
-	token_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-	value text NOT NULL
+CREATE SCHEMA auth;
+
+CREATE TABLE auth.tokens (
+	token_id bigint GENERATED ALWAYS AS IDENTITY,
+	value text NOT NULL,
+	PRIMARY KEY(token_id)
 );
 `
 
@@ -81,7 +84,7 @@ func (a *Auther) storeRefreshToken(ctx context.Context, tok *oauth2.Token) (int,
 	}
 	tokenID := 0
 	err = a.db.GetContext(ctx, &tokenID, `
-		INSERT INTO auth_tokens (value)
+		INSERT INTO auth.tokens (value)
 		VALUES ($1)
 		RETURNING token_id;
 	`, string(b))
@@ -96,7 +99,7 @@ func (a *Auther) getToken(ctx context.Context, tokenID int) (*oauth2.Token, erro
 	tokenString := ""
 	err := a.db.GetContext(ctx, &tokenString, `
 		SELECT value
-		FROM auth_tokens
+		FROM auth.tokens
 		WHERE token_id = $1;
 	`, tokenID)
 	if err != nil {

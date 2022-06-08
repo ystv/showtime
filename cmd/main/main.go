@@ -27,6 +27,7 @@ type Config struct {
 	mcr        *mcr.Config
 	brave      brave.Config
 	handlers   *handlers.Config
+	db         *db.Config
 }
 
 func main() {
@@ -62,9 +63,17 @@ func main() {
 			IngestAddress:   os.Getenv("ST_INGEST_ADDR"),
 			JWTSigningKey:   os.Getenv("ST_SIGNING_KEY"),
 		},
+		db: &db.Config{
+			Host:     os.Getenv("ST_DB_HOST"),
+			Port:     os.Getenv("ST_DB_PORT"),
+			SSLMode:  os.Getenv("ST_DB_SSLMODE"),
+			DBName:   os.Getenv("ST_DB_DBNAME"),
+			Username: os.Getenv("ST_DB_USERNAME"),
+			Password: os.Getenv("ST_DB_PASSWORD"),
+		},
 	}
 
-	db, err := db.New()
+	db, err := db.New(conf.db)
 	if err != nil {
 		log.Fatalf("unable to create database: %+v", err)
 	}

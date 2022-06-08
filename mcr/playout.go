@@ -47,7 +47,7 @@ func (mcr *MCR) StartPlayout(ctx context.Context, po Playout) error {
 	}
 
 	_, err = mcr.db.ExecContext(ctx, `
-		UPDATE playouts
+		UPDATE mcr.playouts
 		SET status = 'live'
 		WHERE playout_id = $1;
 	`, po.ID)
@@ -70,7 +70,7 @@ func (mcr *MCR) EndPlayout(ctx context.Context, po Playout) error {
 	continuityInputID := 0
 	err := mcr.db.GetContext(ctx, &continuityInputID, `
 		SELECT continuity_input_id
-		FROM channels
+		FROM mcr.channels
 		WHERE channel_id = $1;`, po.ChannelID)
 	if err != nil {
 		return fmt.Errorf("failed to get continuity input id: %w", err)
@@ -87,7 +87,7 @@ func (mcr *MCR) EndPlayout(ctx context.Context, po Playout) error {
 	}
 
 	_, err = mcr.db.ExecContext(ctx, `
-		UPDATE playouts
+		UPDATE mcr.playouts
 		SET
 			brave_input_id = 0,
 			status = 'stream-ended'
@@ -133,7 +133,7 @@ func (mcr *MCR) NewPlayout(ctx context.Context, po EditPlayout) (int, error) {
 
 	playoutID := 0
 	err = mcr.db.GetContext(ctx, &playoutID, `
-		INSERT INTO playouts (
+		INSERT INTO mcr.playouts (
 			brave_input_id, channel_id, source_type, source_uri, status, title,
 			description, scheduled_start, scheduled_end, visibility
 		)
@@ -160,7 +160,7 @@ func (mcr *MCR) GetPlayout(ctx context.Context, playoutID int) (Playout, error) 
 		SELECT
 			playout_id, brave_input_id, channel_id, source_type, source_uri, status,
 			title, description, scheduled_start, scheduled_end, visibility
-		FROM playouts
+		FROM mcr.playouts
 		WHERE playout_id  = $1;`, playoutID)
 	if err != nil {
 		return Playout{}, fmt.Errorf("failed to get playout: %w", err)
@@ -175,7 +175,7 @@ func (mcr *MCR) GetPlayoutsForChannel(ctx context.Context, ch Channel) ([]Playou
 		SELECT
 			playout_id, brave_input_id, channel_id, source_type, source_uri, status,
 			title, description, scheduled_start, scheduled_end, visibility
-		FROM playouts
+		FROM mcr.playouts
 		WHERE channel_id  = $1
 		ORDER BY
 			scheduled_start ASC,
@@ -230,7 +230,7 @@ func (mcr *MCR) UpdatePlayout(ctx context.Context, playoutID int, po EditPlayout
 	}
 
 	_, err = mcr.db.ExecContext(ctx, `
-		UPDATE playouts SET
+		UPDATE mcr.playouts SET
 			brave_input_id = $1,
 			channel_id = $2,
 			source_type = $3,
@@ -263,7 +263,7 @@ func (mcr *MCR) DeletePlayout(ctx context.Context, playoutID int) error {
 	}
 
 	_, err = mcr.db.ExecContext(ctx, `
-		DELETE FROM playouts
+		DELETE FROM mcr.playouts
 		WHERE playout_id = $1;`, playoutID)
 	if err != nil {
 		return fmt.Errorf("failed to delete playout from store: %w", err)

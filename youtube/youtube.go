@@ -27,15 +27,18 @@ type (
 
 // Schema represents the youtube package in the database.
 var Schema = `
-CREATE TABLE youtube_accounts (
-	account_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+CREATE SCHEMA youtube;
+
+CREATE TABLE youtube.accounts (
+	account_id bigint GENERATED ALWAYS AS IDENTITY,
 	token_id integer NOT NULL,
-	FOREIGN KEY(token_id) REFERENCES auth_tokens(token_id)
+	PRIMARY KEY(account_id),
+	CONSTRAINT fk_token FOREIGN KEY(token_id) REFERENCES auth.tokens(token_id)
 );
 
-CREATE TABLE youtube_broadcasts (
-	broadcast_id text NOT NULL PRIMARY KEY,
-	account_id text NOT NULL,
+CREATE TABLE youtube.broadcasts (
+	broadcast_id text NOT NULL,
+	account_id bigint NOT NULL,
 	ingest_address text NOT NULL,
 	ingest_key text NOT NULL,
 	title text NOT NULL,
@@ -43,7 +46,8 @@ CREATE TABLE youtube_broadcasts (
 	scheduled_start text NOT NULL,
 	scheduled_end text NOT NULL,
 	visibility text NOT NULL,
-	FOREIGN KEY(account_id) REFERENCES youtube_accounts(account_id)
+	PRIMARY KEY(broadcast_id),
+	CONSTRAINT fk_account FOREIGN KEY(account_id) REFERENCES youtube.accounts(account_id)
 );
 `
 var (
