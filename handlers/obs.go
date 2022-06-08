@@ -22,7 +22,25 @@ func (h *Handlers) obsListLivestreams(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	return c.Render(http.StatusOK, "list-livestreams", strms)
+	upcoming := []livestream.Livestream{}
+	past := []livestream.Livestream{}
+	for _, strm := range strms {
+		if strm.Status == "stream-ended" {
+			past = append(past, strm)
+		} else {
+			upcoming = append(upcoming, strm)
+		}
+	}
+
+	data := struct {
+		Upcoming []livestream.Livestream
+		Past     []livestream.Livestream
+	}{
+		Upcoming: upcoming,
+		Past:     past,
+	}
+
+	return c.Render(http.StatusOK, "list-livestreams", data)
 }
 
 func (h *Handlers) obsGetLivestream(c echo.Context) error {
