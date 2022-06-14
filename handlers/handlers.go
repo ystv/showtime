@@ -111,6 +111,8 @@ func (h *Handlers) Start() {
 		ch := internal.Group("/channels/:channelID")
 		{
 			ch.GET("", h.obsGetChannel)
+			ch.GET("/edit", h.obsEditChannel)
+			ch.POST("/edit", h.obsEditChannelSubmit)
 			ch.POST("/on-air", h.obsSetChannelOnAir)
 			ch.POST("/off-air", h.obsSetChannelOffAir)
 		}

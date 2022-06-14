@@ -671,6 +671,58 @@ func (h *Handlers) obsLinkToRTMPConfirm(c echo.Context) error {
 	return c.Render(http.StatusCreated, "successful-link", strmID)
 }
 
+func (h *Handlers) obsListChannels(c echo.Context) error {
+	ch, err := h.mcr.ListChannels(c.Request().Context())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	data := struct {
+		Channels []mcr.Channel
+	}{
+		Channels: ch,
+	}
+	return c.Render(http.StatusOK, "list-channels", data)
+}
+
+func (h *Handlers) obsNewChannel(c echo.Context) error {
+	return c.Render(http.StatusOK, "edit-channel", editChannelForm{
+		Fields: mcr.EditChannel{},
+		Title:  "New",
+		Action: "Create",
+	})
+}
+
+type (
+	editChannelForm struct {
+		ID     int
+		Fields mcr.EditChannel
+		Title  string
+		Action string
+		Errors []string
+	}
+)
+
+func (h *Handlers) obsNewChannelSubmit(c echo.Context) error {
+	form := editChannelForm{
+		Fields: mcr.EditChannel{},
+		Title:  "New",
+		Action: "Create",
+	}
+
+	err := c.Bind(&form.Fields)
+	if err != nil {
+		form.Errors = append(form.Errors, err.Error())
+		return c.Render(http.StatusBadRequest, "edit-channel", form)
+	}
+
+	chID, err := h.mcr.NewChannel(c.Request().Context(), form.Fields)
+	if err != nil {
+		form.Errors = append(form.Errors, err.Error())
+		return c.Render(http.StatusBadRequest, "edit-channel", form)
+	}
+	return c.Redirect(http.StatusFound, fmt.Sprintf("/channels/%d", chID))
+}
+
 func (h *Handlers) obsGetChannel(c echo.Context) error {
 	ctx := c.Request().Context()
 	channelID, err := strconv.Atoi(c.Param("channelID"))
@@ -694,6 +746,62 @@ func (h *Handlers) obsGetChannel(c echo.Context) error {
 		Playouts: po,
 	}
 	return c.Render(http.StatusOK, "get-channel", data)
+}
+
+func (h *Handlers) obsEditChannel(c echo.Context) error {
+	ctx := c.Request().Context()
+	channelID, err := strconv.Atoi(c.Param("channelID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	ch, err := h.mcr.GetChannel(ctx, channelID)
+	if err != nil {
+		err = fmt.Errorf("failed to get channel: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.Render(http.StatusOK, "edit-channel", editChannelForm{
+		Fields: mcr.EditChannel{
+			Title:   ch.Title,
+			URLName: ch.URLName,
+		},
+		ID:     ch.ID,
+		Title:  "Edit",
+		Action: "Save",
+	})
+}
+
+func (h *Handlers) obsEditChannelSubmit(c echo.Context) error {
+	ctx := c.Request().Context()
+	channelID, err := strconv.Atoi(c.Param("channelID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	ch, err := h.mcr.GetChannel(ctx, channelID)
+	if err != nil {
+		err = fmt.Errorf("failed to get channel: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	form := editChannelForm{
+		Fields: mcr.EditChannel{},
+		ID:     ch.ID,
+		Title:  "Edit",
+		Action: "Save",
+	}
+
+	err = c.Bind(&form.Fields)
+	if err != nil {
+		form.Errors = append(form.Errors, err.Error())
+		return c.Render(http.StatusBadRequest, "edit-channel", form)
+	}
+
+	err = h.mcr.UpdateChannel(ctx, ch.ID, form.Fields)
+	if err != nil {
+		form.Errors = append(form.Errors, err.Error())
+		return c.Render(http.StatusBadRequest, "edit-channel", form)
+	}
+	return c.Redirect(http.StatusFound, fmt.Sprintf("/channels/%d", ch.ID))
 }
 
 func (h *Handlers) obsSetChannelOnAir(c echo.Context) error {
@@ -748,34 +856,136 @@ func (h *Handlers) obsSetChannelOffAir(c echo.Context) error {
 	return c.Redirect(http.StatusFound, fmt.Sprintf("/channels/%d", ch.ID))
 }
 
-func (h *Handlers) obsListChannels(c echo.Context) error {
-	ch, err := h.mcr.ListChannels(c.Request().Context())
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
-	data := struct {
-		Channels []mcr.Channel
-	}{
-		Channels: ch,
-	}
-	return c.Render(http.StatusOK, "list-channels", data)
-}
-
-func (h *Handlers) obsNewChannel(c echo.Context) error {
-	return c.Render(http.StatusOK, "new-channel", nil)
-}
-
-func (h *Handlers) obsNewChannelSubmit(c echo.Context) error {
-	ch := mcr.NewChannel{}
-	err := c.Bind(&ch)
+func (h *Handlers) obsArchiveChannel(c echo.Context) error {
+	ctx := c.Request().Context()
+	channelID, err := strconv.Atoi(c.Param("channelID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	_, err = h.mcr.NewChannel(c.Request().Context(), ch)
+	ch, err := h.mcr.GetChannel(ctx, channelID)
 	if err != nil {
+		err = fmt.Errorf("failed to get channel: %w", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	return h.obsListChannels(c)
+
+	data := struct {
+		Channel mcr.Channel
+		Status  string
+	}{
+		Channel: ch,
+		Status:  "archive",
+	}
+
+	return c.Render(http.StatusFound, "set-channel-status", data)
+}
+
+func (h *Handlers) obsArchiveChannelConfirm(c echo.Context) error {
+	ctx := c.Request().Context()
+	channelID, err := strconv.Atoi(c.Param("channelID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	ch, err := h.mcr.GetChannel(ctx, channelID)
+	if err != nil {
+		err = fmt.Errorf("failed to get channel: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	err = h.mcr.ArchiveChannel(ctx, ch)
+	if err != nil {
+		err = fmt.Errorf("failed to archive channel: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.Redirect(http.StatusFound, "/channels")
+}
+
+func (h *Handlers) obsUnarchiveChannel(c echo.Context) error {
+	ctx := c.Request().Context()
+	channelID, err := strconv.Atoi(c.Param("channelID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	ch, err := h.mcr.GetChannel(ctx, channelID)
+	if err != nil {
+		err = fmt.Errorf("failed to get channel: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	data := struct {
+		Channel mcr.Channel
+		Status  string
+	}{
+		Channel: ch,
+		Status:  "unarchive",
+	}
+
+	return c.Render(http.StatusFound, "set-channel-status", data)
+}
+
+func (h *Handlers) obsUnarchiveChannelConfirm(c echo.Context) error {
+	ctx := c.Request().Context()
+	channelID, err := strconv.Atoi(c.Param("channelID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	ch, err := h.mcr.GetChannel(ctx, channelID)
+	if err != nil {
+		err = fmt.Errorf("failed to get channel: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	err = h.mcr.UnarchiveChannel(ctx, ch)
+	if err != nil {
+		err = fmt.Errorf("failed to set channel unarchived: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.Redirect(http.StatusFound, fmt.Sprintf("/channels/%d", ch.ID))
+}
+
+func (h *Handlers) obsDeleteChannel(c echo.Context) error {
+	ctx := c.Request().Context()
+	channelID, err := strconv.Atoi(c.Param("channelID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	ch, err := h.mcr.GetChannel(ctx, channelID)
+	if err != nil {
+		err = fmt.Errorf("failed to get channel: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	data := struct {
+		Channel mcr.Channel
+		Status  string
+	}{
+		Channel: ch,
+		Status:  "delete",
+	}
+
+	return c.Render(http.StatusFound, "set-channel-status", data)
+}
+
+func (h *Handlers) obsDeleteChannelConfirm(c echo.Context) error {
+	ctx := c.Request().Context()
+	channelID, err := strconv.Atoi(c.Param("channelID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	ch, err := h.mcr.GetChannel(ctx, channelID)
+	if err != nil {
+		err = fmt.Errorf("failed to get channel: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	err = h.mcr.DeleteChannel(ctx, ch)
+	if err != nil {
+		err = fmt.Errorf("failed to delete channel: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.Redirect(http.StatusFound, "/channels")
 }
 
 type integrations struct {

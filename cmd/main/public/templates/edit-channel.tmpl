@@ -1,0 +1,61 @@
+{{ define "edit-channel" }}
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>New channel</title>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css"
+        />
+      <script
+        defer
+        src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"
+        ></script>
+    </head>
+    <body>
+      <div class="column has-text-centered">
+        <h1 class="title">{{ .Title}} channel</h1>
+        <form {{ if eq .Action "create"  }} action="/channels/new" {{ end }} method="post" autocomplete="off" class="block">
+          <div class="field">
+            <label class="label" for="title">Title:</label>
+            <div class="control">
+              <input class="input" name="title" value="{{ .Fields.Title }}" />
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="urlName">URL Name:</label>
+            <div class="control">
+              <input class="input" name="urlName" value="{{ .Fields.URLName }}" />
+            </div>
+          </div>
+          <nav class="level">
+            <div class="level-item">
+          <div class="field is-grouped">
+            <div class="control">
+              <a href="/channels{{ if eq .Action "Save" }}/{{ .ID }}{{ end }}" class="input is-link is-light">Cancel</a>
+            </div>
+            <div class="control">
+              <input type="submit" value="{{ .Action }}" class="button is-link" />
+            </div>
+          </div>
+          </div>
+          </nav>
+        </form>
+        {{ if .Errors }}
+          <article class="message is-warning">
+            <div class="message-header">
+              <p>Errors in form</p>
+            </div>
+            <div class="message-body">
+              {{ range .Errors }}
+                <p>{{ . }}</p>
+              {{ end }}
+            </div>
+          </article>
+        {{ end }}
+      </div>
+    </body>
+  </html>
+{{ end }}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/ystv/showtime/brave"
 )
@@ -13,7 +14,8 @@ type (
 	Channel struct {
 		ID                int    `db:"channel_id"`
 		Status            string `db:"status"`
-		OutputURL         string `db:"url_name"`
+		URLName           string `db:"url_name"`
+		OutputURL         string
 		Width             int    `db:"res_width"`
 		Height            int    `db:"res_height"`
 		Title             string `db:"title"`
@@ -23,8 +25,8 @@ type (
 		ProgramOutputID   int    `db:"program_output_id"`
 	}
 
-	// NewChannel creates a new instance of a channel.
-	NewChannel struct {
+	// EditChannel creates or updates a channel.
+	EditChannel struct {
 		Title   string `json:"title" form:"title"`
 		URLName string `json:"urlName" form:"urlName"`
 		Width   int
@@ -35,6 +37,8 @@ type (
 var (
 	// ErrURLNameEmpty when the URL name is empty.
 	ErrURLNameEmpty = errors.New("url name is empty")
+	// ErrChannelOnAir when the channel is on air.
+	ErrChannelOnAir = errors.New("channel is on-air")
 )
 
 // setChannelProgram
@@ -71,7 +75,7 @@ func (mcr *MCR) SetChannelOnAir(ctx context.Context, ch Channel) error {
 		return fmt.Errorf("failed to create mixer: %w", err)
 	}
 
-	o, err := mcr.brave.NewRTMPOutput(ctx, m, ch.OutputURL)
+	o, err := mcr.brave.NewRTMPOutput(ctx, m, mcr.baseServeURL.ResolveReference(&url.URL{Path: ch.URLName}).String())
 	if err != nil {
 		return fmt.Errorf("failed to create output: %w", err)
 	}
@@ -121,7 +125,8 @@ func (mcr *MCR) SetChannelOffAir(ctx context.Context, ch Channel) error {
 }
 
 // NewChannel creates a new channel including a mixer.
-func (mcr *MCR) NewChannel(ctx context.Context, ch NewChannel) (int, error) {
+func (mcr *MCR) NewChannel(ctx context.Context, ch EditChannel) (int, error) {
+	// Validation.
 	if len(ch.Title) == 0 {
 		return 0, ErrTitleEmpty
 	}
@@ -152,6 +157,51 @@ func (mcr *MCR) NewChannel(ctx context.Context, ch NewChannel) (int, error) {
 	return channelID, nil
 }
 
+// UpdateChannel updates a given channel.
+//
+// Certain parameters can only be changed when the channel is off-air.
+func (mcr *MCR) UpdateChannel(ctx context.Context, channelID int, ch EditChannel) error {
+	// Validation.
+	if len(ch.Title) == 0 {
+		return ErrTitleEmpty
+	}
+
+	if len(ch.URLName) == 0 {
+		return ErrURLNameEmpty
+	}
+
+	oldCh, err := mcr.GetChannel(ctx, channelID)
+	if err != nil {
+		return fmt.Errorf("failed to get channel: %w", err)
+	}
+
+	// Defaults.
+	if ch.Width == 0 {
+		ch.Width = oldCh.Width
+	}
+	if ch.Height == 0 {
+		ch.Height = oldCh.Height
+	}
+
+	if oldCh.Status == "on-air" && (ch.Width != oldCh.Width || ch.Height != oldCh.Height || ch.URLName != oldCh.URLName) {
+		// This requires us to restart brave with different parameters, so need to be off-air to perform.
+		return ErrChannelOnAir
+	}
+
+	_, err = mcr.db.ExecContext(ctx, `
+		UPDATE mcr.channels SET
+			title = $1,
+			url_name = $2,
+			res_width = $3,
+			res_height = $4
+		WHERE channel_id = $5;`, ch.Title, ch.URLName, ch.Width, ch.Height, channelID)
+	if err != nil {
+		return fmt.Errorf("failed to update channel: %w", err)
+	}
+
+	return nil
+}
+
 // GetChannel returns a channel.
 func (mcr *MCR) GetChannel(ctx context.Context, channelID int) (Channel, error) {
 	ch := Channel{}
@@ -163,7 +213,8 @@ func (mcr *MCR) GetChannel(ctx context.Context, channelID int) (Channel, error) 
 	if err != nil {
 		return Channel{}, fmt.Errorf("failed to get channel: %w", err)
 	}
-	ch.OutputURL = mcr.outputAddress.String() + "/ch-" + ch.OutputURL
+	ch.OutputURL = mcr.outputAddress.String() + "/ch-" + ch.URLName
+
 	return ch, nil
 }
 
