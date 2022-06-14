@@ -23,14 +23,20 @@
     <h2 class="subtitle">{{ .Channel.OutputURL }}</h2>
     <div class="buttons">
       <a href="/channels/{{ .Channel.ID }}/edit" class="button is-info">Edit channel</a>
-      {{ if  eq .Channel.Status "off-air" }}
-        <form action="/channels/{{ .Channel.ID }}/on-air" method="post">
-      <button class="button is-warning">On-air</button>
-      </form>
-      {{ else }}
+      {{ if eq .Channel.Status "on-air" }}
       <form action="/channels/{{ .Channel.ID }}/off-air" method="post">
-      <button class="button is-warning">Off-air</button>
+      <button class="button is-danger is-outlined">Set off-air</button>
       </form>
+      {{ end }}
+      {{ if eq .Channel.Status "off-air" }}
+      <a href="/channels/{{ .Channel.ID }}/archive" class="button is-warning">Archive</a>
+        <form action="/channels/{{ .Channel.ID }}/on-air" method="post">
+      <button class="button is-success">Set on-air</button>
+      </form>
+      {{ end }}
+      {{ if eq .Channel.Status "archived" }}
+      <a href="/channels/{{ .Channel.ID }}/un-archive" class="button">Unarchive</a> 
+      <a href="/channels/{{ .Channel.ID }}/delete" class="button is-danger is-outlined">Delete</a>
       {{ end }}
     </div>
   </section>

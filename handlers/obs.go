@@ -870,9 +870,11 @@ func (h *Handlers) obsArchiveChannel(c echo.Context) error {
 
 	data := struct {
 		Channel mcr.Channel
+		Title   string
 		Status  string
 	}{
 		Channel: ch,
+		Title:   "Archive",
 		Status:  "archive",
 	}
 
@@ -914,9 +916,11 @@ func (h *Handlers) obsUnarchiveChannel(c echo.Context) error {
 
 	data := struct {
 		Channel mcr.Channel
+		Title   string
 		Status  string
 	}{
 		Channel: ch,
+		Title:   "Un-archive",
 		Status:  "unarchive",
 	}
 
@@ -958,9 +962,11 @@ func (h *Handlers) obsDeleteChannel(c echo.Context) error {
 
 	data := struct {
 		Channel mcr.Channel
+		Title   string
 		Status  string
 	}{
 		Channel: ch,
+		Title:   "Delete",
 		Status:  "delete",
 	}
 

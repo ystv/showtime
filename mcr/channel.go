@@ -39,6 +39,8 @@ var (
 	ErrURLNameEmpty = errors.New("url name is empty")
 	// ErrChannelOnAir when the channel is on air.
 	ErrChannelOnAir = errors.New("channel is on-air")
+	// ErrChannelNotArchived when a channel is not in the archive status.
+	ErrChannelNotArchived = errors.New("channel is not archived")
 )
 
 // setChannelProgram
@@ -229,4 +231,60 @@ func (mcr *MCR) ListChannels(ctx context.Context) ([]Channel, error) {
 		return nil, fmt.Errorf("failed to get list of channels: %w", err)
 	}
 	return ch, nil
+}
+
+// ArchiveChannel puts a channel into a off-state. Effectively hiding the
+// channel.
+func (mcr *MCR) ArchiveChannel(ctx context.Context, ch Channel) error {
+	if ch.Status != "off-air" {
+		return ErrChannelOnAir
+	}
+
+	_, err := mcr.db.ExecContext(ctx, `
+		UPDATE mcr.channels SET
+			status = 'archived'
+		WHERE channel_id = $1;`, ch.ID)
+	return err
+}
+
+// UnarchiveChannel restores a channel back to service.
+func (mcr *MCR) UnarchiveChannel(ctx context.Context, ch Channel) error {
+	if ch.Status != "archived" {
+		return ErrChannelNotArchived
+	}
+
+	_, err := mcr.db.ExecContext(ctx, `
+		UPDATE mcr.channels SET
+			status = 'off-air'
+		WHERE channel_id = $1;`, ch.ID)
+	return err
+}
+
+// DeleteChannel deletes a channel including its playout's.
+//
+// Restricted to just archived channel's to prevent accidental deletion.
+func (mcr *MCR) DeleteChannel(ctx context.Context, ch Channel) error {
+	if ch.Status != "archived" {
+		return ErrChannelNotArchived
+	}
+
+	playouts, err := mcr.GetPlayoutsForChannel(ctx, ch)
+	if err != nil {
+		return fmt.Errorf("failed to get playouts: %w", err)
+	}
+
+	for _, play := range playouts {
+		err = mcr.DeletePlayout(ctx, play.ID)
+		if err != nil {
+			return fmt.Errorf("failed to delete playout: %w", err)
+		}
+	}
+
+	_, err = mcr.db.ExecContext(ctx, `
+		DELETE FROM mcr.channels
+		WHERE channel_id = $1;`, ch.ID)
+	if err != nil {
+		return fmt.Errorf("failed to delete channel from store: %w", err)
+	}
+	return nil
 }

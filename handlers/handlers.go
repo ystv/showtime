@@ -115,6 +115,12 @@ func (h *Handlers) Start() {
 			ch.POST("/edit", h.obsEditChannelSubmit)
 			ch.POST("/on-air", h.obsSetChannelOnAir)
 			ch.POST("/off-air", h.obsSetChannelOffAir)
+			ch.GET("/archive", h.obsArchiveChannel)
+			ch.POST("/archive", h.obsArchiveChannelConfirm)
+			ch.GET("/un-archive", h.obsUnarchiveChannel)
+			ch.POST("/un-archive", h.obsUnarchiveChannelConfirm)
+			ch.GET("/delete", h.obsDeleteChannel)
+			ch.POST("/delete", h.obsDeleteChannelConfirm)
 		}
 
 		internal.GET("/integrations", h.obsListIntegrations)
