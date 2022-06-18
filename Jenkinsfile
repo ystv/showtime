@@ -1,9 +1,9 @@
 @Library('ystv-jenkins')
 
-String registryEndpoint = 'registry.comp.ystv.co.uk'
+String registryEndpoint = 'https://registry.comp.ystv.co.uk'
 
 def image
-String imageName = "showtime:${env.BRANCH_NAME}-${env.BUILD_ID}"
+String imageName = "ystv/showtime:${env.BRANCH_NAME}-${env.BUILD_ID}"
 
 pipeline {
   agent {
@@ -24,7 +24,9 @@ pipeline {
     stage('Build image') {
       steps {
         script {
-          image = docker.build(imageName)
+          docker.withRegistry(registryEndpoint) {
+            image = docker.build(imageName)
+          }
         }
       }
     }
@@ -32,9 +34,11 @@ pipeline {
     stage('Push image to registry') {
       steps {
         script {
-          image.push()
-          if ( env.BRANCH_IS_PRIMARY ) {
-            image.push('latest')
+          docker.WithRegistry(registryEndpoint, 'docker-registry') {
+            image.push()
+            if ( env.BRANCH_IS_PRIMARY ) {
+              image.push('latest')
+            }
           }
         }
       }
