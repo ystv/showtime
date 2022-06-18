@@ -1,0 +1,74 @@
+{{ define "list-livestreams" }}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Select livestream</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css"
+/>
+<script
+  defer
+  src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"
+></script>
+<style>
+  body {
+    background: #F2F6FA;
+    height: 100vh;
+  }
+</style>
+  </head>
+  <body>
+  <nav class="navbar is-white">
+    <div class="navbar-menu">
+      <p class="navbar-item">ShowTime!</p>
+      <a class="navbar-item" href="/livestreams">Livestreams</a>
+      <a class="navbar-item" href="/integrations">Integrations</a>
+      <p class="navbar-item">MCR</p>
+      <a class="navbar-item" href="/channels">Channels</a>
+    </div>
+  </nav>
+  <section class="section">
+  <div class="container">
+    <div class="columns">
+      <div class="column">
+        <nav class="level">
+          <div class="level-left">
+            <div class="level-item">
+              <h1 class="title">Upcoming streams</h1>
+            </div>
+          </div>
+          <div class="level-right">
+            <div class="level-item">
+              <a class="button is-success" href="/livestreams/new">New livestream</a>
+            </div>
+          </div>
+        </nav>
+        {{ range .Upcoming }}
+        <a class="box" href="livestreams/{{ .ID }}">
+          <div class="content">
+            {{ .Title }}
+          </div>
+        </a>
+        {{ else }}
+        <p>No upcoming livestreams.</p>
+        {{ end }}
+        <h1 class="title">Past streams</h1>
+        {{ range .Past }}
+        <a class="box" href="livestreams/{{ .ID }}">
+          <div class="content">
+            {{ .Title }}
+          </div>
+        </a>
+        {{ else }}
+        <p>No past livestreams.</p>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+  </section>
+  </body>
+</html>
+{{ end }}

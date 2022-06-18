@@ -1,8 +1,8 @@
-{{ define "successful-link" }}
+{{ define "list-channels" }}
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Linked successfully</title>
+    <title>Select channel</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link
@@ -16,12 +16,15 @@
   </head>
   <body>
   <div class="column has-text-centered">
-    <h1 class="title">Linked successfully</h1>
-    <p>
-        Click <a href="/livestreams/{{ . }}/manage">here</a> to go back to livestream manage, 
-        otherwise <a href="/">here</a> for main menu.
-    </p>
-    </div>
+    <a href="/">🔙 Back</a>
+    <h1 class="title">Select a channel</h1>
+    <ul>
+    {{ range .Channels }}
+        <a href="/channels/{{ .ID }}">{{ .Title }}</a>
+    {{ end }}
+    </ul>
+    <p>or create a <a href="/channels/new">new</a> one.</p>
+  </div>
   </body>
 </html>
 {{ end }}

@@ -2,8 +2,8 @@ package youtube
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/ystv/showtime/auth"
@@ -11,105 +11,89 @@ import (
 )
 
 type (
+	// YouTube is a client to manage accounts and youtubers.
+	YouTube struct {
+		db        *sqlx.DB
+		auth      *auth.Auther
+		youtubers map[int]*YouTuber
+	}
+	// YouTuber is a small client to integrate a youtuber.
 	YouTuber struct {
-		yt *youtube.Service
-		db *sqlx.DB
-	}
-	Broadcast struct {
-		ID        string `json:"id"`
-		Title     string `json:"title"`
-		StartTime string `json:"startTime"`
-	}
-	// Stream is effectively what you know as the stream key
-	Stream struct {
-		ID     string
-		Title  string
-		Status string
-		Ingest Ingest
-	}
-	Ingest struct {
-		Name    string
-		Address string
-	}
-	NewStream struct {
-		Title       string
-		Description string
-		FrameRate   string
-		IngestType  string
-		Resolution  string
+		accountID int
+		db        *sqlx.DB
+		yt        *youtube.Service
 	}
 )
 
+// Schema represents the youtube package in the database.
 var Schema = `
-CREATE TABLE youtube_broadcasts (
-	broadcast_id text NOT NULL PRIMARY KEY,
+CREATE SCHEMA youtube;
+
+CREATE TABLE youtube.accounts (
+	account_id bigint GENERATED ALWAYS AS IDENTITY,
+	token_id integer NOT NULL,
+	PRIMARY KEY(account_id),
+	CONSTRAINT fk_token FOREIGN KEY(token_id) REFERENCES auth.tokens(token_id)
+);
+
+CREATE TABLE youtube.broadcasts (
+	broadcast_id text NOT NULL,
+	account_id bigint NOT NULL,
 	ingest_address text NOT NULL,
-	stream_name text NOT NULL
+	ingest_key text NOT NULL,
+	title text NOT NULL,
+	description text NOT NULL,
+	scheduled_start text NOT NULL,
+	scheduled_end text NOT NULL,
+	visibility text NOT NULL,
+	PRIMARY KEY(broadcast_id),
+	CONSTRAINT fk_account FOREIGN KEY(account_id) REFERENCES youtube.accounts(account_id)
 );
 `
+var (
+	// ErrNoYouTuberFound when the youtube account cannot be found.
+	ErrNoYouTuberFound = errors.New("youtuber not found")
+	// ErrTokenNotFound when the token cannot be found.
+	ErrTokenNotFound = errors.New("token not found")
+)
 
-func New(db *sqlx.DB, auth *auth.Auther) (*YouTuber, error) {
-	tok, err := auth.GetToken("me")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get token: %w", err)
-	}
-	client := auth.GetClient(context.Background(), tok)
-	service, err := youtube.New(client)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create youtube service: %w", err)
+// New creates an instance of a youtuber client.
+func New(ctx context.Context, db *sqlx.DB, auth *auth.Auther) (*YouTube, error) {
+	yt := &YouTube{
+		db:        db,
+		auth:      auth,
+		youtubers: map[int]*YouTuber{},
 	}
 
+	accounts, err := yt.listAccounts(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list accounts: %w", err)
+	}
+
+	for _, account := range accounts {
+		httpClient, err := auth.GetHTTPClient(ctx, account.TokenID)
+		ytClient, err := youtube.New(httpClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create youtube service: %w", err)
+		}
+		yt.youtubers[account.ID] = newYouTuber(account.ID, db, ytClient)
+	}
+	return yt, nil
+}
+
+func newYouTuber(accountID int, db *sqlx.DB, yt *youtube.Service) *YouTuber {
 	return &YouTuber{
-		yt: service,
-		db: db,
-	}, nil
+		accountID: accountID,
+		db:        db,
+		yt:        yt,
+	}
 }
 
-func (y *YouTuber) EnableShowTimeForBroadcast(ctx context.Context, broadcastID string) error {
-	stream, err := y.newStream(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create stream: %w", err)
+// GetYouTuber fetches a youtuber.
+func (y *YouTube) GetYouTuber(accountID int) (*YouTuber, error) {
+	yt, ok := y.youtubers[accountID]
+	if !ok {
+		return nil, ErrNoYouTuberFound
 	}
-
-	err = y.switchStream(ctx, broadcastID, stream.ID)
-	if err != nil {
-		return fmt.Errorf("failed to switch stream: %w", err)
-	}
-
-	_, err = y.db.ExecContext(ctx, `
-		INSERT INTO youtube_broadcasts (
-			broadcast_id,
-			ingest_address,
-			stream_name
-		) VALUES ($1, $2, $3);`, broadcastID, stream.Ingest.Address, stream.Ingest.Name)
-
-	if err != nil {
-		return fmt.Errorf("failed to add broadcast to db: %w", err)
-	}
-
-	return nil
-}
-
-func (y *YouTuber) DisableShowTimeForBroadcast(ctx context.Context, broadcastID string) error {
-	err := y.switchStream(ctx, broadcastID, "")
-	if err != nil {
-		return fmt.Errorf("failed to switch stream: %w", err)
-	}
-
-	_, err = y.db.ExecContext(ctx, `
-	DELETE FROM youtube_broadcasts WHERE broadcast_id = $1;`, broadcastID)
-	if err != nil {
-		return fmt.Errorf("failed to delete broadcast from db: %w", err)
-	}
-
-	return nil
-}
-
-func (b *Broadcast) PrettyDateTime() string {
-	ts, err := time.Parse(time.RFC3339, b.StartTime)
-	if err != nil {
-		return err.Error()
-	}
-
-	return ts.Format(time.RFC822)
+	return yt, nil
 }

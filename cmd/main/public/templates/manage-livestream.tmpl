@@ -1,0 +1,117 @@
+{{ define "manage-livestream" }}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Edit {{ .Livestream.Title }}</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css"
+/>
+<script
+  defer
+  src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"
+></script>
+<style>
+  body {
+    background: #F2F6FA;
+  }
+  .container .columns {
+    margin: 3rem 0;
+  }
+</style>
+  </head>
+  <body>
+  <nav class="navbar is-white">
+    <div class="container">
+      <div class="navbar-menu">
+        <p class="navbar-item">ShowTime!</p>
+        <a class="navbar-item" href="/livestreams">Livestreams</a>
+        <a class="navbar-item" href="/integrations">Integrations</a>
+        <p class="navbar-item">MCR</p>
+        <a class="navbar-item" href="/channels">Channels</a>
+      </div>
+    </div>
+  </nav>
+  <div class="container">
+    <div class="columns">
+      <div class="column">
+        <nav class="breadcrumb" aria-label="breadcrumbs">
+          <ul>
+            <li><a href="/livestreams">Livestreams</a></li>
+            <li><a href="/livestreams/{{ .Livestream.ID }}">{{ .Livestream.ID }}</a></li>
+            <li class="is-active"><a href="#" aria-current="page">Manage</a></li>
+          </ul>
+        </nav>
+        <nav class="level">
+          <div class="level-left">
+            <div class="level-item">
+              <h1 class="title">{{ .Livestream.Title }}</h1>
+            </div>
+          </div>
+          <div class="level-right">
+            <div class="level-item">
+              <div class="buttons">
+                <a href="/livestreams/{{ .Livestream.ID }}/edit" class="button is-info">Edit stream</a>
+                <a href="/livestreams/{{ .Livestream.ID }}/delete" class="button is-danger is-outlined">Delete stream</a>
+              </div>
+            </div>
+          </div>
+        </nav>
+        <div class="columns">
+          <div class="column is-9">
+            <div class="box content">
+              <p>
+                Scheduled start: <b>{{ .Livestream.PrettyDateTime .Livestream.ScheduledStart }}</b>
+                <br>
+                Scheduled end: <b>{{ .Livestream.PrettyDateTime .Livestream.ScheduledEnd }}</b>
+              </p>
+              <p>{{ .Livestream.Description }}</p>
+            </div>
+          </div>
+          <div class="column is-3">
+            <nav class="level">
+              <div class="level-left">
+                <div class="level-item">
+                  <p class="subtitle is-5">Links</p>
+                </div>
+              </div>
+              <div class="level-right">
+                <p class="level-item"><a class="button is-success" href="/livestreams/{{ .Livestream.ID }}/link">New link</a></p>
+              </div>
+            </nav>
+            {{ range .Links }}
+        <div class="box content">
+          <article class="post">
+            <div class="media">
+              <div class="media-left">
+                <p>{{ .IntegrationType }}</p>
+              </div>
+              <div class="media-content">
+              </div>
+              <div class="media-right">
+                <a class="delete" href="/livestreams/{{ $.Livestream.ID }}/unlink/{{ .ID }}"></a>
+              </div>
+            </div>
+          </article>
+        </div>
+        {{ end }}
+      </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="footer">
+    <div class="container">
+      <div class="content has-text-centered">
+        <p>
+          Prefer a prettier UI? Try  
+          <a href="https://creator.ystv.co.uk/live/streams">Creator Studio</a>.
+        </p>
+      </div>
+    </div>
+  </footer>
+  </body>
+</html>
+{{ end }}

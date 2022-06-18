@@ -41,16 +41,16 @@ func (h *Handlers) callbackGoogle(c echo.Context) error {
 		return c.Redirect(http.StatusTemporaryRedirect, "/")
 	}
 
-	tok, err := h.auth.NewToken(c.Request().Context(), code)
+	tokenID, err := h.auth.NewToken(c.Request().Context(), code)
 	if err != nil {
 		err = fmt.Errorf("failed to get token: %w", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	err = h.auth.StoreToken("me", tok)
+	err = h.yt.NewAccount(c.Request().Context(), tokenID)
 	if err != nil {
-		err = fmt.Errorf("failed to store token: %w", err)
+		err = fmt.Errorf("failed to create youtube account reference: %w", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	return c.String(http.StatusOK, "login successful!")
+	return c.Render(http.StatusOK, "successful-integration", nil)
 }

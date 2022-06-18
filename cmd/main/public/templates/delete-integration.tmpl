@@ -1,0 +1,52 @@
+{{ define "delete-integration" }}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Delete integration</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css"
+/>
+<script
+  defer
+  src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"
+></script>
+  </head>
+  <body>
+  <div class="column has-text-centered">
+    <h1 class="title">Delete integration</h1>
+    <h2 class="subtitle">This will affect the following:</h2>
+    {{ range .About }}
+    <div class="card">
+      <div class="card-content">
+        <div class="media">
+          <div class="media-left">
+            <figure class="image is-48x48">
+              <img src="{{ .Image }}">
+            </figure>
+          </div>
+          <div class="media-content">
+            <p class="title is-4">{{ .Name }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    {{ end }}
+
+    <p class="card-footer-item">Total broadcasts to delink:</p>
+    <p><b>{{ .TotalBroadcasts }}</b></p>
+    <form method="post">
+      <div class="field is-grouped">
+        <p class="control">
+        <a class="button" href="/integrations">Cancel</a>
+        </p>
+        <p class="control">
+        <input type="submit" class="button is-danger" value="Confirm deletion" />
+        </p>
+      </div>
+    </form>
+  </body>
+</html>
+{{ end }}

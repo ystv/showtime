@@ -1,0 +1,39 @@
+{{ define "set-rtmp-output-link" }}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Link {{ .Livestream.Title }} to RTMP output</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css"
+/>
+<script
+  defer
+  src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"
+></script>
+  </head>
+  <body>
+  <div class="column has-text-centered">
+    <h1 class="title">Link "{{ .Livestream.Title }}" to RTMP output</h1>
+    <form autocomplete="off" method="post">
+      <div class="field">
+        <label class="label" for="outputURL">Output URL</label>
+        <div class="control">
+          <input type="input" name="outputURL" />
+        </div>
+      </div>
+      <div class="field is-grouped">
+        <div class="control">
+          <a href="/livestreams/{{ .Livestream.ID }}" class="input is-link is-light">Cancel</a>
+        </div>
+        <div class="control">
+          <input class="button is-link" type="submit" value="Create" />
+        </div>
+      </div>
+    </form>
+    </div>
+  </body>
+</html>
+{{ end }}

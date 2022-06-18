@@ -1,8 +1,8 @@
-{{ define "set-youtube-link" }}
+{{ define "set-youtube-link-broadcast" }}
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Link {{ .Playout.Title }} to YouTube</title>
+    <title>Link {{ .Livestream.Title }} to YouTube</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link
@@ -16,15 +16,17 @@
   </head>
   <body>
   <div class="column has-text-centered">
-    <h1 class="title">{{ .Playout.Title }}</h1>
-    <form action="/playouts/{{ .Playout.PlayoutID }}/link/youtube/confirm" method="post">
+    <a href="/livestreams/{{ .Livestream.ID }}/manage">🔙 Back</a>
+    <h1 class="title">{{ .Livestream.Title }}</h1>
+    <form action="/livestreams/{{ .Livestream.ID }}/link/youtube-existing/confirm" method="post">
+      <input type="hidden" name="accountID" value={{ .AccountID }}>
         <label for="broadcastID">Select a livestream to link to:</label>
         <select name="broadcastID">
             {{ range .Broadcasts }}
                 <option value="{{ .ID }}">{{ .Title }} ({{ .PrettyDateTime }})</option>
             {{ end }}
         </select>
-        <input type="submit" value="Link to playout" />
+        <input class="button" type="submit" value="Confirm link" />
     </form>
     <p>
         Remember to schedule your YouTube livestream before trying to link it.

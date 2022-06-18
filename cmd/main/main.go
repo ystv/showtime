@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"io/fs"
 	"log"
@@ -9,28 +10,30 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/ystv/showtime/auth"
+	"github.com/ystv/showtime/brave"
 	"github.com/ystv/showtime/db"
 	"github.com/ystv/showtime/handlers"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/youtube/v3"
+	"github.com/ystv/showtime/livestream"
+	"github.com/ystv/showtime/mcr"
+	"github.com/ystv/showtime/youtube"
 )
 
 //go:embed public/*
 var content embed.FS
 
+// Config for ShowTime!
 type Config struct {
-	handlers *handlers.Config
+	livestream livestream.Config
+	mcr        *mcr.Config
+	brave      brave.Config
+	handlers   *handlers.Config
+	db         *db.Config
 }
 
 func main() {
 	// Load environment
 	godotenv.Load(".env")           // Load .env file for production
 	godotenv.Overload(".env.local") // Load .env.local for developing
-
-	b, err := os.ReadFile("credentials.json")
-	if err != nil {
-		log.Fatalf("Unable to read client secret file: %+v", err)
-	}
 
 	// Check if debugging
 	debug, err := strconv.ParseBool(os.Getenv("ST_DEBUG"))
@@ -43,6 +46,16 @@ func main() {
 	}
 
 	conf := Config{
+		livestream: livestream.Config{
+			IngestAddress: os.Getenv("ST_INGEST_ADDR"),
+		},
+		mcr: &mcr.Config{
+			BaseServeURL:  os.Getenv("ST_BASE_SERVE_ADDR"),
+			OutputAddress: os.Getenv("ST_OUTPUT_ADDR"),
+		},
+		brave: brave.Config{
+			Endpoint: os.Getenv("ST_BRAVE_ADDR"),
+		},
 		handlers: &handlers.Config{
 			Debug:           debug,
 			StateCookieName: "state-token",
@@ -50,20 +63,45 @@ func main() {
 			IngestAddress:   os.Getenv("ST_INGEST_ADDR"),
 			JWTSigningKey:   os.Getenv("ST_SIGNING_KEY"),
 		},
+		db: &db.Config{
+			Host:     os.Getenv("ST_DB_HOST"),
+			Port:     os.Getenv("ST_DB_PORT"),
+			SSLMode:  os.Getenv("ST_DB_SSLMODE"),
+			DBName:   os.Getenv("ST_DB_DBNAME"),
+			Username: os.Getenv("ST_DB_USERNAME"),
+			Password: os.Getenv("ST_DB_PASSWORD"),
+		},
 	}
 
-	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b, youtube.YoutubeForceSslScope)
-	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %+v", err)
-	}
-
-	db, err := db.New()
+	db, err := db.New(conf.db)
 	if err != nil {
 		log.Fatalf("unable to create database: %+v", err)
 	}
 
-	auth := auth.NewAuther(config)
+	b, err := os.ReadFile("credentials.json")
+	if err != nil {
+		log.Fatalf("unable to read client secret file: %+v", err)
+	}
+
+	ytConfig, err := auth.NewYouTubeConfig(b)
+	if err != nil {
+		log.Fatalf("failed to create youtube config: %+v", err)
+	}
+	auth := auth.NewAuther(db, ytConfig)
+
+	brave, err := brave.New(conf.brave)
+	if err != nil {
+		log.Fatalf("failed to create brave client: %+v", err)
+	}
+	mcr, err := mcr.NewMCR(conf.mcr, db, brave)
+	if err != nil {
+		log.Fatalf("failed to create mcr: %+v", err)
+	}
+	yt, err := youtube.New(context.Background(), db, auth)
+	if err != nil {
+		log.Fatalf("failed to create youtube client: %+v", err)
+	}
+	ls := livestream.New(conf.livestream, db, mcr, yt)
 
 	templatesFS, err := fs.Sub(content, "public/templates")
 	if err != nil {
@@ -74,7 +112,7 @@ func main() {
 		log.Fatalf("failed to create templater: %w", err)
 	}
 
-	h := handlers.New(conf.handlers, db, auth, templates)
+	h := handlers.New(conf.handlers, auth, ls, mcr, yt, templates)
 
 	h.Start()
 }
