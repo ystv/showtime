@@ -23,14 +23,16 @@ pipeline {
 
     stage('Build image') {
       steps {
-        image = docker.build(imageName)
+        script {
+          image = docker.build(imageName)
+        }
       }
     }
 
     stage('Push image to registry') {
       steps {
-        image.push()
         script {
+          image.push()
           if ( env.BRANCH_IS_PRIMARY ) {
             image.push('latest')
           }
