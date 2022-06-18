@@ -34,7 +34,7 @@ pipeline {
     stage('Push image to registry') {
       steps {
         script {
-          docker.WithRegistry(registryEndpoint, 'docker-registry') {
+          docker.withRegistry(registryEndpoint, 'docker-registry') {
             image.push()
             if ( env.BRANCH_IS_PRIMARY ) {
               image.push('latest')
