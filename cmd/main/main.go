@@ -78,7 +78,7 @@ func main() {
 		log.Fatalf("unable to create database: %+v", err)
 	}
 
-	b, err := os.ReadFile("credentials.json")
+	b, err := os.ReadFile("credentials/youtube.json")
 	if err != nil {
 		log.Fatalf("unable to read client secret file: %+v", err)
 	}

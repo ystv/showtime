@@ -1,4 +1,3 @@
-credentials.json
-showtime.db
 .env.local
+credentials
 assets
