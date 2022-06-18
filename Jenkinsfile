@@ -3,7 +3,7 @@
 String registryEndpoint = 'registry.comp.ystv.co.uk'
 
 def image
-String imageName = 'showtime:$env.BRANCH_NAME-$env.BUILD_ID'
+String imageName = "showtime:${env.BRANCH_NAME}-${env.BUILD_ID}"
 
 pipeline {
   agent {
@@ -47,7 +47,7 @@ pipeline {
       steps {
         build(job: 'Deploy Nomad Job', parameters: [
           string(name: 'JOB_FILE', value: 'showtime.nomad'),
-          text(name: 'TAG_REPLACEMENTS', value: '$registryEndpoint/$imageName')
+          text(name: 'TAG_REPLACEMENTS', value: "${registryEndpoint}/${imageName}")
         ])
       }
     }
