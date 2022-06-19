@@ -27,7 +27,7 @@ type Config struct {
 	mcr        *mcr.Config
 	brave      brave.Config
 	handlers   *handlers.Config
-	auth       *auh.Config
+	auth       *auth.Config
 	db         *db.Config
 }
 
