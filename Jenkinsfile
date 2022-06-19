@@ -50,7 +50,7 @@ pipeline {
       }
       steps {
         build(job: 'Deploy Nomad Job', parameters: [
-          string(name: 'JOB_FILE', value: 'showtime.nomad'),
+          string(name: 'JOB_FILE', value: 'showtime-dev.nomad'),
           text(name: 'TAG_REPLACEMENTS', value: "${registryEndpoint}/${imageName}")
         ])
       }
