@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"log"
 
 	"golang.org/x/oauth2"
@@ -13,7 +12,7 @@ import (
 func NewYouTubeConfig(b []byte) (*oauth2.Config, error) {
 	// Temporary debug.
 	log.Println("temporary debug start")
-	fmt.Printf("%+s", string(b))
+	log.Println(string(b))
 	log.Println("temporary debug end")
 	// If modifying these scopes, delete your previously saved credentials file.
 	return google.ConfigFromJSON(b, youtube.YoutubeForceSslScope)
