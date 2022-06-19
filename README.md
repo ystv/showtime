@@ -5,7 +5,8 @@ Stream integration and safety maker.
 ## Setup
 
 Download the OAuth client from the Google Cloud Console (APIs and services /
-    Credentials) and save it as `credentials.json` in the project directory.
+Credentials) and save it as `youtube.json` in the project directory in a
+new folder called credentials.
 
 Create an empty postgres database.
 
@@ -42,6 +43,11 @@ ST_SIGNING_KEY=something-long-and-random
 
 # Used for cookies
 ST_DOMAIN_NAME=example.com
+
+# Note: optional
+
+# Path to folder with oauth2 credentials
+ST_CRED_PATH=/etc/showtime/credentials
 ```
 
 Initialise the postgres database with the `init` program.
