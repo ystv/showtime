@@ -130,6 +130,9 @@ func (h *Handlers) Start() {
 		// API endpoints
 		api := internal.Group("/api")
 		{
+			api.GET("/health", func(c echo.Context) error {
+				return c.NoContent(http.StatusOK)
+			})
 			api.POST("/livestreams", h.newLivestream)
 			api.PUT("/livestreams", h.updateLivestream)
 			api.GET("/livestreams", h.listLivestreams)
