@@ -130,9 +130,6 @@ func (h *Handlers) Start() {
 		// API endpoints
 		api := internal.Group("/api")
 		{
-			api.GET("/health", func(c echo.Context) error {
-				return c.NoContent(http.StatusOK)
-			})
 			api.POST("/livestreams", h.newLivestream)
 			api.PUT("/livestreams", h.updateLivestream)
 			api.GET("/livestreams", h.listLivestreams)
@@ -144,6 +141,9 @@ func (h *Handlers) Start() {
 	}
 
 	// Endpoints that skip authentication
+	h.mux.GET("/api/health", func(c echo.Context) error {
+		return c.NoContent(http.StatusOK)
+	})
 	h.mux.POST("/api/nginx/hook", h.hookStreamStart)
 	h.mux.GET("/oauth/google/login", h.loginGoogle)
 	h.mux.GET("/oauth/google/callback", h.callbackGoogle)
