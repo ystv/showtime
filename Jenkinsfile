@@ -24,7 +24,7 @@ pipeline {
     stage('Build image') {
       steps {
         script {
-          docker.withRegistry(registryEndpoint) {
+          docker.withRegistry(registryEndpoint, 'docker-registry') {
             image = docker.build(imageName)
           }
         }
