@@ -11,12 +11,10 @@ RUN go mod download
 # Copy the source.
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o showtime ./cmd/main
+RUN GOOS=linux GOARCH=amd64 go build -o showtime ./cmd/main
 
-FROM scratch
+FROM registry.comp.ystv.co.uk/ffmpeg:latest
 
-COPY --from=build /workspace/showtime /
-
+COPY --from=build /workspace/showtime /usr/bin/
 EXPOSE 8080
-
-ENTRYPOINT ["/showtime"]
+ENTRYPOINT ["/usr/bin/showtime"]
