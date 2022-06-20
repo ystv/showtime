@@ -27,6 +27,7 @@ type Config struct {
 	mcr        *mcr.Config
 	brave      brave.Config
 	handlers   *handlers.Config
+	auth       *auth.Config
 	db         *db.Config
 }
 
@@ -63,6 +64,9 @@ func main() {
 			IngestAddress:   os.Getenv("ST_INGEST_ADDR"),
 			JWTSigningKey:   os.Getenv("ST_SIGNING_KEY"),
 		},
+		auth: &auth.Config{
+			CredentialsPath: os.Getenv("ST_CRED_PATH"),
+		},
 		db: &db.Config{
 			Host:     os.Getenv("ST_DB_HOST"),
 			Port:     os.Getenv("ST_DB_PORT"),
@@ -78,7 +82,10 @@ func main() {
 		log.Fatalf("unable to create database: %+v", err)
 	}
 
-	b, err := os.ReadFile("credentials.json")
+	if conf.auth.CredentialsPath == "" {
+		conf.auth.CredentialsPath = "credentials"
+	}
+	b, err := os.ReadFile(conf.auth.CredentialsPath + "/youtube.json")
 	if err != nil {
 		log.Fatalf("unable to read client secret file: %+v", err)
 	}

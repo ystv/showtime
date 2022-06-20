@@ -20,6 +20,10 @@ type (
 		ID    int
 		Value *oauth2.Token
 	}
+	// Config to configure auth.
+	Config struct {
+		CredentialsPath string
+	}
 )
 
 // Schema represents the auth package in the database.

@@ -45,8 +45,7 @@ type (
 	}
 	// Permission represents the permissions that a user has
 	Permission struct {
-		PermissionID int    `json:"id"`
-		Name         string `json:"name"`
+		Name string `json:"name"`
 	}
 )
 
@@ -59,9 +58,8 @@ func New(conf *Config, auth *auth.Auther, ls *livestream.Livestreamer, mcr *mcr.
 	return &Handlers{
 		conf: conf,
 		jwtConfig: middleware.JWTConfig{
-			Claims:      &JWTClaims{},
-			TokenLookup: "cookie:token",
-			SigningKey:  []byte(conf.JWTSigningKey),
+			Claims:     &JWTClaims{},
+			SigningKey: []byte(conf.JWTSigningKey),
 		},
 		auth: auth,
 		ls:   ls,
@@ -141,6 +139,9 @@ func (h *Handlers) Start() {
 	}
 
 	// Endpoints that skip authentication
+	h.mux.GET("/api/health", func(c echo.Context) error {
+		return c.NoContent(http.StatusOK)
+	})
 	h.mux.POST("/api/nginx/hook", h.hookStreamStart)
 	h.mux.GET("/oauth/google/login", h.loginGoogle)
 	h.mux.GET("/oauth/google/callback", h.callbackGoogle)
