@@ -81,3 +81,12 @@ go run cmd/main/main.go
 
 ShowTime! will now be listening on `:8080`. See
 [handlers.go](handlers/handlers.go) for possible paths.
+
+The current authentication system only covers the `/api` path, it's best to use
+a proxy which implements it's own authentication to prevent unauthorised access
+to the other paths.
+
+## Developing against
+
+ShowTime! exposes a API which has JWT bearer token security that is compatible
+with a [web-auth](https://github.com/ystv/web-auth) generated access token.
