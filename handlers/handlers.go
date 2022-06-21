@@ -72,9 +72,6 @@ func New(conf *Config, auth *auth.Auther, ls *livestream.Livestreamer, mcr *mcr.
 // Start sets up a HTTP server listening.
 func (h *Handlers) Start() {
 	internal := h.mux.Group("")
-	if !h.conf.Debug {
-		internal.Use(middleware.JWTWithConfig(h.jwtConfig))
-	}
 	{
 		// Basic UI endpoints
 		internal.GET("/", h.obsHome)
@@ -127,6 +124,9 @@ func (h *Handlers) Start() {
 
 		// API endpoints
 		api := internal.Group("/api")
+		if !h.conf.Debug {
+			api.Use(middleware.JWTWithConfig(h.jwtConfig))
+		}
 		{
 			api.POST("/livestreams", h.newLivestream)
 			api.PUT("/livestreams", h.updateLivestream)
