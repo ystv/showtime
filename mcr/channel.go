@@ -215,7 +215,7 @@ func (mcr *MCR) GetChannel(ctx context.Context, channelID int) (Channel, error) 
 	if err != nil {
 		return Channel{}, fmt.Errorf("failed to get channel: %w", err)
 	}
-	ch.OutputURL = mcr.outputAddress.String() + ch.URLName
+	ch.OutputURL = mcr.outputAddress.ResolveReference(&url.URL{Path: ch.URLName}).String()
 
 	return ch, nil
 }
