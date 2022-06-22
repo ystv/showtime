@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
+	"path"
 
 	"github.com/ystv/showtime/brave"
 )
@@ -77,7 +77,7 @@ func (mcr *MCR) SetChannelOnAir(ctx context.Context, ch Channel) error {
 		return fmt.Errorf("failed to create mixer: %w", err)
 	}
 
-	o, err := mcr.brave.NewRTMPOutput(ctx, m, mcr.outputAddress.ResolveReference(&url.URL{Path: ch.URLName}).String())
+	o, err := mcr.brave.NewRTMPOutput(ctx, m, path.Join(mcr.outputAddress.String(), ch.URLName))
 	if err != nil {
 		return fmt.Errorf("failed to create output: %w", err)
 	}
@@ -215,7 +215,8 @@ func (mcr *MCR) GetChannel(ctx context.Context, channelID int) (Channel, error) 
 	if err != nil {
 		return Channel{}, fmt.Errorf("failed to get channel: %w", err)
 	}
-	ch.OutputURL = mcr.outputAddress.ResolveReference(&url.URL{Path: ch.URLName}).String()
+	// TODO: Switch to url.JoinPath when Go 1.19 is released.
+	ch.OutputURL = path.Join(mcr.outputAddress.String(), ch.URLName)
 
 	return ch, nil
 }
