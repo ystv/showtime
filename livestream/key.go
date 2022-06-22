@@ -5,9 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strings"
 
-	"github.com/tjarratt/babble"
+	petname "github.com/dustinkirkland/golang-petname"
 )
 
 // ErrStreamKeyNotFound when a given stream key is not found.
@@ -48,8 +47,5 @@ func (ls *Livestreamer) RefreshStreamKey(ctx context.Context, livestreamID strin
 }
 
 func (ls *Livestreamer) generateStreamkey() string {
-	babbler := babble.NewBabbler()
-	babbler.Separator = "-"
-	babbler.Count = 3
-	return strings.ToLower(babbler.Babble())
+	return petname.Generate(3, "-")
 }
