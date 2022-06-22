@@ -18,6 +18,6 @@ FROM registry.comp.ystv.co.uk/ffmpeg:latest
 COPY --from=build /workspace/showtime /usr/bin/
 EXPOSE 8080
 
-HEALTHCHECK --interval 15s CMD curl --fail http://localhost:8080/api/health || exit 1
+HEALTHCHECK --interval=15s CMD curl --fail http://localhost:8080/api/health || exit 1
 
 ENTRYPOINT ["/usr/bin/showtime"]
