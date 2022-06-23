@@ -145,7 +145,7 @@ func (mcr *MCR) updateContinuityInput(ctx context.Context, channelID int, inputI
 func newContinuityCard(card newContinuityCardParams) error {
 	dc := gg.NewContext(card.X, card.Y)
 
-	if err := dc.LoadFontFace("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf", 96); err != nil {
+	if err := dc.LoadFontFace("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 96); err != nil {
 		return fmt.Errorf("failed to load font face: %w", err)
 	}
 
