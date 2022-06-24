@@ -15,8 +15,6 @@ RUN GOOS=linux GOARCH=amd64 go build -o showtime ./cmd/main
 
 FROM registry.comp.ystv.co.uk/ffmpeg:latest
 
-RUN apt update && apt install fontconfig
-
 COPY --from=build /workspace/showtime /usr/bin/
 EXPOSE 8080
 
