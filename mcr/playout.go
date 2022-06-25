@@ -167,7 +167,7 @@ func (mcr *MCR) GetPlayout(ctx context.Context, playoutID int) (Playout, error) 
 		WHERE playout_id  = $1;`, playoutID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return ErrPlayoutNotFound
+			return Playout{}, ErrPlayoutNotFound
 		}
 		return Playout{}, fmt.Errorf("failed to get playout: %w", err)
 	}
