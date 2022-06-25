@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/fogleman/gg"
@@ -45,11 +46,12 @@ func (mcr *MCR) refreshContinuityCard(ctx context.Context, channelID int) error 
 		return fmt.Errorf("failed to get channel rundown: %w", err)
 	}
 
+	bgImgPath := fmt.Sprintf("assets/ch/%d-card-bg.jpg", channelID)
 	dstImgPath := fmt.Sprintf("assets/ch/%d-card-continuity.png", channelID)
 	err = newContinuityCard(newContinuityCardParams{
 		X:               cr.Width,
 		Y:               cr.Height,
-		BackgroundPath:  "assets/ch/0-card-bg.jpg",
+		BackgroundPath:  bgImgPath,
 		DestinationPath: dstImgPath,
 		Title:           cr.Title,
 		Playouts:        cr.Playouts,
@@ -151,11 +153,14 @@ func newContinuityCard(card newContinuityCardParams) error {
 
 	im, err := gg.LoadImage(card.BackgroundPath)
 	if err != nil {
-		return fmt.Errorf("failed to load background image: %w", err)
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("failed to load background image: %w", err)
+		}
+	} else {
+		dc.DrawImage(im, 0, 0)
 	}
 
 	dc.SetRGB(1, 1, 1)
-	dc.DrawImage(im, 0, 0)
 	dc.DrawStringAnchored(card.Title+" - We're not on-air right now", float64(card.X)/2, float64(card.Y)/4, 0.5, 0.5)
 
 	if err := dc.LoadFontFace("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf", 50); err != nil {
