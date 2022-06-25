@@ -61,7 +61,7 @@ func (mcr *MCR) refreshContinuityCard(ctx context.Context, channelID int) error 
 	}
 
 	dstVidPath := fmt.Sprintf("assets/ch/%d-card-continuity.mp4", channelID)
-	err = ffmpeg.NewVideoFromSingleImage(dstImgPath, dstVidPath)
+	err = ffmpeg.NewVideoFromSingleImage(ctx, dstImgPath, dstVidPath)
 	if err != nil {
 		return fmt.Errorf("failed to create video from card image: %w", err)
 	}

@@ -1,15 +1,17 @@
 package ffmpeg
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 // NewForwardStream takes a FFmpeg input and copies it to an RTMP URL.
-func NewForwardStream(srcURL, dstURL string) error {
+func NewForwardStream(ctx context.Context, srcURL, dstURL string) error {
 	cmdString := fmt.Sprintf("ffmpeg -i \"%s\" -c copy -f flv \"%s\"",
 		srcURL, dstURL)
-	cmd := exec.Command("sh", "-c", cmdString)
+	cmd := exec.CommandContext(ctx, "sh", "-c", cmdString)
 
 	err := cmd.Start()
 	if err != nil {
@@ -19,10 +21,10 @@ func NewForwardStream(srcURL, dstURL string) error {
 }
 
 // NewVideoFromSingleImage creates a video file from a single image with a duration of 2 seconds.
-func NewVideoFromSingleImage(srcPath, dstPath string) error {
-	cmdString := fmt.Sprintf("ffmpeg -y -loop 1 -i \"%s\" -c:v libx264 -tune stillimage -t 2 -pix_fmt yuv420p -vf scale=1920:1080 \"%s\"",
+func NewVideoFromSingleImage(ctx context.Context, srcPath, dstPath string) error {
+	args := fmt.Sprintf("-y -loop 1 -i %s -c:v libx264 -tune stillimage -t 2 -pix_fmt yuv420p -vf scale=1920:1080 %s",
 		srcPath, dstPath)
-	cmd := exec.Command("sh", "-c", cmdString)
+	cmd := exec.CommandContext(ctx, "ffmpeg", strings.Fields(args)...)
 
 	err := cmd.Start()
 	if err != nil {

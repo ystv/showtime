@@ -64,7 +64,7 @@ func (ls *Livestreamer) Forward(ctx context.Context, strm ConsumeLivestream) err
 
 			go func() {
 				time.Sleep(1 * time.Second)
-				err = ffmpeg.NewForwardStream(srcURL, rtmpOutput.OutputURL)
+				err = ffmpeg.NewForwardStream(context.Background(), srcURL, rtmpOutput.OutputURL)
 				if err != nil {
 					log.Printf("failed to forward custom rtmp stream: %+v", err)
 				}
@@ -86,7 +86,7 @@ func (ls *Livestreamer) ytForward(ctx context.Context, streamKey string, broadca
 
 	go func() {
 		time.Sleep(1 * time.Second)
-		err = ffmpeg.NewForwardStream(srcURL, dstURL)
+		err = ffmpeg.NewForwardStream(context.Background(), srcURL, dstURL)
 		if err != nil {
 			log.Printf("failed to forward youtube stream: %+v", err)
 		}
