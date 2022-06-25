@@ -25,4 +25,4 @@ EXPOSE 8080
 
 HEALTHCHECK --interval=15s CMD curl --fail http://localhost:8080/api/health || exit 1
 
-ENTRYPOINT ["showtime"]
+CMD ["showtime"]
