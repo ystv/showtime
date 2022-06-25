@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"runtime/debug"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
@@ -141,6 +142,13 @@ func (h *Handlers) Start() {
 	// Endpoints that skip authentication
 	h.mux.GET("/api/health", func(c echo.Context) error {
 		return c.NoContent(http.StatusOK)
+	})
+	h.mux.GET("/api/version", func(c echo.Context) error {
+		info, ok := debug.ReadBuildInfo()
+		if !ok {
+			return c.NoContent(http.StatusNoContent)
+		}
+		return c.JSON(http.StatusOK, info.Settings)
 	})
 	h.mux.POST("/api/nginx/hook", h.hookStreamStart)
 	h.mux.GET("/oauth/google/login", h.loginGoogle)

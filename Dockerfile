@@ -11,11 +11,12 @@ RUN go mod download
 # Copy the source.
 COPY . .
 
-RUN GOOS=linux GOARCH=amd64 go build -o showtime ./cmd/main
+WORKDIR /workspace/cmd/main
+RUN GOOS=linux GOARCH=amd64 go build -o showtime
 
 FROM registry.comp.ystv.co.uk/ffmpeg:latest
 
-COPY --from=build /workspace/showtime /usr/bin/
+COPY --from=build /workspace/cmd/main/showtime /usr/bin/
 EXPOSE 8080
 
 HEALTHCHECK --interval=15s CMD curl --fail http://localhost:8080/api/health || exit 1
