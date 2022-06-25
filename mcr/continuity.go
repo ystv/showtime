@@ -185,7 +185,7 @@ func newContinuityCard(card newContinuityCardParams) error {
 
 	for _, po := range card.Playouts {
 		playout := ""
-		if po.ScheduledStart.Day() == time.Now().Day() {
+		if dateEqual(po.ScheduledStart, time.Now()) {
 			playout = po.ScheduledStart.Format("Today - 3:04PM")
 		} else {
 			playout = po.ScheduledStart.Format("2 January - 3:04PM")
@@ -202,4 +202,10 @@ func newContinuityCard(card newContinuityCardParams) error {
 	}
 
 	return nil
+}
+
+func dateEqual(dateA, dateB time.Time) bool {
+	yearA, monthA, dayA := dateA.Date()
+	yearB, monthB, dayB := dateB.Date()
+	return yearA == yearB && monthA == monthB && dayA == dayB
 }
