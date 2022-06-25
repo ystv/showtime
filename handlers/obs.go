@@ -315,7 +315,7 @@ func (h *Handlers) obsDeleteLivestreamSubmit(c echo.Context) error {
 	err = h.ls.Delete(ctx, strm)
 	if err != nil {
 		err = fmt.Errorf("failed to delete livestream: %w", err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.Render(http.StatusOK, "successful-livestream-delete", nil)

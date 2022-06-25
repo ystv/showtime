@@ -166,6 +166,9 @@ func (mcr *MCR) GetPlayout(ctx context.Context, playoutID int) (Playout, error) 
 		FROM mcr.playouts
 		WHERE playout_id  = $1;`, playoutID)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrPlayoutNotFound
+		}
 		return Playout{}, fmt.Errorf("failed to get playout: %w", err)
 	}
 	return po, nil
@@ -269,9 +272,6 @@ func (mcr *MCR) DeletePlayout(ctx context.Context, playoutID int) error {
 		DELETE FROM mcr.playouts
 		WHERE playout_id = $1;`, po.ID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return ErrPlayoutNotFound
-		}
 		return fmt.Errorf("failed to delete playout from store: %w", err)
 	}
 
