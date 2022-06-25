@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+
+	"github.com/ystv/showtime/mcr"
 )
 
 type (
@@ -88,7 +90,9 @@ func (ls *Livestreamer) DeleteLink(ctx context.Context, link Link) error {
 
 		err = ls.mcr.DeletePlayout(ctx, playoutID)
 		if err != nil {
-			return fmt.Errorf("failed to delete playout: %w", err)
+			if !errors.Is(err, mcr.ErrPlayoutNotFound) {
+				return fmt.Errorf("failed to delete playout: %w", err)
+			}
 		}
 
 	case LinkYTNew:

@@ -2,6 +2,7 @@ package mcr
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -35,6 +36,8 @@ type (
 )
 
 var (
+	// ErrPlayoutNotFound when a playout cannot be found.
+	ErrPlayoutNotFound = errors.New("playout not found")
 	// ErrSourceOnAir when a source is currently live, it cannot be removed.
 	ErrSourceOnAir = errors.New("cannot remove source that is on air")
 )
@@ -266,6 +269,9 @@ func (mcr *MCR) DeletePlayout(ctx context.Context, playoutID int) error {
 		DELETE FROM mcr.playouts
 		WHERE playout_id = $1;`, playoutID)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrPlayoutNotFound
+		}
 		return fmt.Errorf("failed to delete playout from store: %w", err)
 	}
 
