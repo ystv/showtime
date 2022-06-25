@@ -17,8 +17,12 @@ RUN GOOS=linux GOARCH=amd64 go build -o showtime
 FROM registry.comp.ystv.co.uk/ffmpeg:latest
 
 COPY --from=build /workspace/cmd/main/showtime /usr/bin/
+
+WORKDIR /opt/showtime
+RUN mkdir assets
+
 EXPOSE 8080
 
 HEALTHCHECK --interval=15s CMD curl --fail http://localhost:8080/api/health || exit 1
 
-ENTRYPOINT ["/usr/bin/showtime"]
+ENTRYPOINT ["showtime"]
