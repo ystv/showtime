@@ -163,7 +163,7 @@ func newContinuityCard(card newContinuityCardParams) error {
 	dc.SetRGB(1, 1, 1)
 	dc.DrawStringAnchored(card.Title+" - We're not on-air right now", float64(card.X)/2, float64(card.Y)/4, 0.5, 0.5)
 
-	if err := dc.LoadFontFace("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf", 50); err != nil {
+	if err := dc.LoadFontFace("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 50); err != nil {
 		return fmt.Errorf("failed to load font face: %w", err)
 	}
 
