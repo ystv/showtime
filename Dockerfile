@@ -19,7 +19,7 @@ FROM registry.comp.ystv.co.uk/ffmpeg:latest
 COPY --from=build /workspace/cmd/main/showtime /usr/bin/
 
 WORKDIR /opt/showtime
-RUN mkdir assets
+RUN mkdir -p assets/ch
 
 EXPOSE 8080
 
