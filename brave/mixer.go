@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,9 +14,9 @@ import (
 type (
 	// Mixer provides media mixing.
 	Mixer struct {
-		ID     int
-		width  int
-		height int
+		ID     int `json:"id"`
+		width  int `json:"width"`
+		height int `json:"height"`
 	}
 	// NewMixerParams are fields configuring the mixer.
 	NewMixerParams struct {
@@ -23,6 +24,27 @@ type (
 		Height int
 	}
 )
+
+var (
+	// ErrMixerNotFound when the mixer is not found in brave's state.
+	ErrMixerNotFound = errors.New("mixer not found")
+)
+
+// GetMixer retrives a mixer from brave.
+func (b *Braver) GetMixer(ctx context.Context, mixerID int) (Mixer, error) {
+	err := b.refreshState(ctx)
+	if err != nil {
+		return Mixer{}, fmt.Errorf("failed to refresh state: %w", err)
+	}
+
+	for _, mixer := range b.state.mixers {
+		if mixer.ID == mixerID {
+			return mixer, nil
+		}
+	}
+
+	return Mixer{}, ErrMixerNotFound
+}
 
 // NewMixer creates a mixer object in brave and returns it's ID.
 func (b *Braver) NewMixer(ctx context.Context, p NewMixerParams) (Mixer, error) {
