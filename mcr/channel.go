@@ -196,7 +196,12 @@ func (mcr *MCR) UpdateChannel(ctx context.Context, channelID int, ch EditChannel
 		return fmt.Errorf("failed to update channel: %w", err)
 	}
 
-	err = mcr.refreshContinuityCard(ctx, channelID)
+	newCh, err := mcr.GetChannel(ctx, channelID)
+	if err != nil {
+		return fmt.Errorf("failed to get channel: %w", err)
+	}
+
+	err = mcr.refreshContinuityCard(ctx, newCh)
 	if err != nil {
 		return fmt.Errorf("failed to refresh continuity card: %w", err)
 	}

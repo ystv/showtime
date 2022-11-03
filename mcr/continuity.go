@@ -40,8 +40,8 @@ type (
 	}
 )
 
-func (mcr *MCR) refreshContinuityCard(ctx context.Context, channelID int) error {
-	cr, err := mcr.getChannelRundown(ctx, channelID)
+func (mcr *MCR) refreshContinuityCard(ctx context.Context, ch Channel) error {
+	cr, err := mcr.getChannelRundown(ctx, ch.ID)
 	if err != nil {
 		return fmt.Errorf("failed to get channel rundown: %w", err)
 	}
