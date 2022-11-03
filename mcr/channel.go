@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ystv/showtime/brave"
+	"github.com/ystv/showtime/engine"
 )
 
 type (
@@ -18,10 +18,10 @@ type (
 		Width             int    `db:"res_width"`
 		Height            int    `db:"res_height"`
 		Title             string `db:"title"`
-		MixerID           int    `db:"mixer_id"`
-		ProgramInputID    int    `db:"program_input_id"`
-		ContinuityInputID int    `db:"continuity_input_id"`
-		ProgramOutputID   int    `db:"program_output_id"`
+		mixerID           int    `db:"mixer_id"`
+		programInputID    int    `db:"program_input_id"`
+		continuityInputID int    `db:"continuity_input_id"`
+		programOutputID   int    `db:"program_output_id"`
 	}
 
 	// EditChannel creates or updates a channel.
@@ -43,40 +43,36 @@ var (
 )
 
 // setChannelProgram
-func (mcr *MCR) setChannelProgram(ctx context.Context, channelID int, inputID int) error {
-	mixerID := 0
-	err := mcr.db.GetContext(ctx, &mixerID, `
-		SELECT mixer_id
-		FROM mcr.channels
-		WHERE channel_id = $1`, channelID)
-	err = mcr.brave.CutMixerToInput(ctx, mixerID, inputID)
+func (mcr *MCR) setChannelProgram(ctx context.Context, ch Channel, inputID int) error {
+	m, err := mcr.eng.GetMixer(ctx, ch.mixerID)
+	if err != nil {
+		return fmt.Errorf("failed to get mixer: %w", err)
+	}
+
+	i, err := mcr.eng.GetInput(ctx, inputID)
+	if err != nil {
+		return fmt.Errorf("failed to get input: %w", err)
+	}
+
+	err = m.CutToInput(ctx, i)
 	if err != nil {
 		return fmt.Errorf("failed to cut mixer to input: %w", err)
-	}
-	_, err = mcr.db.ExecContext(ctx, `
-		UPDATE mcr.channels
-			SET program_input_id = $1
-		WHERE channel_id = $2;
-	`, inputID, channelID)
-	if err != nil {
-		return fmt.Errorf("failed to update program input in store: %w", err)
 	}
 	return nil
 }
 
 // SetChannelOnAir starts the channel's broadcast.
 func (mcr *MCR) SetChannelOnAir(ctx context.Context, ch Channel) error {
-	p := brave.NewMixerParams{
+	m, err := mcr.eng.NewMixer(ctx, engine.NewMixer{
 		Width:  ch.Width,
 		Height: ch.Height,
-	}
-
-	m, err := mcr.brave.NewMixer(ctx, p)
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create mixer: %w", err)
 	}
 
-	o, err := mcr.brave.NewRTMPOutput(ctx, m, mcr.outputAddress.String()+"/"+ch.URLName)
+	outputURL := fmt.Sprintf("%s/%s", mcr.outputAddress, ch.URLName)
+	o, err := m.NewOutput(ctx, outputURL)
 	if err != nil {
 		return fmt.Errorf("failed to create output: %w", err)
 	}
@@ -92,7 +88,7 @@ func (mcr *MCR) SetChannelOnAir(ctx context.Context, ch Channel) error {
 		return fmt.Errorf("failed to update channel in store: %w", err)
 	}
 
-	err = mcr.refreshContinuityCard(ctx, ch.ID)
+	err = mcr.refreshContinuityCard(ctx, ch)
 	if err != nil {
 		return fmt.Errorf("failed to refresh continuity card: %w", err)
 	}
@@ -102,11 +98,11 @@ func (mcr *MCR) SetChannelOnAir(ctx context.Context, ch Channel) error {
 
 // SetChannelOffAir ends the channel's broadcast.
 func (mcr *MCR) SetChannelOffAir(ctx context.Context, ch Channel) error {
-	err := mcr.brave.DeleteOutput(ctx, ch.ProgramOutputID)
+	err := mcr.brave.DeleteOutput(ctx, ch.programOutputID)
 	if err != nil {
 		return fmt.Errorf("failed to delete program output: %w", err)
 	}
-	err = mcr.brave.DeleteMixer(ctx, ch.MixerID)
+	err = mcr.brave.DeleteMixer(ctx, ch.mixerID)
 	if err != nil {
 		return fmt.Errorf("failed to delete mixer: %w", err)
 	}

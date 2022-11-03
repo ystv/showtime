@@ -1,12 +1,13 @@
 package mcr
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/ystv/showtime/brave"
+	"github.com/ystv/showtime/engine"
 )
 
 type (
@@ -15,7 +16,7 @@ type (
 		baseServeURL  *url.URL
 		outputAddress *url.URL
 		db            *sqlx.DB
-		brave         *brave.Braver
+		eng           *engine.Enginer
 	}
 	// Config to configure Brave.
 	Config struct {
@@ -46,10 +47,6 @@ CREATE TABLE mcr.channels (
 	url_name text NOT NULL UNIQUE,
 	res_width integer NOT NULL,
 	res_height integer NOT NULL,
-	mixer_id integer NOT NULL,
-	program_input_id integer NOT NULL,
-	continuity_input_id integer NOT NULL,
-	program_output_id integer NOT NULL,
 	PRIMARY KEY (channel_id)
 );
 
@@ -71,7 +68,7 @@ CREATE TABLE mcr.playouts (
 `
 
 // NewMCR creates a new channel manager.
-func NewMCR(c *Config, db *sqlx.DB, brave *brave.Braver) (*MCR, error) {
+func NewMCR(c *Config, db *sqlx.DB, eng *engine.Enginer) (*MCR, error) {
 	baseServe, err := url.Parse(c.BaseServeURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid serve url: %w", err)
@@ -80,10 +77,55 @@ func NewMCR(c *Config, db *sqlx.DB, brave *brave.Braver) (*MCR, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid output url: %w", err)
 	}
-	return &MCR{
+
+	mcr := &MCR{
 		baseServeURL:  baseServe,
 		outputAddress: output,
 		db:            db,
-		brave:         brave,
+		eng:           eng,
 	}, nil
+
+	err = mcr.Start()
+	if err != nil {
+		return nil, fmt.Errorf("failed to start mcr: %w", err)
+	}
+
+	return mcr
+}
+
+// Start the MCR.
+//
+// We presume that existing channel engine allocations are already running. So
+// we don't run any startup construction on them.
+func (mcr *MCR) Start(ctx context.Context) error {
+	engineHosts, err = newEngineHostStore(ctx) // Map of Brave HTTP clients.
+	channels, err := ch.listActiveChannels(ctx)
+
+	for _, ch := range channels {
+		// Allocate engines to channels.
+		err := eng.AllocateEngines(ch.ID, ch.MaxEngines)
+		if err != nil {
+			return fmt.Errorf("failed to allocate engines for ch %s: %w", ch.ID, err)
+		}
+		chEngines, err := ch.GetCurrentEngines(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get channel engines: %w", err)
+		}
+
+		// Allocate to channel's max.
+		for i := range ch.MaxEngines - len(currentEngines) {
+			for _, engineHost := range engineHosts {
+				for _, chEngine := range chEngines {
+					if engine.ID != chEngine.ID {
+						err = ch.NewEngine(engineHost) // Will start engines
+						if err != nil {
+							return fmt.Errorf("failed to add engine: %w", err)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return nil
 }
