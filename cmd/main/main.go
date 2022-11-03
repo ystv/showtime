@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"io/fs"
 	"log"
 	"os"
@@ -25,7 +26,6 @@ var content embed.FS
 type Config struct {
 	livestream livestream.Config
 	mcr        *mcr.Config
-	brave      brave.Config
 	handlers   *handlers.Config
 	auth       *auth.Config
 	db         *db.Config
@@ -53,9 +53,6 @@ func main() {
 		mcr: &mcr.Config{
 			BaseServeURL:  os.Getenv("ST_BASE_SERVE_ADDR"),
 			OutputAddress: os.Getenv("ST_OUTPUT_ADDR"),
-		},
-		brave: brave.Config{
-			Endpoint: os.Getenv("ST_BRAVE_ADDR"),
 		},
 		handlers: &handlers.Config{
 			Debug:           debug,
@@ -85,21 +82,32 @@ func main() {
 	if conf.auth.CredentialsPath == "" {
 		conf.auth.CredentialsPath = "credentials"
 	}
-	b, err := os.ReadFile(conf.auth.CredentialsPath + "/youtube.json")
+	youtubeCredentials, err := os.ReadFile(conf.auth.CredentialsPath + "/youtube.json")
 	if err != nil {
 		log.Fatalf("unable to read client secret file: %+v", err)
 	}
 
-	ytConfig, err := auth.NewYouTubeConfig(b)
+	ytConfig, err := auth.NewYouTubeConfig(youtubeCredentials)
 	if err != nil {
 		log.Fatalf("failed to create youtube config: %+v", err)
 	}
 	auth := auth.NewAuther(db, ytConfig)
 
-	brave, err := brave.New(conf.brave)
+	braveConfigFile, err := os.ReadFile("brave-config.json")
 	if err != nil {
-		log.Fatalf("failed to create brave client: %+v", err)
+		log.Fatalf("failed to read brave config file")
 	}
+	braveConfig := brave.Config{}
+	err = json.Unmarshal(braveConfigFile, &braveConfig)
+	if err != nil {
+		log.Fatalf("failed to unmarshal brave config json: %+v", err)
+	}
+
+	brave, err := brave.New(&braveConfig)
+	if err != nil {
+		log.Fatalf("failed to create brave service: %+v", err)
+	}
+
 	mcr, err := mcr.NewMCR(conf.mcr, db, brave)
 	if err != nil {
 		log.Fatalf("failed to create mcr: %+v", err)
@@ -116,7 +124,7 @@ func main() {
 	}
 	templates, err := handlers.NewTemplater(templatesFS)
 	if err != nil {
-		log.Fatalf("failed to create templater: %w", err)
+		log.Fatalf("failed to create templater: %+v", err)
 	}
 
 	h := handlers.New(conf.handlers, auth, ls, mcr, yt, templates)

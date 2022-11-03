@@ -1,3 +1,4 @@
 .env.local
 credentials
 assets
+engine-config.json
