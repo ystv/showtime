@@ -1,22 +1,19 @@
 package main
 
 import (
-	"context"
 	"log"
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/ystv/showtime/auth"
+
 	"github.com/ystv/showtime/db"
-	"github.com/ystv/showtime/livestream"
-	"github.com/ystv/showtime/mcr"
-	"github.com/ystv/showtime/youtube"
+	"github.com/ystv/showtime/db/schema"
 )
 
 func main() {
 	// Load environment
-	godotenv.Load(".env")           // Load .env file for production
-	godotenv.Overload(".env.local") // Load .env.local for developing
+	_ = godotenv.Load(".env")           // Load .env file for production
+	_ = godotenv.Overload(".env.local") // Load .env.local for developing
 
 	dbConf := &db.Config{
 		Host:     os.Getenv("ST_DB_HOST"),
@@ -30,24 +27,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("unable to create database: %+v", err)
 	}
+	defer db.Close()
 
-	ctx := context.Background()
-
-	_, err = db.ExecContext(ctx, livestream.Schema)
-	if err != nil {
-		log.Fatalf("failed to create livestream schema: %+v", err)
-	}
-	_, err = db.ExecContext(ctx, mcr.Schema)
-	if err != nil {
-		log.Fatalf("failed to create channel schema: %+v", err)
-	}
-	_, err = db.ExecContext(ctx, auth.Schema)
-	if err != nil {
-		log.Fatalf("failed to create auth schema: %+v", err)
-	}
-	_, err = db.ExecContext(ctx, youtube.Schema)
-	if err != nil {
-		log.Fatalf("failed to create youtube schema: %+v", err)
+	if err := schema.UpgradeDatabase(db); err != nil {
+		log.Fatal(err)
 	}
 
 	log.Println("successfully initialised showtime")

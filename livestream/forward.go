@@ -33,7 +33,7 @@ func (ls *Livestreamer) Forward(ctx context.Context, strm ConsumeLivestream) err
 				time.Sleep(1 * time.Second)
 				err = ls.mcr.PlayPlayoutSource(ctx, po)
 				if err != nil {
-					log.Printf("failed to start mcr playout source: %w", err)
+					log.Printf("failed to start mcr playout source: %v", err)
 				}
 			}()
 
