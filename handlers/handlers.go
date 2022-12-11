@@ -189,6 +189,15 @@ func (h *Handlers) handleError(err error, c echo.Context) {
 	if err == nil {
 		return
 	}
+	var httpErr *echo.HTTPError
+	if errors.As(err, &httpErr) {
+		if strings.Contains(c.Request().Header.Get("Accept"), "application/json") {
+			c.JSON(httpErr.Code, map[string]string{"error": fmt.Sprintf("%v", httpErr.Message)})
+		} else {
+			c.String(httpErr.Code, fmt.Sprintf("%v", httpErr.Message))
+		}
+		return
+	}
 	if errors.Is(err, sql.ErrNoRows) {
 		c.NoContent(http.StatusNotFound)
 		return
