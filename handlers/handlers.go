@@ -1,16 +1,20 @@
 package handlers
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
 	"io/fs"
 	"net/http"
 	"runtime/debug"
+	"strings"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
 	"github.com/ystv/showtime/auth"
 	"github.com/ystv/showtime/livestream"
 	"github.com/ystv/showtime/mcr"
@@ -176,8 +180,25 @@ func (h *Handlers) Start() {
 	h.mux.Use(middleware.Recover())
 	h.mux.Use(middleware.CORSWithConfig(corsConfig))
 	h.mux.HideBanner = true
+	h.mux.HTTPErrorHandler = h.handleError
 
 	h.mux.Logger.Fatal(h.mux.Start(":8080"))
+}
+
+func (h *Handlers) handleError(err error, c echo.Context) {
+	if err == nil {
+		return
+	}
+	if errors.Is(err, sql.ErrNoRows) {
+		c.NoContent(http.StatusNotFound)
+		return
+	}
+	h.mux.Logger.Errorf("%s %s %s error: %v", c.Request().Method, c.Request().URL, c.Request().RemoteAddr, err)
+	if strings.Contains(c.Request().Header.Get("Accept"), "application/json") {
+		c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+	} else {
+		c.String(http.StatusInternalServerError, "internal server error, please check the logs for details")
+	}
 }
 
 // Templater creates webpages for UI.
