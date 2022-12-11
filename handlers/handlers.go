@@ -204,9 +204,9 @@ func (h *Handlers) handleError(err error, c echo.Context) {
 	}
 	h.mux.Logger.Errorf("%s %s %s error: %v", c.Request().Method, c.Request().URL, c.Request().RemoteAddr, err)
 	if strings.Contains(c.Request().Header.Get("Accept"), "application/json") {
-		c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error", "detail": fmt.Sprintf("%v", err)})
 	} else {
-		c.String(http.StatusInternalServerError, "internal server error, please check the logs for details")
+		c.String(http.StatusInternalServerError, fmt.Sprintf("internal server error (please check the logs for details): %v", err))
 	}
 }
 
