@@ -3,6 +3,7 @@ package livestream
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 )
 
@@ -47,6 +48,9 @@ func (ls *Livestreamer) Start(ctx context.Context, strm Livestream) error {
 	err = ls.updateStatus(ctx, strm.ID, "stream-started")
 	if err != nil {
 		return fmt.Errorf("failed to update status: %w", err)
+	}
+	if err := ls.CreateEvent(ctx, strm.ID, EventStarted, EventStartedPayload{}); err != nil {
+		log.Printf("failed to log stream start event: %v", err)
 	}
 
 	return nil
@@ -109,6 +113,9 @@ func (ls *Livestreamer) End(ctx context.Context, strm Livestream) error {
 	err = ls.updateStatus(ctx, strm.ID, "stream-ended")
 	if err != nil {
 		return fmt.Errorf("failed to update status: %w", err)
+	}
+	if err := ls.CreateEvent(ctx, strm.ID, EventEnded, EventEndedPayload{}); err != nil {
+		log.Printf("failed to log stream end event: %v", err)
 	}
 
 	return nil

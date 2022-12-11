@@ -17,26 +17,48 @@
   <body>
   <div class="column has-text-centered">
     <a href="/livestreams">🔙 Back</a>
-    <h3 class="title is-5">{{ .Title }}</h1>
-    <h2 class="title is-4">Stream key</h3>
-    <div class="container block">
-      <div class="notification is-primary">
-        <h1 class="title is-2">{{ .StreamKey }}</h1>
-      </div>
-    </div>
-    <nav class="level">
-      <div class="level-item">
-        <div class="buttons">
-          {{ if eq .Status "pending" }}
-          <a href="/livestreams/{{ .ID }}/start" class="button is-danger">Start stream</a>
-          {{ end }}
-          {{ if eq .Status "stream-started"}}
-          <a href="/livestreams/{{ .ID }}/end" class="button is-danger">End stream</a>
-          {{ end }}
-          <a href="/livestreams/{{ .ID }}/manage" class="button is-info">Manage stream</a>
+    {{ with .stream }}
+      <h3 class="title is-5">{{ .Title }}</h3>
+      <h2 class="title is-4">Stream key</h2>
+      <div class="container block">
+        <div class="notification is-primary">
+          <h1 class="title is-2">{{ .StreamKey }}</h1>
         </div>
       </div>
-    </nav>
+      <nav class="level">
+        <div class="level-item">
+          <div class="buttons">
+            {{ if eq .Status "pending" }}
+              <a href="/livestreams/{{ .ID }}/start" class="button is-danger">Start stream</a>
+            {{ end }}
+            {{ if eq .Status "stream-started"}}
+              <a href="/livestreams/{{ .ID }}/end" class="button is-danger">End stream</a>
+            {{ end }}
+            <a href="/livestreams/{{ .ID }}/manage" class="button is-info">Manage stream</a>
+          </div>
+        </div>
+      </nav>
+    {{ end }}
+    <div>
+      <h3 class="title is-3">Events</h3>
+      {{ range .events | reverse }}
+        <div class="container block">
+            {{ $class := "is-info is-light" }}
+            {{ if or (eq .Type "stream_lost") (eq .Type "error") }}
+                {{ $class = "is-danger is-light" }}
+            {{ end }}
+            <div class="notification {{ $class }}">
+                <h4 class="title">{{ .Type | toString | replace "_" " " | title }}</h4>
+                <p>
+                    {{ if or (eq .Type "linked") (eq .Type "unlinked") }}
+                        To {{ .Data.TargetType }} {{ .Data.TargetID }}
+                    {{ end }}
+                </p>
+                <div class="subtitle is-5">{{ .Time | date "2006-01-02 15:04:05" }}</div>
+            </div>
+        </div>
+      {{ end }}
+    </div>
     <p>
         Don't know how to add a stream key? Follow the guide 
         <a href="https://docs.ystv.co.uk/wiki/How_to_add_a_stream_key_to_OBS">here</a>.

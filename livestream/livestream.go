@@ -4,12 +4,14 @@ package livestream
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/jmoiron/sqlx/types"
 
 	"github.com/ystv/showtime/mcr"
 	"github.com/ystv/showtime/youtube"
@@ -266,6 +268,52 @@ func (ls *Livestreamer) Delete(ctx context.Context, strm Livestream) error {
 		return fmt.Errorf("failed to delete livestream from store: %w", err)
 	}
 
+	return nil
+}
+
+func (ls *Livestreamer) ListEvents(ctx context.Context, strmID int) ([]Event, error) {
+	// trying to directly unmarshal a JSONB field will result in it being base64 encoded
+	// (see: https://github.com/jmoiron/sqlx/issues/133)
+	var evts []struct {
+		EventWithoutData
+		Data types.JSONText `db:"event_data"`
+	}
+	err := ls.db.SelectContext(ctx, &evts, `
+		SELECT livestream_event_id, event_type, event_data, event_time
+		FROM livestream_events
+		WHERE livestream_id = $1
+		ORDER BY event_time ASC;
+	`, strmID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get events: %w", err)
+	}
+
+	result := make([]Event, 0, len(evts))
+	for _, evt := range evts {
+		data, err := UnmarshalEventPayload(evt.Type, json.RawMessage(evt.Data))
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal event data: %w", err)
+		}
+		result = append(result, Event{
+			EventWithoutData: evt.EventWithoutData,
+			Data:             data,
+		})
+	}
+	return result, nil
+}
+
+func (ls *Livestreamer) CreateEvent(ctx context.Context, strmID int, typ EventType, payload EventPayload) error {
+	payloadJSON, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal payload: %w", err)
+	}
+	_, err = ls.db.ExecContext(ctx, `
+		INSERT INTO livestream_events (livestream_id, event_type, event_data)
+		VALUES ($1, $2, $3::jsonb);
+	`, strmID, typ, payloadJSON)
+	if err != nil {
+		return fmt.Errorf("failed to insert event: %w", err)
+	}
 	return nil
 }
 

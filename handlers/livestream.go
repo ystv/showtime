@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
+
 	"github.com/ystv/showtime/livestream"
 )
 
@@ -27,6 +28,21 @@ func (h *Handlers) listLivestreams(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	return c.JSON(http.StatusOK, strms)
+}
+
+func (h *Handlers) getLivestreamEvents(c echo.Context) error {
+	strmID, err := strconv.Atoi(c.Param("livestreamID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	evts, err := h.ls.ListEvents(c.Request().Context(), strmID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	if evts == nil {
+		return c.JSON(http.StatusOK, []string{})
+	}
+	return c.JSON(http.StatusOK, evts)
 }
 
 func (h *Handlers) updateLivestream(c echo.Context) error {

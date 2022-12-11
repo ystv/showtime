@@ -11,6 +11,7 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -136,6 +137,7 @@ func (h *Handlers) Start() {
 			api.POST("/livestreams", h.newLivestream)
 			api.PUT("/livestreams", h.updateLivestream)
 			api.GET("/livestreams", h.listLivestreams)
+			api.GET("/livestreams/:livestreamID/events", h.getLivestreamEvents)
 			api.POST("/livestreams/:livestreamID/refresh-key", h.refreshStreamKey)
 			api.POST("/livestreams/:livestreamID/link/youtube/:broadcastID", h.enableYouTube)
 			api.POST("/livestreams/:livestreamID/unlink/youtube/:broadcastID", h.disableYouTube)
@@ -155,6 +157,7 @@ func (h *Handlers) Start() {
 		return c.JSON(http.StatusOK, info.Settings)
 	})
 	h.mux.POST("/api/nginx/hook", h.hookStreamStart)
+	h.mux.POST("/api/nginx/hook_done", h.hookStreamDone)
 	h.mux.GET("/oauth/google/login", h.loginGoogle)
 	h.mux.GET("/oauth/google/callback", h.callbackGoogle)
 	h.mux.Static("/assets", "assets")
@@ -220,7 +223,8 @@ type Templater struct {
 
 // NewTemplater creates a new templater instance.
 func NewTemplater(fs fs.FS) (*Templater, error) {
-	t, err := template.ParseFS(fs, "*.tmpl")
+	t := template.New("").Funcs(sprig.FuncMap())
+	t, err := t.ParseFS(fs, "*.tmpl")
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse templates: %w", err)
 	}
