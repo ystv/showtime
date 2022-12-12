@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	// Postgres driver
@@ -20,8 +21,9 @@ type Config struct {
 
 // New creates a new database client.
 func New(conf *Config) (*sqlx.DB, error) {
-	dbURI := fmt.Sprintf("host=%s port=%s sslmode=%s dbname=%s user=%s password=%s application_name=ShowTime!",
-		conf.Host, conf.Port, conf.SSLMode, conf.DBName, conf.Username, conf.Password)
+	// ref. https://pkg.go.dev/github.com/lib/pq#hdr-Connection_String_Parameters for formatting
+	dbURI := fmt.Sprintf("host=%s port=%s sslmode=%s dbname=%s user=%s password='%s' application_name=ShowTime!",
+		conf.Host, conf.Port, conf.SSLMode, conf.DBName, conf.Username, strings.ReplaceAll(conf.Password, "'", "\\'"))
 	db, err := sqlx.Open("postgres", dbURI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open db: %w", err)

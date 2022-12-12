@@ -4,6 +4,33 @@ Stream integration and safety maker.
 
 ## Setup
 
+### Docker
+
+> **Note**
+> The Docker setup uses some images that are only available from YSTV's internal Docker registry.
+> If you are a not a YSTV member you will not be able to use this setup.
+
+Sign in to the YSTV Docker registry using your edit PC (AD) credentials - if you're not sure how to do this, message #computing on YSTV Slack:
+
+```sh
+$ docker login registry.comp.ystv.co.uk
+```
+
+Download the OAuth client from the Google Cloud Console (APIs and services /
+Credentials) and save it as `youtube.json` in the project directory in a
+new folder called credentials.
+
+Then, run
+
+```shell
+$ docker compose up -d
+```
+
+ShowTime! will now be listening on http://localhost:8080.
+You can now also stream to the nginx over RTMP on `rtmp://localhost/ingest/<stream-key>`.
+
+### Manual
+
 Download the OAuth client from the Google Cloud Console (APIs and services /
 Credentials) and save it as `youtube.json` in the project directory in a
 new folder called credentials.
