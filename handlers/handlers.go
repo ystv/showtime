@@ -193,23 +193,23 @@ func (h *Handlers) handleError(err error, c echo.Context) {
 
 	// TODO(https://ystv.atlassian.net/browse/SHOW-50): this should be handled at the handler level, not here
 	if errors.Is(err, sql.ErrNoRows) {
-		err = echo.NewHTTPError(http.StatusNotFound, "not found")
+		err = echo.NewHTTPError(http.StatusNotFound, err)
 	}
 
 	var httpErr *echo.HTTPError
 	if errors.As(err, &httpErr) {
 		if isJSON {
-			c.JSON(httpErr.Code, map[string]string{"error": fmt.Sprintf("%v", httpErr.Message)})
+			_ = c.JSON(httpErr.Code, map[string]string{"error": fmt.Sprintf("%v", httpErr.Message)})
 		} else {
-			c.String(httpErr.Code, fmt.Sprintf("%v", httpErr.Message))
+			_ = c.String(httpErr.Code, fmt.Sprintf("%s: %v", http.StatusText(httpErr.Code), httpErr.Message))
 		}
 		return
 	}
 	h.mux.Logger.Errorf("%s %s %s error: %v", c.Request().Method, c.Request().URL, c.Request().RemoteAddr, err)
 	if isJSON {
-		c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error", "detail": fmt.Sprintf("%v", err)})
+		_ = c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error", "detail": fmt.Sprintf("%v", err)})
 	} else {
-		c.String(http.StatusInternalServerError, fmt.Sprintf("internal server error (please check the logs for details): %v", err))
+		_ = c.String(http.StatusInternalServerError, fmt.Sprintf("internal server error (please check the logs for details): %v", err))
 	}
 }
 
