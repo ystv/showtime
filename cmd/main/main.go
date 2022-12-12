@@ -80,7 +80,6 @@ func main() {
 			AutoInit: autoInit,
 		},
 	}
-	log.Printf("debug: configuration: %+v", conf)
 
 	db, err := db.New(conf.db)
 	if err != nil {
