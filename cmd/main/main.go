@@ -9,9 +9,11 @@ import (
 	"strconv"
 
 	"github.com/joho/godotenv"
+
 	"github.com/ystv/showtime/auth"
 	"github.com/ystv/showtime/brave"
 	"github.com/ystv/showtime/db"
+	"github.com/ystv/showtime/db/schema"
 	"github.com/ystv/showtime/handlers"
 	"github.com/ystv/showtime/livestream"
 	"github.com/ystv/showtime/mcr"
@@ -80,6 +82,13 @@ func main() {
 	db, err := db.New(conf.db)
 	if err != nil {
 		log.Fatalf("unable to create database: %+v", err)
+	}
+	schemaVersion, err := schema.GetCurrentSchemaVersion(db)
+	if err != nil {
+		log.Fatalf("unable to get schema version: %+v", err)
+	}
+	if schemaVersion != schema.HighestSchemaVersion {
+		log.Fatalf("Database schema outdated, please run 'init' again; expected %d, but found %d", schema.HighestSchemaVersion, schemaVersion)
 	}
 
 	if conf.auth.CredentialsPath == "" {

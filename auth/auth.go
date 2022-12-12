@@ -26,17 +26,6 @@ type (
 	}
 )
 
-// Schema represents the auth package in the database.
-var Schema = `
-CREATE SCHEMA auth;
-
-CREATE TABLE auth.tokens (
-	token_id bigint GENERATED ALWAYS AS IDENTITY,
-	value text NOT NULL,
-	PRIMARY KEY(token_id)
-);
-`
-
 // NewAuther creates a oauth2 handler.
 func NewAuther(db *sqlx.DB, config *oauth2.Config) *Auther {
 	return &Auther{

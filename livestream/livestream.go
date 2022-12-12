@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+
 	"github.com/ystv/showtime/mcr"
 	"github.com/ystv/showtime/youtube"
 )
@@ -53,38 +54,6 @@ type (
 		StreamKey string `db:"stream_key" json:"streamKey"`
 	}
 )
-
-// Schema represents the livestream package in the database.
-var Schema = `
-CREATE TABLE livestreams (
-	livestream_id bigint GENERATED ALWAYS AS IDENTITY,
-	status text NOT NULL,
-	stream_key text NOT NULL,
-	title text NOT NULL,
-	description text NOT NULL,
-	scheduled_start timestamptz NOT NULL,
-	scheduled_end timestamptz NOT NULL,
-	visibility text NOT NULL,
-	PRIMARY KEY(livestream_id),
-	UNIQUE(stream_key)
-);
-
-CREATE TABLE links (
-	link_id bigint GENERATED ALWAYS AS IDENTITY,
-	livestream_id integer NOT NULL,
-	integration_type text NOT NULL,
-	integration_id text NOT NULL,
-	PRIMARY KEY(link_id),
-	CONSTRAINT fk_livestream FOREIGN KEY(livestream_id) REFERENCES livestreams(livestream_id),
-	UNIQUE (integration_type, integration_id)
-);
-
-CREATE TABLE rtmp_outputs (
-	rtmp_output_id bigint GENERATED ALWAYS AS IDENTITY,
-	output_url text NOT NULL,
-	PRIMARY KEY(rtmp_output_id)
-);
-`
 
 // New creates an instance of livestreamer.
 func New(c Config, db *sqlx.DB, mcr *mcr.MCR, yt *youtube.YouTube) *Livestreamer {

@@ -1,22 +1,24 @@
 package main
 
 import (
-	"context"
+	"flag"
 	"log"
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/ystv/showtime/auth"
+	"github.com/pressly/goose/v3"
+
 	"github.com/ystv/showtime/db"
-	"github.com/ystv/showtime/livestream"
-	"github.com/ystv/showtime/mcr"
-	"github.com/ystv/showtime/youtube"
+	"github.com/ystv/showtime/db/migrations"
 )
 
 func main() {
 	// Load environment
-	godotenv.Load(".env")           // Load .env file for production
-	godotenv.Overload(".env.local") // Load .env.local for developing
+	_ = godotenv.Load(".env")           // Load .env file for production
+	_ = godotenv.Overload(".env.local") // Load .env.local for developing
+
+	downOne := flag.Bool("down_one", false, "undo the last migration instead of upgrading - only use for development!")
+	flag.Parse()
 
 	dbConf := &db.Config{
 		Host:     os.Getenv("ST_DB_HOST"),
@@ -30,24 +32,23 @@ func main() {
 	if err != nil {
 		log.Fatalf("unable to create database: %+v", err)
 	}
+	defer db.Close()
 
-	ctx := context.Background()
+	goose.SetBaseFS(migrations.Migrations)
 
-	_, err = db.ExecContext(ctx, livestream.Schema)
-	if err != nil {
-		log.Fatalf("failed to create livestream schema: %+v", err)
+	if err := goose.SetDialect("postgres"); err != nil {
+		log.Fatalf("unable to set goose dialect: %v", err)
 	}
-	_, err = db.ExecContext(ctx, mcr.Schema)
-	if err != nil {
-		log.Fatalf("failed to create channel schema: %+v", err)
+
+	if *downOne {
+		if err := goose.Down(db.DB, "."); err != nil {
+			log.Fatalf("unable to downgrade: %v", err)
+		}
+		return
 	}
-	_, err = db.ExecContext(ctx, auth.Schema)
-	if err != nil {
-		log.Fatalf("failed to create auth schema: %+v", err)
-	}
-	_, err = db.ExecContext(ctx, youtube.Schema)
-	if err != nil {
-		log.Fatalf("failed to create youtube schema: %+v", err)
+
+	if err := goose.Up(db.DB, "."); err != nil {
+		log.Fatalf("unable to run migrations: %v", err)
 	}
 
 	log.Println("successfully initialised showtime")
