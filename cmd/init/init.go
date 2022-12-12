@@ -5,9 +5,10 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/pressly/goose/v3"
 
 	"github.com/ystv/showtime/db"
-	"github.com/ystv/showtime/db/schema"
+	"github.com/ystv/showtime/db/migrations"
 )
 
 func main() {
@@ -29,8 +30,14 @@ func main() {
 	}
 	defer db.Close()
 
-	if err := schema.UpgradeDatabase(db); err != nil {
-		log.Fatal(err)
+	goose.SetBaseFS(migrations.Migrations)
+
+	if err := goose.SetDialect("postgres"); err != nil {
+		log.Fatalf("unable to set goose dialect: %v", err)
+	}
+
+	if err := goose.Up(db.DB, "."); err != nil {
+		log.Fatalf("unable to run migrations: %v", err)
 	}
 
 	log.Println("successfully initialised showtime")

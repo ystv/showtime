@@ -7,10 +7,9 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"github.com/ystv/showtime/auth"
-	"github.com/ystv/showtime/db"
-
 	"google.golang.org/api/youtube/v3"
+
+	"github.com/ystv/showtime/auth"
 )
 
 type (
@@ -27,34 +26,6 @@ type (
 		yt        *youtube.Service
 	}
 )
-
-// Schema represents the youtube package in the database.
-var Schema = db.VersionedSchema{
-	1: `
-	CREATE SCHEMA youtube;
-	
-	CREATE TABLE youtube.accounts (
-		account_id bigint GENERATED ALWAYS AS IDENTITY,
-		token_id integer NOT NULL,
-		PRIMARY KEY(account_id),
-		CONSTRAINT fk_token FOREIGN KEY(token_id) REFERENCES auth.tokens(token_id)
-	);
-	
-	CREATE TABLE youtube.broadcasts (
-		broadcast_id text NOT NULL,
-		account_id bigint NOT NULL,
-		ingest_address text NOT NULL,
-		ingest_key text NOT NULL,
-		title text NOT NULL,
-		description text NOT NULL,
-		scheduled_start text NOT NULL,
-		scheduled_end text NOT NULL,
-		visibility text NOT NULL,
-		PRIMARY KEY(broadcast_id),
-		CONSTRAINT fk_account FOREIGN KEY(account_id) REFERENCES youtube.accounts(account_id)
-	);
-	`,
-}
 
 var (
 	// ErrNoYouTuberFound when the youtube account cannot be found.

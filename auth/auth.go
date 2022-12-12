@@ -8,8 +8,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/oauth2"
-
-	"github.com/ystv/showtime/db"
 )
 
 type (
@@ -27,19 +25,6 @@ type (
 		CredentialsPath string
 	}
 )
-
-// Schema represents the auth package in the database.
-var Schema = db.VersionedSchema{
-	1: `
-	CREATE SCHEMA auth;
-	
-	CREATE TABLE auth.tokens (
-		token_id bigint GENERATED ALWAYS AS IDENTITY,
-		value text NOT NULL,
-		PRIMARY KEY(token_id)
-	);
-	`,
-}
 
 // NewAuther creates a oauth2 handler.
 func NewAuther(db *sqlx.DB, config *oauth2.Config) *Auther {

@@ -8,7 +8,6 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/ystv/showtime/brave"
-	"github.com/ystv/showtime/db"
 )
 
 type (
@@ -36,43 +35,6 @@ var (
 	// ErrVisibilityEmpty validation error when visibility is empty.
 	ErrVisibilityEmpty = errors.New("visibility is empty")
 )
-
-// Schema represents the mcr package in the database.
-var Schema = db.VersionedSchema{
-	1: `
-	CREATE SCHEMA mcr;
-	
-	CREATE TABLE mcr.channels (
-		channel_id bigint GENERATED ALWAYS AS IDENTITY,
-		status text NOT NULL,
-		title text NOT NULL,
-		url_name text NOT NULL UNIQUE,
-		res_width integer NOT NULL,
-		res_height integer NOT NULL,
-		mixer_id integer NOT NULL,
-		program_input_id integer NOT NULL,
-		continuity_input_id integer NOT NULL,
-		program_output_id integer NOT NULL,
-		PRIMARY KEY (channel_id)
-	);
-	
-	CREATE TABLE mcr.playouts (
-		playout_id bigint GENERATED ALWAYS AS IDENTITY,
-		channel_id bigint NOT NULL,
-		brave_input_id integer NOT NULL,
-		source_type text NOT NULL,
-		source_uri text NOT NULL,
-		status text NOT NULL,
-		title text NOT NULL,
-		description text NOT NULL,
-		scheduled_start timestamptz NOT NULL,
-		scheduled_end timestamptz NOT NULL,
-		visibility text NOT NULL,
-		PRIMARY KEY (playout_id),
-		CONSTRAINT fk_channel FOREIGN KEY(channel_id) REFERENCES mcr.channels(channel_id)
-	);
-	`,
-}
 
 // NewMCR creates a new channel manager.
 func NewMCR(c *Config, db *sqlx.DB, brave *brave.Braver) (*MCR, error) {
