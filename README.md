@@ -90,3 +90,21 @@ to the other paths.
 
 ShowTime! exposes a API which has JWT bearer token security that is compatible
 with a [web-auth](https://github.com/ystv/web-auth) generated access token.
+
+We use [goose](https://github.com/pressly/goose) to manage database migrations (read: upgrades/downgrades).
+If you need to make changes to the database, install goose, then run
+
+```shell
+$ cd db/migrations
+$ goose create describe_what_its_doing sql
+# write the migration
+$ cd ../..
+$ go run cmd/init/init.go
+```
+
+Before you push your changes and open a PR, don't forget to run `goose fix` (see [versioning](https://github.com/pressly/goose#hybrid-versioning)):
+
+```shell
+$ cd db/migrations
+$ goose fix
+```
