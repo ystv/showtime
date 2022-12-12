@@ -54,15 +54,7 @@ func (h *Handlers) obsGetLivestream(c echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to get stream: %w", err)
 	}
-	events, err := h.ls.ListEvents(ctx, strmID)
-	if err != nil {
-		return fmt.Errorf("failed to list stream events: %w", err)
-	}
-
-	return c.Render(http.StatusOK, "get-livestream", map[string]interface{}{
-		"stream": strm,
-		"events": events,
-	})
+	return c.Render(http.StatusOK, "get-livestream", strm)
 }
 
 func (h *Handlers) obsNewLivestream(c echo.Context) error {

@@ -16,54 +16,93 @@
   </head>
   <body>
   <div class="column has-text-centered">
-    <a href="/livestreams">🔙 Back</a>
-    {{ with .stream }}
+    <a href="/livestreams">🔙 Back</a>=
       <h3 class="title is-5">{{ .Title }}</h3>
       <h2 class="title is-4">Stream key</h2>
       <div class="container block">
-        <div class="notification is-primary">
-          <h1 class="title is-2">{{ .StreamKey }}</h1>
-        </div>
+          <div class="notification is-primary">
+              <h1 class="title is-2">{{ .StreamKey }}</h1>
+          </div>
       </div>
       <nav class="level">
-        <div class="level-item">
-          <div class="buttons">
-            {{ if eq .Status "pending" }}
-              <a href="/livestreams/{{ .ID }}/start" class="button is-danger">Start stream</a>
-            {{ end }}
-            {{ if eq .Status "stream-started"}}
-              <a href="/livestreams/{{ .ID }}/end" class="button is-danger">End stream</a>
-            {{ end }}
-            <a href="/livestreams/{{ .ID }}/manage" class="button is-info">Manage stream</a>
+          <div class="level-item">
+              <div class="buttons">
+                  {{ if eq .Status "pending" }}
+                      <a href="/livestreams/{{ .ID }}/start" class="button is-danger">Start stream</a>
+                  {{ end }}
+                  {{ if eq .Status "stream-started"}}
+                      <a href="/livestreams/{{ .ID }}/end" class="button is-danger">End stream</a>
+                  {{ end }}
+                  <a href="/livestreams/{{ .ID }}/manage" class="button is-info">Manage stream</a>
+              </div>
           </div>
-        </div>
       </nav>
-    {{ end }}
     <div>
       <h3 class="title is-3">Events</h3>
-      {{ range .events | reverse }}
-        <div class="container block">
-            {{ $class := "is-info is-light" }}
-            {{ if or (eq .Type "stream_lost") (eq .Type "error") }}
-                {{ $class = "is-danger is-light" }}
-            {{ end }}
-            <div class="notification {{ $class }}">
-                <h4 class="title">{{ .Type | toString | replace "_" " " | title }}</h4>
-                <p>
-                    {{ if or (eq .Type "linked") (eq .Type "unlinked") }}
-                        To {{ .Data.TargetType }} {{ .Data.TargetID }}
-                    {{ end }}
-                </p>
-                <div class="subtitle is-5">{{ .Time | date "2006-01-02 15:04:05" }}</div>
-            </div>
+        <div class="container block" id="evtsContainer">
+            <em>Loading, please wait...</em>
         </div>
-      {{ end }}
     </div>
     <p>
         Don't know how to add a stream key? Follow the guide 
         <a href="https://docs.ystv.co.uk/wiki/How_to_add_a_stream_key_to_OBS">here</a>.
     </p>
   </div>
+  <template id="eventBlock">
+      <div class="message">
+          <div class="message-body" style="padding: 0">
+              <h4 class="title is-5"></h4>
+              <div class="subtitle time"></div>
+              <p class="payload"></p>
+          </div>
+      </div>
+  </template>
+  <script type="text/javascript">
+      function update() {
+          fetch("/api/livestreams/{{ .ID }}/events").then(res => res.json()).then(/** @type any[] */evts => {
+              const container = document.getElementById("evtsContainer");
+              const template = document.getElementById("eventBlock");
+              container.innerHTML = "";
+              for (const evt of evts.reverse()) {
+                const block = template.content.cloneNode(true);
+
+                let clazz = "";
+                switch (evt.type) {
+                    case "stream_lost":
+                    case "error":
+                        clazz = "is-danger";
+                        break;
+                }
+                if (clazz.length > 0) {
+                    block.querySelector(".message").classList.add(clazz);
+                }
+
+                let type = evt.type.replace("_", " ");
+                type[0] = type[0].toUpperCase();
+                block.querySelector(".title").textContent = type;
+                block.querySelector(".time").textContent = new Date(evt.time).toLocaleString();
+
+                switch (evt.type) {
+                    case "linked":
+                    case "unlinked":
+                        block.querySelector(".payload").textContent = `To ${evt.data.targetType} ${evt.data.targetID}`;
+                        break;
+                }
+
+                container.appendChild(block);
+              }
+              setTimeout(update, 10_000);
+          }).catch(err => {
+              const container = document.getElementById("evtsContainer");
+                container.innerHTML = `<div class="notification is-danger">
+                <h1 class="title is-2">Error</h1>
+                <p>${err}</p>
+              `;
+              setTimeout(update, 10_000)
+          });
+      }
+      update();
+  </script>
   </body>
 </html>
 {{ end }}
