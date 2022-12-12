@@ -1,0 +1,53 @@
+version: '3.8'
+services:
+
+  postgres:
+    image: postgres:alpine
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+        POSTGRES_PASSWORD: showtime
+        POSTGRES_USER: showtime
+        POSTGRES_DB: showtime
+
+  brave:
+    # Built from https://github.com/ystv/brave
+    image: registry.comp.ystv.co.uk/brave:latest
+    ports:
+      - "5000:5000"
+
+  nginx:
+    image: registry.comp.ystv.co.uk/nginx/nginx-rtmp:latest
+    ports:
+      - '1935:1935'
+      - '8081:80'
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf
+
+  showtime:
+    build: .
+    depends_on:
+      - postgres
+      - brave
+      - nginx
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./credentials:/run/credentials
+    environment:
+      - ST_DEBUG=true
+      - ST_INGEST_ADDR=rtmp://nginx:1935/ingest
+      - ST_OUTPUT_ADDR=rtmp://nginx:1935/output
+      - ST_BASE_SERVE_ADDR=showtime
+      - ST_BRAVE_ADDR=brave
+      - ST_DB_HOST=postgres
+      - ST_DB_PORT=5432
+      - ST_DB_SSLMODE=disable
+      - ST_DB_USERNAME=showtime
+      - ST_DB_PASSWORD=showtime
+      - ST_DB_DBNAME=showtime
+      - ST_DB_AUTO_INIT=true
+      - ST_CRED_PATH=/run/credentials
+
+volumes:
+  pgdata: { }

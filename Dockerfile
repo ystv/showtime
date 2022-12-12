@@ -12,9 +12,11 @@ RUN go mod download
 COPY . .
 
 WORKDIR /workspace/cmd/main
-RUN GOOS=linux GOARCH=amd64 go build -o showtime
+RUN GOOS=linux go build -o showtime
 
-FROM registry.comp.ystv.co.uk/ffmpeg:latest
+FROM debian:bullseye-slim
+
+COPY --from=mwader/static-ffmpeg:5.1.2 /ffmpeg /usr/local/bin/
 
 COPY --from=build /workspace/cmd/main/showtime /usr/bin/
 

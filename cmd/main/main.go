@@ -13,7 +13,6 @@ import (
 	"github.com/ystv/showtime/auth"
 	"github.com/ystv/showtime/brave"
 	"github.com/ystv/showtime/db"
-	"github.com/ystv/showtime/db/schema"
 	"github.com/ystv/showtime/handlers"
 	"github.com/ystv/showtime/livestream"
 	"github.com/ystv/showtime/mcr"
@@ -48,6 +47,8 @@ func main() {
 		log.Println("Debug Mode - Disabled auth - pls don't run in production")
 	}
 
+	autoInit, _ := strconv.ParseBool(os.Getenv("ST_DB_AUTO_INIT"))
+
 	conf := Config{
 		livestream: livestream.Config{
 			IngestAddress: os.Getenv("ST_INGEST_ADDR"),
@@ -76,19 +77,13 @@ func main() {
 			DBName:   os.Getenv("ST_DB_DBNAME"),
 			Username: os.Getenv("ST_DB_USERNAME"),
 			Password: os.Getenv("ST_DB_PASSWORD"),
+			AutoInit: autoInit,
 		},
 	}
 
 	db, err := db.New(conf.db)
 	if err != nil {
 		log.Fatalf("unable to create database: %+v", err)
-	}
-	schemaVersion, err := schema.GetCurrentSchemaVersion(db)
-	if err != nil {
-		log.Fatalf("unable to get schema version: %+v", err)
-	}
-	if schemaVersion != schema.HighestSchemaVersion {
-		log.Fatalf("Database schema outdated, please run 'init' again; expected %d, but found %d", schema.HighestSchemaVersion, schemaVersion)
 	}
 
 	if conf.auth.CredentialsPath == "" {
