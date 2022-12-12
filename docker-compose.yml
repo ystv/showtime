@@ -11,6 +11,7 @@ services:
         POSTGRES_DB: showtime
 
   brave:
+    # Built from https://github.com/ystv/brave
     image: registry.comp.ystv.co.uk/brave:latest
     ports:
       - "5000:5000"

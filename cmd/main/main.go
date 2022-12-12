@@ -9,12 +9,10 @@ import (
 	"strconv"
 
 	"github.com/joho/godotenv"
-	"github.com/pressly/goose/v3"
 
 	"github.com/ystv/showtime/auth"
 	"github.com/ystv/showtime/brave"
 	"github.com/ystv/showtime/db"
-	"github.com/ystv/showtime/db/migrations"
 	"github.com/ystv/showtime/handlers"
 	"github.com/ystv/showtime/livestream"
 	"github.com/ystv/showtime/mcr"
@@ -84,26 +82,6 @@ func main() {
 	db, err := db.New(conf.db)
 	if err != nil {
 		log.Fatalf("unable to create database: %+v", err)
-	}
-
-	goose.SetBaseFS(migrations.Migrations)
-	autoInit, _ := strconv.ParseBool(os.Getenv("ST_DB_AUTO_INIT"))
-	if autoInit {
-		log.Printf("auto-initialising database")
-		if err := goose.SetDialect("postgres"); err != nil {
-			log.Fatalf("failed to set goose dialect: %+v", err)
-		}
-		if err := goose.Up(db.DB, "."); err != nil {
-			log.Fatalf("failed to run goose migrations: %+v", err)
-		}
-	}
-
-	upToDate, err := migrations.IsUpToDate(db.DB)
-	if err != nil {
-		log.Fatalf("failed to check if migrations are up to date: %+v", err)
-	}
-	if !upToDate {
-		log.Fatalf("database not up to date, please run 'init' or set ST_DB_AUTO_INIT=true")
 	}
 
 	if conf.auth.CredentialsPath == "" {

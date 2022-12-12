@@ -8,7 +8,8 @@ Stream integration and safety maker.
 
 > **Note**
 > The Docker setup uses some images that are only available from YSTV's internal Docker registry.
-> If you are a not a YSTV member you will not be able to use this setup.
+> If you are a not a YSTV member you will need to build [Brave](https://github.com/ystv/brave), nginx-rtmp, and ffmpeg images yourself.
+> We hope to make these images available publicly in the future.
 
 Sign in to the YSTV Docker registry using your edit PC (AD) credentials - if you're not sure how to do this, message #computing on YSTV Slack:
 
