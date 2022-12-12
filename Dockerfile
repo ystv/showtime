@@ -14,7 +14,7 @@ COPY . .
 WORKDIR /workspace/cmd/main
 RUN GOOS=linux go build -o showtime
 
-FROM debian:bullseye
+FROM debian:bullseye-slim
 
 COPY --from=mwader/static-ffmpeg:5.1.2 /ffmpeg /usr/local/bin/
 
