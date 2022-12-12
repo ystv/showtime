@@ -27,7 +27,6 @@ func main() {
 		Username:               os.Getenv("ST_DB_USERNAME"),
 		Password:               os.Getenv("ST_DB_PASSWORD"),
 		SkipSchemaVersionCheck: true,
-		SkipAutoInit:           true,
 	}
 	db, err := db.New(dbConf)
 	if err != nil {

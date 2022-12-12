@@ -3,8 +3,6 @@ package db
 import (
 	"fmt"
 	"log"
-	"os"
-	"strconv"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -32,7 +30,7 @@ type Config struct {
 	Username               string
 	Password               string
 	SkipSchemaVersionCheck bool
-	SkipAutoInit           bool
+	AutoInit               bool
 }
 
 // New creates a new database client.
@@ -49,8 +47,7 @@ func New(conf *Config) (*sqlx.DB, error) {
 		return nil, fmt.Errorf("failed to ping db: %w", err)
 	}
 
-	autoInit, _ := strconv.ParseBool(os.Getenv("ST_DB_AUTO_INIT"))
-	if autoInit && !conf.SkipAutoInit {
+	if conf.AutoInit {
 		log.Printf("auto-initialising database")
 		if err := goose.Up(db.DB, "."); err != nil {
 			return nil, fmt.Errorf("failed to run goose migrations: %+v", err)

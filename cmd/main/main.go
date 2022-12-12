@@ -47,6 +47,8 @@ func main() {
 		log.Println("Debug Mode - Disabled auth - pls don't run in production")
 	}
 
+	autoInit, _ := strconv.ParseBool(os.Getenv("ST_DB_AUTO_INIT"))
+
 	conf := Config{
 		livestream: livestream.Config{
 			IngestAddress: os.Getenv("ST_INGEST_ADDR"),
@@ -75,6 +77,7 @@ func main() {
 			DBName:   os.Getenv("ST_DB_DBNAME"),
 			Username: os.Getenv("ST_DB_USERNAME"),
 			Password: os.Getenv("ST_DB_PASSWORD"),
+			AutoInit: autoInit,
 		},
 	}
 	log.Printf("debug: configuration: %+v", conf)
