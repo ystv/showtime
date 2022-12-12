@@ -1,16 +1,20 @@
 package handlers
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
 	"io/fs"
 	"net/http"
 	"runtime/debug"
+	"strings"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
 	"github.com/ystv/showtime/auth"
 	"github.com/ystv/showtime/livestream"
 	"github.com/ystv/showtime/mcr"
@@ -176,8 +180,37 @@ func (h *Handlers) Start() {
 	h.mux.Use(middleware.Recover())
 	h.mux.Use(middleware.CORSWithConfig(corsConfig))
 	h.mux.HideBanner = true
+	h.mux.HTTPErrorHandler = h.handleError
 
 	h.mux.Logger.Fatal(h.mux.Start(":8080"))
+}
+
+func (h *Handlers) handleError(err error, c echo.Context) {
+	if err == nil {
+		return
+	}
+	isJSON := strings.Contains(c.Request().Header.Get("Accept"), "application/json")
+
+	// TODO(https://ystv.atlassian.net/browse/SHOW-50): this should be handled at the handler level, not here
+	if errors.Is(err, sql.ErrNoRows) {
+		err = echo.NewHTTPError(http.StatusNotFound, err)
+	}
+
+	var httpErr *echo.HTTPError
+	if errors.As(err, &httpErr) {
+		if isJSON {
+			_ = c.JSON(httpErr.Code, map[string]string{"error": fmt.Sprintf("%v", httpErr.Message)})
+		} else {
+			_ = c.String(httpErr.Code, fmt.Sprintf("%s: %v", http.StatusText(httpErr.Code), httpErr.Message))
+		}
+		return
+	}
+	h.mux.Logger.Errorf("%s %s %s error: %v", c.Request().Method, c.Request().URL, c.Request().RemoteAddr, err)
+	if isJSON {
+		_ = c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error", "detail": fmt.Sprintf("%v", err)})
+	} else {
+		_ = c.String(http.StatusInternalServerError, fmt.Sprintf("internal server error (please check the logs for details): %v", err))
+	}
 }
 
 // Templater creates webpages for UI.
