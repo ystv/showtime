@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 
@@ -15,6 +16,9 @@ func main() {
 	// Load environment
 	_ = godotenv.Load(".env")           // Load .env file for production
 	_ = godotenv.Overload(".env.local") // Load .env.local for developing
+
+	downOne := flag.Bool("down_one", false, "undo the last migration instead of upgrading - only use for development!")
+	flag.Parse()
 
 	dbConf := &db.Config{
 		Host:     os.Getenv("ST_DB_HOST"),
@@ -34,6 +38,13 @@ func main() {
 
 	if err := goose.SetDialect("postgres"); err != nil {
 		log.Fatalf("unable to set goose dialect: %v", err)
+	}
+
+	if *downOne {
+		if err := goose.Down(db.DB, "."); err != nil {
+			log.Fatalf("unable to downgrade: %v", err)
+		}
+		return
 	}
 
 	if err := goose.Up(db.DB, "."); err != nil {

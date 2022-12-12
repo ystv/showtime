@@ -102,6 +102,12 @@ $ cd ../..
 $ go run cmd/init/init.go
 ```
 
+If you need to undo the migration you just wrote, run
+
+```shell
+$ go run cmd/init/init.go -down_one
+```
+
 Before you push your changes and open a PR, don't forget to run `goose fix` (see [versioning](https://github.com/pressly/goose#hybrid-versioning)):
 
 ```shell
