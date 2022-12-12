@@ -17,7 +17,7 @@ var Migrations embed.FS
 // NB: this function assumes goose.SetBaseFS has been called.
 func IsUpToDate(db *sql.DB) (bool, error) {
 	// migration version
-	migrations, err := goose.CollectMigrations(".", 0, math.MaxInt)
+	migrations, err := goose.CollectMigrations(".", 0, math.MaxInt64)
 	if err != nil {
 		return false, fmt.Errorf("failed to collect migrations: %w", err)
 	}
@@ -30,6 +30,10 @@ func IsUpToDate(db *sql.DB) (bool, error) {
 	version, err := goose.GetDBVersion(db)
 	if err != nil {
 		return false, fmt.Errorf("failed to get db version: %w", err)
+	}
+
+	if version > last.Version {
+		return false, fmt.Errorf("db version is greater than the latest migration version, this ShowTime binary is outdated")
 	}
 
 	return version == last.Version, nil
