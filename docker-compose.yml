@@ -26,7 +26,6 @@ services:
 
   showtime:
     build: .
-    platform: linux/amd64 # TODO multi-arch image
     depends_on:
       - postgres
       - brave
