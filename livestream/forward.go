@@ -34,6 +34,13 @@ func (ls *Livestreamer) Forward(ctx context.Context, strm ConsumeLivestream) err
 				err = ls.mcr.PlayPlayoutSource(ctx, po)
 				if err != nil {
 					log.Printf("failed to start mcr playout source: %v", err)
+					err = ls.CreateEvent(ctx, strm.ID, EventError, EventErrorPayload{
+						Err:     err.Error(),
+						Context: "mcr.PlayPlayoutSource",
+					})
+					if err != nil {
+						log.Printf("failed to log error event: %v", err)
+					}
 				}
 			}()
 
@@ -67,6 +74,13 @@ func (ls *Livestreamer) Forward(ctx context.Context, strm ConsumeLivestream) err
 				err = ffmpeg.NewForwardStream(context.Background(), srcURL, rtmpOutput.OutputURL)
 				if err != nil {
 					log.Printf("failed to forward custom rtmp stream: %+v", err)
+					err = ls.CreateEvent(ctx, strm.ID, EventError, EventErrorPayload{
+						Err:     err.Error(),
+						Context: "ffmpeg.NewForwardStream",
+					})
+					if err != nil {
+						log.Printf("failed to log error event: %v", err)
+					}
 				}
 			}()
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/ystv/showtime/mcr"
@@ -54,7 +55,16 @@ func (ls *Livestreamer) NewLink(ctx context.Context, l NewLinkParams) (Link, err
 		VALUES ($1, $2, $3)
 		RETURNING link_id;
 	`, l.LivestreamID, l.IntegrationType, l.IntegrationID)
-	return Link{ID: linkID, IntegrationType: l.IntegrationType, IntegrationID: l.IntegrationID}, err
+	if err != nil {
+		return Link{}, fmt.Errorf("failed to create link: %w", err)
+	}
+	if err := ls.CreateEvent(ctx, l.LivestreamID, EventLinked, EventLinkedPayload{
+		IntegrationType: l.IntegrationType,
+		IntegrationID:   l.IntegrationID,
+	}); err != nil {
+		log.Printf("failed to log link event: %v", err)
+	}
+	return Link{ID: linkID, IntegrationType: l.IntegrationType, IntegrationID: l.IntegrationID}, nil
 }
 
 // GetLink returns a single link.
@@ -81,6 +91,11 @@ func (ls *Livestreamer) ListLinks(ctx context.Context, livestreamID int) ([]Link
 
 // DeleteLink removes a relationship between a livestream and an integration.
 func (ls *Livestreamer) DeleteLink(ctx context.Context, link Link) error {
+	var streamID int
+	err := ls.db.GetContext(ctx, &streamID, `SELECT livestream_id FROM links WHERE link_id = $1;`, link.ID)
+	if err != nil {
+		return fmt.Errorf("failed to get livestream id: %w", err)
+	}
 	switch link.IntegrationType {
 	case LinkMCR:
 		playoutID, err := strconv.Atoi(link.IntegrationID)
@@ -120,12 +135,18 @@ func (ls *Livestreamer) DeleteLink(ctx context.Context, link Link) error {
 	default:
 		return ErrUnkownIntegrationType
 	}
-	_, err := ls.db.ExecContext(ctx, `
+	_, err = ls.db.ExecContext(ctx, `
 		DELETE FROM links
 		WHERE link_id = $1;
 	`, link.ID)
 	if err != nil {
 		return fmt.Errorf("failed to delete link from store: %w", err)
 	}
-	return err
+	if err := ls.CreateEvent(ctx, streamID, EventUnlinked, EventUnlinkedPayload{
+		IntegrationType: link.IntegrationType,
+		IntegrationID:   link.IntegrationID,
+	}); err != nil {
+		log.Printf("failed to log unlink event: %v", err)
+	}
+	return nil
 }

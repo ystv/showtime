@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+
 	"github.com/ystv/showtime/livestream"
 	"github.com/ystv/showtime/mcr"
 	"github.com/ystv/showtime/youtube"
@@ -51,9 +52,8 @@ func (h *Handlers) obsGetLivestream(c echo.Context) error {
 	}
 	strm, err := h.ls.Get(ctx, strmID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return fmt.Errorf("failed to get stream: %w", err)
 	}
-
 	return c.Render(http.StatusOK, "get-livestream", strm)
 }
 

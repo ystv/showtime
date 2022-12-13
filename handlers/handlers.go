@@ -136,6 +136,7 @@ func (h *Handlers) Start() {
 			api.POST("/livestreams", h.newLivestream)
 			api.PUT("/livestreams", h.updateLivestream)
 			api.GET("/livestreams", h.listLivestreams)
+			api.GET("/livestreams/:livestreamID/events", h.getLivestreamEvents)
 			api.POST("/livestreams/:livestreamID/refresh-key", h.refreshStreamKey)
 			api.POST("/livestreams/:livestreamID/link/youtube/:broadcastID", h.enableYouTube)
 			api.POST("/livestreams/:livestreamID/unlink/youtube/:broadcastID", h.disableYouTube)
@@ -154,7 +155,8 @@ func (h *Handlers) Start() {
 		}
 		return c.JSON(http.StatusOK, info.Settings)
 	})
-	h.mux.POST("/api/nginx/hook", h.hookStreamStart)
+	h.mux.POST("/api/hooks/nginx/on_publish", h.hookStreamStart)
+	h.mux.POST("/api/hooks/nginx/on_publish_done", h.hookStreamDone)
 	h.mux.GET("/oauth/google/login", h.loginGoogle)
 	h.mux.GET("/oauth/google/callback", h.callbackGoogle)
 	h.mux.Static("/assets", "assets")

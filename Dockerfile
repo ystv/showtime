@@ -15,6 +15,7 @@ WORKDIR /workspace/cmd/main
 RUN GOOS=linux go build -o showtime
 
 FROM debian:bullseye-slim
+RUN apt update && apt install -y ca-certificates
 
 COPY --from=mwader/static-ffmpeg:5.1.2 /ffmpeg /usr/local/bin/
 
