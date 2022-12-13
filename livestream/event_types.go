@@ -32,9 +32,9 @@ const (
 	// EventUnlinked is when a livestream is unlinked from an integration.
 	EventUnlinked EventType = "unlinked"
 	// EventStreamReceived is when ShowTime! starts receiving an incoming stream from nginx.
-	EventStreamReceived EventType = "streamReceived"
+	EventStreamReceived EventType = "stream-received"
 	// EventStreamLost is when nginx reports it has stopped receiving a stream.
-	EventStreamLost EventType = "streamLost"
+	EventStreamLost EventType = "stream-lost"
 	// EventError is when an error occurs while forwarding a stream.
 	EventError EventType = "error"
 )

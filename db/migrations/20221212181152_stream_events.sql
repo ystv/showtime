@@ -13,8 +13,8 @@ CREATE TABLE livestream_events (
      'ended',
      'linked',
      'unlinked',
-     'streamReceived',
-     'streamLost',
+     'stream-received',
+     'stream-lost',
      'error'
    ))
 );
