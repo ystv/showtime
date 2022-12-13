@@ -7,7 +7,7 @@ import (
 )
 
 type (
-	// EventType is the type of a livestream_events record.
+	// EventType is the value of a livestream_events record's event_type field.
 	// This type must stay in sync with the livestream_event_type enum in the database.
 	EventType        string
 	EventWithoutData struct {
@@ -23,13 +23,20 @@ type (
 )
 
 const (
-	EventStarted        EventType = "started"
-	EventEnded          EventType = "ended"
-	EventLinked         EventType = "linked"
-	EventUnlinked       EventType = "unlinked"
-	EventStreamReceived EventType = "stream_received"
-	EventStreamLost     EventType = "stream_lost"
-	EventError          EventType = "error"
+	// EventStarted is when a livestream is started.
+	EventStarted EventType = "started"
+	// EventEnded is when a livestream is ended.
+	EventEnded EventType = "ended"
+	// EventLinked is when a livestream is linked to an integration.
+	EventLinked EventType = "linked"
+	// EventUnlinked is when a livestream is unlinked from an integration.
+	EventUnlinked EventType = "unlinked"
+	// EventStreamReceived is when ShowTime! starts receiving an incoming stream from nginx.
+	EventStreamReceived EventType = "streamReceived"
+	// EventStreamLost is when nginx reports it has stopped receiving a stream.
+	EventStreamLost EventType = "streamLost"
+	// EventError is when an error occurs while forwarding a stream.
+	EventError EventType = "error"
 )
 
 // EventPayload is the type of all livestream event payloads, used only for type checking.

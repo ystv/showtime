@@ -1,23 +1,23 @@
 --FIXME: run `goose fix`
 
 -- +goose Up
-CREATE TYPE livestream_event_type AS ENUM (
-    'started',
-    'ended',
-    'linked',
-    'unlinked',
-    'stream_received',
-    'stream_lost',
-    'error'
-);
 CREATE TABLE livestream_events (
-   livestream_event_id BIGSERIAL PRIMARY KEY,
-   livestream_id integer NOT NULL REFERENCES livestreams(livestream_id),
-   event_type livestream_event_type NOT NULL,
-   event_time timestamptz NOT NULL DEFAULT NOW(),
-   event_data jsonb DEFAULT '{}'::jsonb
+   livestream_event_id BIGINT GENERATED ALWAYS AS IDENTITY,
+   livestream_id BIGINT NOT NULL REFERENCES livestreams(livestream_id) ON DELETE CASCADE,
+   event_type TEXT NOT NULL,
+   event_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+   event_data JSONB DEFAULT '{}'::jsonb,
+   PRIMARY KEY (livestream_event_id),
+   CHECK (event_type IN (
+     'started',
+     'ended',
+     'linked',
+     'unlinked',
+     'streamReceived',
+     'streamLost',
+     'error'
+   ))
 );
 
 -- +goose Down
 DROP TABLE livestream_events;
-DROP TYPE livestream_event_type;
