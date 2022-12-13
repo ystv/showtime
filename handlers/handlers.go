@@ -11,7 +11,6 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/Masterminds/sprig/v3"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -223,8 +222,7 @@ type Templater struct {
 
 // NewTemplater creates a new templater instance.
 func NewTemplater(fs fs.FS) (*Templater, error) {
-	t := template.New("").Funcs(sprig.FuncMap())
-	t, err := t.ParseFS(fs, "*.tmpl")
+	t, err := template.ParseFS(fs, "*.tmpl")
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse templates: %w", err)
 	}
