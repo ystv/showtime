@@ -80,15 +80,15 @@ type EventEndedPayload struct{}
 func (EventEndedPayload) isEventPayload() {}
 
 type EventLinkedPayload struct {
-	TargetType IntegrationType `json:"targetType"`
-	TargetID   string          `json:"targetID"`
+	IntegrationType IntegrationType `json:"integrationType"`
+	IntegrationID   string          `json:"integrationID"`
 }
 
 func (EventLinkedPayload) isEventPayload() {}
 
 type EventUnlinkedPayload struct {
-	TargetType IntegrationType `json:"targetType"`
-	TargetID   string          `json:"targetID"`
+	IntegrationType IntegrationType `json:"integrationType"`
+	IntegrationID   string          `json:"integrationID"`
 }
 
 func (EventUnlinkedPayload) isEventPayload() {}

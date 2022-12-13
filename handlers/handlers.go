@@ -155,8 +155,8 @@ func (h *Handlers) Start() {
 		}
 		return c.JSON(http.StatusOK, info.Settings)
 	})
-	h.mux.POST("/api/nginx/hook", h.hookStreamStart)
-	h.mux.POST("/api/nginx/hook_done", h.hookStreamDone)
+	h.mux.POST("/api/hooks/nginx/on_publish", h.hookStreamStart)
+	h.mux.POST("/api/hooks/nginx/on_publish_done", h.hookStreamDone)
 	h.mux.GET("/oauth/google/login", h.loginGoogle)
 	h.mux.GET("/oauth/google/callback", h.callbackGoogle)
 	h.mux.Static("/assets", "assets")
