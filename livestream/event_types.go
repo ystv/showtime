@@ -102,8 +102,8 @@ type EventStreamLostPayload struct{}
 func (EventStreamLostPayload) isEventPayload() {}
 
 type EventErrorPayload struct {
-	Err   string      `json:"err"`
-	Extra interface{} `json:"extra"`
+	Err     string `json:"err"`
+	Context string `json:"context"`
 }
 
 func (EventErrorPayload) isEventPayload() {}

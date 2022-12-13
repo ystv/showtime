@@ -24,6 +24,11 @@ func (h *Handlers) hookStreamStart(c echo.Context) error {
 
 	err = h.ls.Forward(c.Request().Context(), strm)
 	if err != nil {
+		log.Printf("failed to forward stream %d: %v", strm.ID, err)
+		_ = h.ls.CreateEvent(c.Request().Context(), strm.ID, livestream.EventError, livestream.EventErrorPayload{
+			Err:     err.Error(),
+			Context: "ls.Forward",
+		})
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 

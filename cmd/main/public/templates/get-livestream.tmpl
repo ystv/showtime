@@ -87,6 +87,13 @@
                     case "unlinked":
                         block.querySelector(".payload").textContent = `To ${evt.data.integrationType} ${evt.data.integrationID}`;
                         break;
+                    case "error":
+                        const errRoot = document.createElement("div");
+                        errRoot.innerText = evt.data.err;
+                        const contextRoot = document.createElement("div")
+                        contextRoot.innerText = "Context: " + evt.data.context;
+                        block.querySelector(".payload").appendChild(errRoot).appendChild(contextRoot);
+                        break;
                 }
 
                 container.appendChild(block);
