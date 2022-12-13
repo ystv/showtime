@@ -59,8 +59,8 @@ func (ls *Livestreamer) NewLink(ctx context.Context, l NewLinkParams) (Link, err
 		return Link{}, fmt.Errorf("failed to create link: %w", err)
 	}
 	if err := ls.CreateEvent(ctx, l.LivestreamID, EventLinked, EventLinkedPayload{
-		TargetType: l.IntegrationType,
-		TargetID:   l.IntegrationID,
+		IntegrationType: l.IntegrationType,
+		IntegrationID:   l.IntegrationID,
 	}); err != nil {
 		log.Printf("failed to log link event: %v", err)
 	}
@@ -143,8 +143,8 @@ func (ls *Livestreamer) DeleteLink(ctx context.Context, link Link) error {
 		return fmt.Errorf("failed to delete link from store: %w", err)
 	}
 	if err := ls.CreateEvent(ctx, streamID, EventUnlinked, EventUnlinkedPayload{
-		TargetType: link.IntegrationType,
-		TargetID:   link.IntegrationID,
+		IntegrationType: link.IntegrationType,
+		IntegrationID:   link.IntegrationID,
 	}); err != nil {
 		log.Printf("failed to log unlink event: %v", err)
 	}
