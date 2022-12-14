@@ -216,13 +216,11 @@ func (h *Handlers) obsStartLivestream(c echo.Context) error {
 	}
 	strm, err := h.ls.Get(ctx, strmID)
 	if err != nil {
-		err = fmt.Errorf("failed to get livestream: %w", err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to get livestream: %w", err)
 	}
 	err = h.ls.Start(ctx, strm)
 	if err != nil {
-		err = fmt.Errorf("failed to start livestream: %w", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return fmt.Errorf("failed to start livestream: %w", err)
 	}
 
 	return h.obsGetLivestream(c)
@@ -236,13 +234,11 @@ func (h *Handlers) obsEndLivestream(c echo.Context) error {
 	}
 	strm, err := h.ls.Get(ctx, strmID)
 	if err != nil {
-		err = fmt.Errorf("failed to get livestream: %w", err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to get livestream: %w", err)
 	}
 	err = h.ls.End(ctx, strm)
 	if err != nil {
-		err = fmt.Errorf("failed to end livestream: %w", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return fmt.Errorf("failed to end livestream: %w", err)
 	}
 
 	return h.obsListLivestreams(c)
@@ -348,14 +344,12 @@ func (h *Handlers) obsUnlink(c echo.Context) error {
 
 	link, err := h.ls.GetLink(ctx, linkID)
 	if err != nil {
-		err = fmt.Errorf("failed to get link: %w", err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to get link: %w", err)
 	}
 
 	err = h.ls.DeleteLink(ctx, link)
 	if err != nil {
-		err = fmt.Errorf("failed to delete link: %w", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return fmt.Errorf("failed to delete link: %w", err)
 	}
 
 	return c.Render(http.StatusOK, "successful-unlink", strmID)

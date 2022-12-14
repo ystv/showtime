@@ -49,6 +49,9 @@ func (mcr *MCR) setChannelProgram(ctx context.Context, channelID int, inputID in
 		SELECT mixer_id
 		FROM mcr.channels
 		WHERE channel_id = $1`, channelID)
+	if err != nil {
+		return fmt.Errorf("failed to get mixer id: %w", err)
+	}
 	err = mcr.brave.CutMixerToInput(ctx, mixerID, inputID)
 	if err != nil {
 		return fmt.Errorf("failed to cut mixer to input: %w", err)
@@ -119,7 +122,7 @@ func (mcr *MCR) SetChannelOffAir(ctx context.Context, ch Channel) error {
 		WHERE channel_id = $1;
 	`, ch.ID)
 	if err != nil {
-		return fmt.Errorf("failed to delete channel in store", err)
+		return fmt.Errorf("failed to delete channel in store: %w", err)
 	}
 
 	return nil

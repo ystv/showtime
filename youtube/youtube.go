@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"google.golang.org/api/option"
 
 	"google.golang.org/api/youtube/v3"
 
@@ -49,7 +50,10 @@ func New(ctx context.Context, db *sqlx.DB, auth *auth.Auther) (*YouTube, error) 
 
 	for _, account := range accounts {
 		httpClient, err := auth.GetHTTPClient(ctx, account.TokenID)
-		ytClient, err := youtube.New(httpClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get youtube http client: %w", err)
+		}
+		ytClient, err := youtube.NewService(ctx, option.WithHTTPClient(httpClient))
 		if err != nil {
 			return nil, fmt.Errorf("failed to create youtube service: %w", err)
 		}

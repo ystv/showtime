@@ -42,7 +42,7 @@ func (b *Braver) NewMixer(ctx context.Context, p NewMixerParams) (Mixer, error) 
 	}
 
 	u := b.baseURL.ResolveReference(&url.URL{Path: "/api/mixers"})
-	req, err := http.NewRequest(http.MethodPut, u.String(), bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, u.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return Mixer{}, fmt.Errorf("%w: %w", ErrRequestFailed, err)
 	}
@@ -94,7 +94,7 @@ func (b *Braver) CutMixerToInput(ctx context.Context, mixerID int, inputID int) 
 	}
 
 	u := b.baseURL.ResolveReference(&url.URL{Path: fmt.Sprintf("/api/mixers/%d/cut_to_source", mixerID)})
-	req, err := http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrRequestFailed, err)
 	}

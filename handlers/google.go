@@ -20,7 +20,9 @@ func (h *Handlers) generateStateOauthCookie(w http.ResponseWriter) string {
 	expiration := time.Now().Add(15 * time.Minute)
 
 	b := make([]byte, 16)
-	rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		panic(fmt.Errorf("failed to generate random bytes: %w", err))
+	}
 	state := base64.URLEncoding.EncodeToString(b)
 	cookie := http.Cookie{Name: h.conf.StateCookieName, Value: state, Expires: expiration}
 	http.SetCookie(w, &cookie)

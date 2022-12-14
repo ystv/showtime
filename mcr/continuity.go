@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/fogleman/gg"
+
 	"github.com/ystv/showtime/ffmpeg"
 )
 
@@ -184,7 +185,7 @@ func newContinuityCard(card newContinuityCardParams) error {
 	yPos = float64(card.Y) / 2
 
 	for _, po := range card.Playouts {
-		playout := ""
+		var playout string
 		if dateEqual(po.ScheduledStart, time.Now()) {
 			playout = po.ScheduledStart.Format("Today - 3:04PM")
 		} else {

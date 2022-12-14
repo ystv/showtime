@@ -31,7 +31,7 @@ type (
 	}
 	// EditLivestream are parameters required to create or update a livestream.
 	EditLivestream struct {
-		Title          string    `form:"title" form:"title"`
+		Title          string    `json:"title" form:"title"`
 		Description    string    `json:"description" form:"description"`
 		ScheduledStart time.Time `json:"scheduledStart" form:"scheduledStart"`
 		ScheduledEnd   time.Time `json:"scheduledEnd" form:"scheduledEnd"`
@@ -228,6 +228,9 @@ func (ls *Livestreamer) Update(ctx context.Context, livestreamID int, strm EditL
 			if err != nil {
 				return fmt.Errorf("failed to update yt-new broadcast: %w", err)
 			}
+
+		case LinkYTExisting: // nothing to do
+		case LinkRTMPOutput: // nothing to do
 		}
 	}
 

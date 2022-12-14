@@ -11,7 +11,9 @@ import (
 )
 
 func (h *Handlers) hookStreamStart(c echo.Context) error {
-	c.Request().ParseForm()
+	if err := c.Request().ParseForm(); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
 	streamKey := c.Request().FormValue("name")
 
 	strm, err := h.ls.GetByStreamKey(c.Request().Context(), streamKey)
@@ -41,7 +43,9 @@ func (h *Handlers) hookStreamStart(c echo.Context) error {
 }
 
 func (h *Handlers) hookStreamDone(c echo.Context) error {
-	c.Request().ParseForm()
+	if err := c.Request().ParseForm(); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
 	streamKey := c.Request().FormValue("name")
 
 	strm, err := h.ls.GetByStreamKey(c.Request().Context(), streamKey)

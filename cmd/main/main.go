@@ -34,8 +34,8 @@ type Config struct {
 
 func main() {
 	// Load environment
-	godotenv.Load(".env")           // Load .env file for production
-	godotenv.Overload(".env.local") // Load .env.local for developing
+	_ = godotenv.Load(".env")           // Load .env file for production
+	_ = godotenv.Overload(".env.local") // Load .env.local for developing
 
 	// Check if debugging
 	debug, err := strconv.ParseBool(os.Getenv("ST_DEBUG"))
@@ -120,7 +120,7 @@ func main() {
 	}
 	templates, err := handlers.NewTemplater(templatesFS)
 	if err != nil {
-		log.Fatalf("failed to create templater: %w", err)
+		log.Fatalf("failed to create templater: %v", err)
 	}
 
 	h := handlers.New(conf.handlers, auth, ls, mcr, yt, templates)

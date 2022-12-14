@@ -16,10 +16,6 @@ type (
 		config *oauth2.Config
 		db     *sqlx.DB
 	}
-	token struct {
-		ID    int
-		Value *oauth2.Token
-	}
 	// Config to configure auth.
 	Config struct {
 		CredentialsPath string
