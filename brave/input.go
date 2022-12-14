@@ -179,7 +179,7 @@ func (b *Braver) NewImageInput(ctx context.Context, uri string) (Input, error) {
 	}
 
 	u := b.baseURL.ResolveReference(&url.URL{Path: "/api/inputs"})
-	req, err := http.NewRequest(http.MethodPut, u.String(), bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, u.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return Input{}, ErrRequestFailed
 	}
