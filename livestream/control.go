@@ -44,7 +44,7 @@ func (ls *Livestreamer) Start(ctx context.Context, strm Livestream) error {
 			}
 
 		case LinkRTMPOutput:
-			return fmt.Errorf("not yet implemented") //FIXME
+			//Nothing to do since there isn't anything we can send
 		}
 	}
 
@@ -112,7 +112,7 @@ func (ls *Livestreamer) End(ctx context.Context, strm Livestream) error {
 			}
 
 		case LinkRTMPOutput:
-			return fmt.Errorf("not yet implemented") //FIXME
+			//Nothing to do since there isn't anything we can send
 		}
 	}
 
