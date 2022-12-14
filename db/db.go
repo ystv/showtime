@@ -50,14 +50,14 @@ func New(conf *Config) (*sqlx.DB, error) {
 	if conf.AutoInit {
 		log.Printf("auto-initialising database")
 		if err := goose.Up(db.DB, "."); err != nil {
-			return nil, fmt.Errorf("failed to run goose migrations: %+v", err)
+			return nil, fmt.Errorf("failed to run goose migrations: %w", err)
 		}
 	}
 
 	if !conf.SkipSchemaVersionCheck {
 		upToDate, err := migrations.IsUpToDate(db.DB)
 		if err != nil {
-			return nil, fmt.Errorf("failed to check if migrations are up to date: %+v", err)
+			return nil, fmt.Errorf("failed to check if migrations are up to date: %w", err)
 		}
 		if !upToDate {
 			return nil, fmt.Errorf("database not up to date, please run 'init' or set ST_DB_AUTO_INIT=true")

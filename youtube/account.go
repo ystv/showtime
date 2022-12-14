@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
 )
 
@@ -18,7 +19,10 @@ type (
 // NewAccount adds a reference to a YouTube account that enabled integration.
 func (y *YouTube) NewAccount(ctx context.Context, tokenID int) error {
 	httpClient, err := y.auth.GetHTTPClient(ctx, tokenID)
-	ytClient, err := youtube.New(httpClient)
+	if err != nil {
+		return fmt.Errorf("failed to get youtube http client: %w", err)
+	}
+	ytClient, err := youtube.NewService(ctx, option.WithHTTPClient(httpClient))
 	if err != nil {
 		return fmt.Errorf("failed to create youtube service: %w", err)
 	}

@@ -74,7 +74,7 @@ func (b *Braver) PauseInput(ctx context.Context, inputID int) error {
 	}
 
 	u := b.baseURL.ResolveReference(&url.URL{Path: fmt.Sprintf("/api/inputs/%d", inputID)})
-	req, err := http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrRequestFailed, err)
 	}
@@ -128,7 +128,7 @@ func (b *Braver) NewURIInput(ctx context.Context, uri string, loop bool) (Input,
 	}
 
 	u := b.baseURL.ResolveReference(&url.URL{Path: "/api/inputs"})
-	req, err := http.NewRequest(http.MethodPut, u.String(), bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, u.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return Input{}, ErrRequestFailed
 	}

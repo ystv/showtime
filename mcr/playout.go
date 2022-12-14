@@ -216,7 +216,7 @@ func (mcr *MCR) UpdatePlayout(ctx context.Context, playoutID int, po EditPlayout
 	}
 
 	// Check if we need to upate the playout's input
-	inputID := 0
+	var inputID int
 
 	if po.SrcURI != oldPo.SrcURI {
 		if oldPo.Status == "live" {

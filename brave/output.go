@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 // Output provides output from a mixer.
@@ -35,9 +37,12 @@ func (b *Braver) NewRTMPOutput(ctx context.Context, m Mixer, outURI string) (Out
 	}
 
 	body, err := json.Marshal(data)
+	if err != nil {
+		return Output{}, fmt.Errorf("failed to marshal brave /outputs request body: %w", err)
+	}
 
 	u := b.baseURL.ResolveReference(&url.URL{Path: "/api/outputs"})
-	req, err := http.NewRequest(http.MethodPut, u.String(), bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, u.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return Output{}, fmt.Errorf("%w: %w", ErrRequestFailed, err)
 	}
@@ -95,9 +100,12 @@ func (b *Braver) NewTCPOutput(ctx context.Context, m Mixer, port int) (Output, e
 	}
 
 	body, err := json.Marshal(data)
+	if err != nil {
+		return Output{}, fmt.Errorf("failed to marshal brave /outputs request body: %w", err)
+	}
 
 	u := b.baseURL.ResolveReference(&url.URL{Path: "/api/outputs"})
-	req, err := http.NewRequest(http.MethodPut, u.String(), bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, u.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return Output{}, fmt.Errorf("%w: %w", ErrRequestFailed, err)
 	}
@@ -122,7 +130,7 @@ func (b *Braver) NewTCPOutput(ctx context.Context, m Mixer, port int) (Output, e
 		return Output{
 			ID:  resp.ID,
 			Src: source,
-			Dst: fmt.Sprintf("tcp://%s:%d", b.baseURL, port),
+			Dst: fmt.Sprintf("tcp://%s", net.JoinHostPort(b.baseURL.Host, strconv.Itoa(port))),
 		}, nil
 	case http.StatusBadRequest:
 		resBytes, err := io.ReadAll(res.Body)
@@ -143,7 +151,7 @@ func (b *Braver) ListOutputs(ctx context.Context) ([]Output, error) {
 // DeleteOutput delete an output in Brave.
 func (b *Braver) DeleteOutput(ctx context.Context, outputID int) error {
 	u := b.baseURL.ResolveReference(&url.URL{Path: fmt.Sprintf("/api/outputs/%d", outputID)})
-	req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, u.String(), nil)
 	if err != nil {
 		return ErrRequestFailed
 	}

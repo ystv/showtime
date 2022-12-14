@@ -42,6 +42,9 @@ func (ls *Livestreamer) Start(ctx context.Context, strm Livestream) error {
 			if err != nil {
 				return fmt.Errorf("failed to start yt-existing broadcast: %w", err)
 			}
+
+		case LinkRTMPOutput:
+			return fmt.Errorf("not yet implemented") //FIXME
 		}
 	}
 
@@ -107,6 +110,9 @@ func (ls *Livestreamer) End(ctx context.Context, strm Livestream) error {
 			if err != nil {
 				return fmt.Errorf("failed to end yt-existing: %w", err)
 			}
+
+		case LinkRTMPOutput:
+			return fmt.Errorf("not yet implemented") //FIXME
 		}
 	}
 

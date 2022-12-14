@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
+
 	"github.com/ystv/showtime/livestream"
 )
 
@@ -63,8 +64,7 @@ func (h *Handlers) disableYouTube(c echo.Context) error {
 
 	link, err := h.ls.GetLink(ctx, linkID)
 	if err != nil {
-		err = fmt.Errorf("failed to get link: %w", err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to get link: %w", err)
 	}
 
 	err = h.yt.DeleteExistingBroadcast(ctx, link.IntegrationID)
@@ -74,8 +74,7 @@ func (h *Handlers) disableYouTube(c echo.Context) error {
 
 	err = h.ls.DeleteLink(ctx, link)
 	if err != nil {
-		err = fmt.Errorf("failed to delete link: %w", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return fmt.Errorf("failed to delete link: %w", err)
 	}
 	return c.NoContent(http.StatusOK)
 }
