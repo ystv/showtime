@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM golang:1.18 AS build
 
 WORKDIR /workspace
@@ -6,7 +7,8 @@ WORKDIR /workspace
 COPY go.mod go.sum ./
 
 # Cache dependencies before building and copying source.
-RUN go mod download
+RUN --mount=type=cache,id=go-mod,target=/root/.cache/go-build \
+    go mod download
 
 # Copy the source.
 COPY . .
@@ -15,7 +17,7 @@ WORKDIR /workspace/cmd/main
 RUN GOOS=linux go build -o showtime
 
 FROM debian:bullseye-slim
-RUN apt update && apt install -y ca-certificates
+RUN apt update && apt install -y ca-certificates fonts-dejavu-core
 
 COPY --from=mwader/static-ffmpeg:5.1.2 /ffmpeg /usr/local/bin/
 
