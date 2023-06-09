@@ -14,6 +14,10 @@
   src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"
 ></script>
 <style>
+body {
+    background: #F2F6FA;
+    height: 100vh;
+  }
 .board-item {
   margin: 5px 0;
   will-change: transform;
@@ -35,13 +39,31 @@
 </style>
   </head>
   <body>
-        <div class="container">
-        <a href="/">🔙 Back</a>
-        <h1 class="title">Integrations</h1>
-        </div>
-      <section class="section">
-        <h1 class="title">YouTube</h1>
-      <div class="columns">
+        <nav class="navbar is-white">
+    <div class="navbar-menu">
+      <p class="navbar-item">ShowTime!</p>
+      <a class="navbar-item" href="/livestreams">Livestreams</a>
+      <a class="navbar-item" href="/integrations">Integrations</a>
+      <p class="navbar-item">MCR</p>
+      <a class="navbar-item" href="/channels">Channels</a>
+    </div>
+  </nav>
+  <section class="section">
+  <div class="container">
+    <div class="columns">
+      <div class="column">
+        <nav class="level">
+          <div class="level-left">
+            <div class="level-item">
+              <h1 class="title">YouTube channels</h1>
+            </div>
+          </div>
+          <div class="level-right">
+            <div class="level-item">
+              <a class="button is-success" href="/oauth/google/login">New YT channel</a>
+            </div>
+          </div>
+        </nav>
         {{ range .Integrations.YouTube }}
         <div class="column">
           <div class="card">
@@ -62,12 +84,27 @@
               <a href="/integrations/unlink/youtube/{{ .AccountID }}" class="card-footer-item">Delete</a>
             </footer>
           </div>
-          </div>
+        </div>
         {{ end }}
+
+        <nav class="level">
+          <div class="level-left">
+            <div class="level-item">
+              <h1 class="title">Engines</h1>
+            </div>
+          </div>
+          <div class="level-right">
+            <div class="level-item">
+              <a class="button is-success" href="/mixers/new">New mixer</a>
+            </div>
+          </div>
+        </nav>
+        <a class="box" href="mixers/1">
+          <div class="content">
+            OBS (#1)
+          </div>
+        </a>
       </div>
-    </div>
-      <a href="/oauth/google/login" class="button is-link is-outlined is-fullwidth">Add channel</a>
-    </div>
   </body>
 </html>
 {{ end }}

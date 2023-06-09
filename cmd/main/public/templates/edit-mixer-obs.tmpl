@@ -1,0 +1,73 @@
+{{ define "edit-mixer-obs" }}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Select livestream</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css"
+/>
+<script
+  defer
+  src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"
+></script>
+<style>
+  body {
+    background: #F2F6FA;
+    height: 100vh;
+  }
+</style>
+  </head>
+  <body>
+  <nav class="navbar is-white">
+    <div class="navbar-menu">
+      <p class="navbar-item">ShowTime!</p>
+      <a class="navbar-item" href="/livestreams">Livestreams</a>
+      <a class="navbar-item" href="/integrations">Integrations</a>
+      <p class="navbar-item">MCR</p>
+      <a class="navbar-item" href="/channels">Channels</a>
+    </div>
+  </nav>
+  <section class="section">
+  <div class="container">
+    <div class="columns">
+      <div class="column">
+        <nav class="level">
+          <div class="level-left">
+            <div class="level-item">
+              <h1 class="title">New OBS mixer</h1>
+            </div>
+          </div>
+        </nav>
+        <div class="content">
+            <article class="post">
+              <form method="post" autocomplete="off">
+                <div class="field">
+                    <label class="label" for="address">Address</label>
+                    <div class="control">
+                        <input class="input" name="address" value="{{ .Fields.Address }}" />
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label" for="user">Username</label>
+                    <div class="control">
+                        <input class="input" name="user" value="{{ .Fields.User }}" />
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label" for="user">Password</label>
+                    <div class="control">
+                        <input class="input" name="user" value="{{ .Fields.User }}" />
+                    </div>
+                </div>
+            </article>
+          </div>
+      </div>
+    </div>
+  </div>
+  </section>
+  </body>
+</html>
+{{ end }}

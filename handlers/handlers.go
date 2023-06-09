@@ -122,6 +122,14 @@ func (h *Handlers) Start() {
 			ch.GET("/delete", h.obsDeleteChannel)
 			ch.POST("/delete", h.obsDeleteChannelConfirm)
 		}
+		internal.GET("/mixers/new", h.obsNewMixer)
+		internal.GET("/mixers/new/obs", h.obsNewMixerOBS)
+		internal.POST("/mixers/new/obs", h.obsNewMixerOBSSubmit)
+		m := internal.Group("/mixers/:mixerID")
+		{
+			m.GET("/edit/obs", h.obsEditMixerOBS)
+			m.POST("/edit/obs", h.obsEditMixerOBSSubmit)
+		}
 
 		internal.GET("/integrations", h.obsListIntegrations)
 		internal.GET("/integrations/unlink/youtube/:accountID", h.obsDeleteYouTubeIntegration)

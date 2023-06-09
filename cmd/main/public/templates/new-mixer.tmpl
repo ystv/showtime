@@ -1,0 +1,72 @@
+{{ define "new-mixer" }}
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>New mixer</title>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css"
+        />
+      <script
+        defer
+        src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"
+        ></script>
+      <style>
+body {
+  background: #F2F6FA;
+  height: 100vh;
+}
+      </style>
+    </head>
+    <body>
+      <nav class="navbar is-white">
+        <div class="container">
+          <div class="navbar-menu">
+            <p class="navbar-item">ShowTime!</p>
+            <a class="navbar-item" href="/livestreams">Livestreams</a>
+            <a class="navbar-item" href="/integrations">Integrations</a>
+            <p class="navbar-item">MCR</p>
+            <a class="navbar-item" href="/channels">Channels</a>
+          </div>
+        </div>
+      </nav>
+      <section class="section">
+        <h1 class="title">New mixer</h1>
+        <a class="box" href="/mixers/brave">
+          <div class="content">
+            <article class="post">
+              <div class="media">
+                <div class="media-left">
+                  <b>Brave</b>
+                </div>
+                <div class="media-content">
+                  <div class="content">
+                    Basic real-time AV editor.
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </a>
+        <a class="box" href="/mixers/obs">
+          <div class="content">
+            <article class="post">
+              <div class="media">
+                <div class="media-left">
+                  <b>OBS</b>
+                </div>
+                <div class="media-content">
+                  <div class="content">
+                    Free and open source software for video recording and livestreaming.
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </a>
+      </section>
+    </body>
+  </html>
+{{ end }}
