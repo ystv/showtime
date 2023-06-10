@@ -90,7 +90,7 @@ body {
         <nav class="level">
           <div class="level-left">
             <div class="level-item">
-              <h1 class="title">Engines</h1>
+              <h1 class="title">Mixers</h1>
             </div>
           </div>
           <div class="level-right">
@@ -99,11 +99,22 @@ body {
             </div>
           </div>
         </nav>
-        <a class="box" href="mixers/1">
-          <div class="content">
-            OBS (#1)
+        {{ range .Integrations.Mixers }}
+        <div>
+          <div class="card">
+            <div class="card-content">
+              <div class="media">
+                <div class="media-content">
+                  <p class="title is-4">{{ .ID }} - {{ .Type }}</p>
+                </div>
+              </div>
+            </div>
+            <footer class="card-footer">
+              <a href="/mixers/{{ .ID }}" class="card-footer-item">Enable</a>
+              <a href="/mixers/{{ .ID }}/delete" class="card-footer-item">Delete</a>
+            </footer>
           </div>
-        </a>
+        {{ end }}
       </div>
   </body>
 </html>

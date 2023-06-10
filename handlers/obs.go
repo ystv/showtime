@@ -11,6 +11,7 @@ import (
 
 	"github.com/ystv/showtime/livestream"
 	"github.com/ystv/showtime/mcr"
+	"github.com/ystv/showtime/mixer"
 	"github.com/ystv/showtime/youtube"
 )
 
@@ -989,39 +990,53 @@ func (h *Handlers) obsDeleteChannelConfirm(c echo.Context) error {
 }
 
 type (
-	editMixerOBSForm struct {
-		Fields editMixerOBSFormFields
+	editMixerForm struct {
+		Fields editMixerFormFields
 		ID     int
 		Title  string
 		Action string
 		Errors []string
 	}
-	editMixerOBSFormFields struct {
+	editMixerFormFields struct {
 		Address  string `form:"address"`
-		Username string `form:"username"`
 		Password string `form:"password"`
 	}
 )
 
 func (h *Handlers) obsNewMixer(c echo.Context) error {
-	return c.Render(http.StatusOK, "edit-mixer", nil)
+	return c.Render(http.StatusOK, "new-mixer", nil)
 }
 
 func (h *Handlers) obsNewMixerOBS(c echo.Context) error {
-	return c.Render(http.StatusOK, "edit-livestream", editMixerOBSForm{
+	return c.Render(http.StatusOK, "edit-mixer-obs", editMixerForm{
 		Title:  "New",
 		Action: "Create",
 	})
 }
 
-func (h *Handlers) obsNewMixerOBSConfirm(c echo.Context) error {
-	var form editMixerOBSFormFields
-	err := c.Bind(&form)
+func (h *Handlers) obsNewMixerOBSSubmit(c echo.Context) error {
+	form := editMixerForm{
+		Title:  "New",
+		Action: "Create",
+	}
+	err := c.Bind(&form.Fields)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	mixerID, err := h.mixers.Create(c.Request().Context(), form.Address, form.Username, form.Password)
+	if form.Fields.Address == "" {
+		form.Errors = append(form.Errors, "Address is required")
+	}
+
+	if len(form.Errors) != 0 {
+		return c.Render(http.StatusBadRequest, "edit-mixer-obs", form)
+	}
+
+	_, err = h.mx.New(c.Request().Context(), mixer.EditMixer{
+		Address:  form.Fields.Address,
+		Password: form.Fields.Password,
+		Type:     mixer.MixerOBS,
+	})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -1029,21 +1044,20 @@ func (h *Handlers) obsNewMixerOBSConfirm(c echo.Context) error {
 	return c.Redirect(http.StatusFound, "/integrations")
 }
 
-func (h *Handlers) obsEditMixer(c echo.Context) error {
+func (h *Handlers) obsEditMixerOBS(c echo.Context) error {
 	mixerID, err := strconv.Atoi(c.Param("mixerID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	m, err := h.mixers.Get(c.Request().Context(), mixerID)
+	m, err := h.mx.Get(c.Request().Context(), mixerID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	return c.Render(http.StatusOK, "edit-mixer-obs", editMixerOBSForm{
-		Fields: editMixerOBSFormFields{
+	return c.Render(http.StatusOK, "edit-mixer-obs", editMixerForm{
+		Fields: editMixerFormFields{
 			Address:  m.Address,
-			Username: m.Username,
 			Password: m.Password,
 		},
 		ID:     mixerID,
@@ -1057,7 +1071,7 @@ func (h *Handlers) obsEditMixerOBSSubmit(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	form := editMixerOBSForm{
+	form := editMixerForm{
 		ID:     mixerID,
 		Title:  "Edit",
 		Action: "Save",
@@ -1069,13 +1083,21 @@ func (h *Handlers) obsEditMixerOBSSubmit(c echo.Context) error {
 		return c.Render(http.StatusBadRequest, "edit-mixer-obs", form)
 	}
 
-	m := mixer.OBS{
-		Address:  form.Fields.Address,
-		Username: form.Fields.Username,
-		Password: form.Fields.Password,
+	if form.Fields.Address == "" {
+		form.Errors = append(form.Errors, "Address is required")
 	}
 
-	err = h.mixers.Update(c.Request().Context(), mixerID, m)
+	if len(form.Errors) != 0 {
+		return c.Render(http.StatusBadRequest, "edit-mixer-obs", form)
+	}
+
+	m := mixer.EditMixer{
+		Address:  form.Fields.Address,
+		Password: form.Fields.Password,
+		Type:     mixer.MixerOBS,
+	}
+
+	err = h.mx.Update(c.Request().Context(), mixerID, m)
 	if err != nil {
 		form.Errors = append(form.Errors, err.Error())
 		return c.Render(http.StatusBadRequest, "edit-livestream", form)
@@ -1084,8 +1106,32 @@ func (h *Handlers) obsEditMixerOBSSubmit(c echo.Context) error {
 	return c.Redirect(http.StatusFound, "/integrations")
 }
 
+// obsDeleteMixer
+func (h *Handlers) obsDeleteMixer(c echo.Context) error {
+	_, err := strconv.Atoi(c.Param("mixerID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	return c.Render(http.StatusOK, "delete-mixer", nil)
+}
+
+func (h *Handlers) obsDeleteMixerConfirm(c echo.Context) error {
+	mixerID, err := strconv.Atoi(c.Param("mixerID"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	err = h.mx.Delete(c.Request().Context(), mixerID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.Redirect(http.StatusFound, "/integrations")
+}
+
 type integrations struct {
 	YouTube []youtube.ChannelInfo
+	Mixers  []mixer.Mixer
 }
 
 type listIntegrationsResponse struct {
@@ -1097,9 +1143,14 @@ func (h *Handlers) obsListIntegrations(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
+	mixers, err := h.mx.List(c.Request().Context())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
 	data := listIntegrationsResponse{
 		Integrations: integrations{
 			YouTube: info,
+			Mixers:  mixers,
 		},
 	}
 	return c.Render(http.StatusOK, "list-integrations", data)

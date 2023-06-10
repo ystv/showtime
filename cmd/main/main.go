@@ -16,6 +16,7 @@ import (
 	"github.com/ystv/showtime/handlers"
 	"github.com/ystv/showtime/livestream"
 	"github.com/ystv/showtime/mcr"
+	"github.com/ystv/showtime/mixer"
 	"github.com/ystv/showtime/youtube"
 )
 
@@ -113,6 +114,7 @@ func main() {
 		log.Fatalf("failed to create youtube client: %+v", err)
 	}
 	ls := livestream.New(conf.livestream, db, mcr, yt)
+	mx := mixer.New(db)
 
 	templatesFS, err := fs.Sub(content, "public/templates")
 	if err != nil {
@@ -123,7 +125,7 @@ func main() {
 		log.Fatalf("failed to create templater: %v", err)
 	}
 
-	h := handlers.New(conf.handlers, auth, ls, mcr, yt, templates)
+	h := handlers.New(conf.handlers, auth, mcr, ls, mx, yt, templates)
 
 	h.Start()
 }

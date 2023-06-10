@@ -18,6 +18,7 @@ import (
 	"github.com/ystv/showtime/auth"
 	"github.com/ystv/showtime/livestream"
 	"github.com/ystv/showtime/mcr"
+	"github.com/ystv/showtime/mixer"
 	"github.com/ystv/showtime/youtube"
 )
 
@@ -29,6 +30,7 @@ type (
 		auth      *auth.Auther
 		mcr       *mcr.MCR
 		ls        *livestream.Livestreamer
+		mx        *mixer.Mixerer
 		yt        *youtube.YouTube
 		mux       *echo.Echo
 	}
@@ -55,7 +57,7 @@ type (
 )
 
 // New creates a new handler instance.
-func New(conf *Config, auth *auth.Auther, ls *livestream.Livestreamer, mcr *mcr.MCR, yt *youtube.YouTube, t *Templater) *Handlers {
+func New(conf *Config, auth *auth.Auther, mcr *mcr.MCR, ls *livestream.Livestreamer, mx *mixer.Mixerer, yt *youtube.YouTube, t *Templater) *Handlers {
 	e := echo.New()
 	e.Renderer = t
 	e.Debug = conf.Debug
@@ -67,8 +69,9 @@ func New(conf *Config, auth *auth.Auther, ls *livestream.Livestreamer, mcr *mcr.
 			SigningKey: []byte(conf.JWTSigningKey),
 		},
 		auth: auth,
-		ls:   ls,
 		mcr:  mcr,
+		ls:   ls,
+		mx:   mx,
 		yt:   yt,
 		mux:  e,
 	}
@@ -129,6 +132,8 @@ func (h *Handlers) Start() {
 		{
 			m.GET("/edit/obs", h.obsEditMixerOBS)
 			m.POST("/edit/obs", h.obsEditMixerOBSSubmit)
+			m.GET("/delete", h.obsDeleteMixer)
+			m.POST("/delete", h.obsDeleteMixerConfirm)
 		}
 
 		internal.GET("/integrations", h.obsListIntegrations)

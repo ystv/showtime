@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Select livestream</title>
+    <title>{{.Title }} OBS mixer</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link
@@ -51,18 +51,36 @@
                     </div>
                 </div>
                 <div class="field">
-                    <label class="label" for="user">Username</label>
+                    <label class="label" for="password">Password</label>
                     <div class="control">
-                        <input class="input" name="user" value="{{ .Fields.User }}" />
+                        <input type="password" class="input" name="password" value="{{ .Fields.Password }}" />
                     </div>
                 </div>
-                <div class="field">
-                    <label class="label" for="user">Password</label>
-                    <div class="control">
-                        <input class="input" name="user" value="{{ .Fields.User }}" />
+                <nav class="level">
+                  <div class="level-item">
+                    <div class="field is-grouped">
+                      <div class="control">
+                        <a href="/mixers{{ if eq .Action "Save" }}/{{ .ID }}{{ end }}" class="input is-link is-light">Cancel</a>
+                      </div>
+                      <div class="control">
+                        <input class="button is-link" type="submit" value="{{ .Action }}" />
+                      </div>
                     </div>
-                </div>
+                  </div>
+                </nav>
             </article>
+            {{ if .Errors }}
+            <article class="message is-warning">
+              <div class="message-header">
+                <p>Errors in form</p>
+              </div>
+              <div class="message-body">
+                {{ range .Errors }}
+                  <p>{{ . }}</p>
+                {{ end }}
+              </div>
+            </article>
+            {{ end }}
           </div>
       </div>
     </div>
